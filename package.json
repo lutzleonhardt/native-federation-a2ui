@@ -8,12 +8,15 @@
     "node": ">=24"
   },
   "scripts": {
-    "postinstall": "playwright install chromium",
+    "postinstall": "playwright install chromium && npm --prefix agent install",
     "ng": "ng",
+    "start": "concurrently -n shell,agent -c cyan,magenta --kill-others-on-fail \"npm run start:shell\" \"npm --prefix agent run start\"",
     "start:shell": "ng serve shell --port 4200",
+    "start:agent": "npm --prefix agent run dev",
     "build": "ng build shell",
+    "test": "npm run test:shell && npm run test:agent",
     "test:shell": "ng test shell",
-    "test": "npm run test:shell",
+    "test:agent": "npm --prefix agent test",
     "lint": "ng lint"
   },
   "dependencies": {
@@ -42,6 +45,7 @@
     "@vitest/browser": "~4.1.11",
     "@vitest/browser-playwright": "~4.1.11",
     "angular-eslint": "21.4.0",
+    "concurrently": "~10.0.5",
     "eslint": "^10.3.0",
     "playwright": "^1.58.0",
     "prettier": "^3.8.1",
