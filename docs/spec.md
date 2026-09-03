@@ -41,10 +41,13 @@ Wann sich das lohnt (README-Regel): mehrere Teams, Anfragen quer zu den Teams, U
 | 4 | „Reservier mir eine Karte" (Klick auf den Button) | `action: reserve { id: { path: '/conf/id' } }` → Shell-Handler → Store → `updateDataModel /conf/remaining` → `Gauge` sinkt | Domänenaktion ohne Modell, Vokabular neutral |
 | 5 | „Vergleiche .NET- und Angular-Konferenzen nach Monat, Karte daneben" | `ChartGrid [ BarChart(/byMonth, selected → /month), Map(points ← /confs, filter ← /month) ]` | Verschachtelung über Remote-Grenzen, Chart-Klick filtert Karte |
 | 6 | „Für welche soll ich die Website öffnen?" (Rückfrage) | `Map(selected → /pick)` + `Button submitAnswer { id: { path: '/pick/id' } }` | Team-Eingabe im vom Modell gebauten Formular (Buch-Muster, Karte statt TextField) |
+| 7 | „Zeig die Angular-Konferenzen auf einer Karte, mit einem Regler für die maximale Entfernung" | `Column [ Slider(value → /filter/maxKm, min 50, max 1000), Map(points ← withinKm(/confs, /filter/maxKm)) ]` — `Slider` kommt aus dem Basis-Katalog, neu ist **nur** die Funktion `withinKm` | **Ein Remote liefert reines Verhalten, kein Anzeige-Primitiv: derselbe Regler ist vorher tot und nachher live. Reglerbewegung filtert die Karte ohne einen einzigen Token** |
 
 **Live-Momente:**
 - Ohne `mfe-maps` beantwortet das Modell Anfrage 2 mit `Timeline` + Text („keine Karte verfügbar"). Remote ins Manifest, Reload → Karte. `context[]` im Request zeigt das neue Vokabular; `agent/` unverändert.
 - `mfe-embed` ist das dritte Remote und in 30 Minuten gebaut: vorher „Website: <Link>", nachher eingebettet. Zeigt, dass ein Vokabular-Remote klein ist.
+- **Die Kür:** `mfe-filter` liefert **ausschließlich die Katalogfunktion `withinKm`** — kein neues Anzeige-Primitiv. `Slider` bringt der Basis-Katalog von `@a2ui/angular` bereits mit (verifiziert 2026-09-03: `slider` steht in `DEFAULT_COMPONENT_IMPLEMENTATIONS` neben `text row column button textField image icon video audioPlayer list card tabs modal divider checkBox choicePicker dateTimeInput`); was fehlt, ist die Fähigkeit, ein Array zu filtern — **keine** der 25 Basis-Funktionen transformiert Arrays. Vorher kann das Modell den Regler also zeichnen, ihn aber an nichts binden; nachher filtert derselbe Regler live. Das macht diesen Moment schärfer als die beiden darüber, wo schlicht ein Baustein fehlt: Hier ist die Lücke **Verhalten**, nicht Aussehen — der Katalog trägt `components` und `functions` als zwei gleichrangige Listen, und föderiert wird hier nur die zweite.
+  - **Voraussetzung:** Die Vorher-Hälfte trägt nur, wenn das Modell den toten Regler *nicht* baut, sondern die Lücke benennt (Prompt-Grundsatz in §6). Genau dafür existiert die Zeile „Fehlendes Vokabular" in §7 — bei diesem Moment ist sie nicht optional, weil ein verfügbarer `Slider` die Improvisation aktiv nahelegt.
 
 ## 3. Architektur
 
@@ -171,6 +174,9 @@ Damit jede Task als „Diff + Test" landen kann (Vorgabe für `/plan`):
 | Renderer-Integration | `renderSurface`-Handler: valide Nachrichten → Surface erscheint, Daten montiert; invalide → `{ ok: false, result }`; Klick auf `Map` aktualisiert gebundenen `Text` ohne Netzwerk | Vitest Browser Mode mit echtem `A2uiRendererService` |
 | Agent-Loop ohne Modell | Agent-Store mit `ReplayAgent`/Mock-Agent (Kap. 9): Anfrage → aufgezeichnete Events → Surface | Vitest Browser Mode; dieselben Aufnahmen wie M4 |
 | Modell-Verhalten | Anfragen 1–6 gegen das echte Modell, Erfolgsquote ≥ 4/5 | manuelles Skript `npm run eval`, nicht in CI |
+| Fehlendes Vokabular | Anfrage mit einer Capability, die im Katalog **nicht** vorhanden ist (z. B. 7 ohne `mfe-filter`): die Antwort **benennt die Lücke** und emittiert **keine wirkungslosen Bedienelemente** — kein Button-Ersatz für einen fehlenden `Slider`, keine Bedienung ohne dahinterliegende Funktion | `npm run eval`, ein Fall je Live-Moment |
+
+Der letzte Fall sichert die Vorher-Hälfte der Live-Momente ab: Ein Modell, das statt einer ehrlichen Absage drei tote Knöpfe baut, besteht die Schema-Validierung (die Namen existieren ja) und lässt die Demo kaputt statt unvollständig aussehen. Der Guardrail des Renderers greift hier nicht — er verhindert erfundene Namen, nicht wirkungslose Komposition aus echten.
 
 Sheriff wie im Buch-Repo für Modulgrenzen (Shell importiert keine Remotes; Remotes kennen nur `libs/capabilities` und die A2UI-/CopilotKit-Typen).
 
@@ -181,6 +187,8 @@ Sheriff wie im Buch-Repo für Modulgrenzen (Shell importiert keine Remotes; Remo
 **M2 — NF-Split.** Dynamic Host, Capability-Vertrag, `mfe-charts` als Remote, Manifest + `?capabilities=`, Shared-Deps (Zod-Singleton mit einer Katalogkomponente aus dem Remote prüfen).
 
 **M3 — `mfe-maps`, `mfe-embed`, Komposition.** Remotes nach Muster, `ChartGrid`, Anfragen 5–6, beide Live-Momente. **Demo fertig.**
+
+**M3+ — Interaktions-Vokabular (Kür, nach M3).** `mfe-filter` als viertes Remote: **nur** die Katalogfunktion `withinKm` (der `Slider` ist im Basis-Katalog vorhanden) — damit das kleinstmögliche Remote der ganzen Demo. Anfrage 7 und der dritte Live-Moment. Bewusst nach der fertigen Demo, weil es die einzige Anfrage ist, die lokale Interaktivität *jenseits* von Auswahl zeigt — und weil das Risiko im Modell liegt, nicht im Renderer: ob es ein verschachteltes `functionCall`-Binding zuverlässig emittiert, ist offen. Machbarkeit des Renderers lässt sich vorab ohne Modell belegen (handgeschriebene A2UI-Messages gegen den echten Renderer).
 
 **M4 — Hosting und Veröffentlichung (optional).** `ReplayAgent` (aufgezeichnete Runs pro Anfrage × Capability-Set, Capture-Skript; Aufnahmen enthalten dank Datenmontage nur Struktur) als Default; `BrowserAgent` (BYOK, ein Modellaufruf pro Run) als Schalter; statisches Deployment wie Frankenstein. README mit Architekturbild, Wann-lohnt-es-sich-Regel, Datenstand. Post 2.
 
