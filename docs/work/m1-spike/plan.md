@@ -131,6 +131,18 @@ Depends on Task 3 (`haversineKm` from `src/app/domain/geo.ts` backs the `distanc
 
 **Instructions**
 
+- **Pre-step — transport probe (temporary; the spec is removed after its findings are logged).**
+  A Browser-Mode spec drives a real `HttpAgent` from `@ag-ui/client` against a temporarily started
+  mock-model agent server (any local tweaks for it, e.g. the CORS origin, stay uncommitted) and
+  answers three questions from the Task 1/2 open issues: does `@ag-ui/client` resolve in the
+  browser bundle (the `uuid` question), does the client expand `TEXT_MESSAGE_CHUNK` to
+  `START/CONTENT/END`, and does a failed run surface as a terminal `RUN_ERROR` client-side. The
+  findings go to the task log with open issues re-routed to Task 7; only if a finding contradicts
+  the documented expectations does a pinning test become a Task 7 deliverable.
+- `agent/requests.http` (lasting side deliverable): JetBrains HTTP Client file for manual
+  exploration against a running `npm run start:agent`: a valid `RunAgentInput` (streams SSE), the
+  400 body, the 404 agent id, the CORS preflight. A comment notes that the dummy key ends runs in
+  `RUN_ERROR` and a real key is needed for real answers. README gets a one-line pointer.
 - `src/app/a2ui/binding.ts`: `binding(schema)` = `schema | { path: string }` (zod/v3 union) — a prop is a literal or a data-model binding.
 - `src/app/a2ui/custom-component.ts`: `createCustomComponent({ name, description, schema, component })` → `AngularComponentImplementation` (see `@a2ui/web_core/v0_9/catalog/types.d.ts` for the implementation shape) with a `ContextFromSchema` type so a component's `props` type is derived from its schema (`BoundProperty<T>` per prop). Keep each primitive's `name`, `description`, `schema` in a framework-free `*.schema.ts` next to the component so Node can import the metadata.
 - `src/app/a2ui/assistant-catalog.ts`: `ASSISTANT_CATALOG_ID = 'https://conference-finder.dev/catalogs/assistant'`; `createAssistantCatalog(fragments: { components, functions }[])` → `new BasicCatalogBase({ id, extraComponents, functions: [...BASIC_FUNCTIONS, ...fns] })`. `functions` **replaces** the basic list, hence the spread. Warn (`console.warn`) on name collisions between fragments or with basic names and keep the first.
@@ -150,6 +162,7 @@ Depends on Task 3 (`haversineKm` from `src/app/domain/geo.ts` backs the `distanc
 - T4-AC-04 — `createAssistantCatalog` yields a catalog whose components include all basic names plus `Gauge`, and whose functions include `formatDate` (basic) plus `daysUntil` and `distance`; a duplicate component name across fragments logs a warning and keeps the first.
 - T4-AC-05 — `catalogToContextEntry` JSON contains `catalogId`, `components.Gauge.schema` with `value` and `max`, and `functions.daysUntil` with an args schema and `returnType: 'number'`.
 - T4-AC-06 — (Browser Mode, real `A2uiRendererService`) processing `createSurface` (assistant id) + `updateComponents` with a `Gauge` bound to `/conf/remaining` and `/conf/capacity` + `updateDataModel` renders the gauge with those values.
+- T4-AC-07 — `agent/requests.http` contains the four requests above and the README references it; manual check: the valid request against a running agent streams SSE in the IDE.
 
 **Key Locations**
 
@@ -157,6 +170,7 @@ Depends on Task 3 (`haversineKm` from `src/app/domain/geo.ts` backs the `distanc
 - `src/app/capabilities/charts/gauge.component.ts`, `gauge.schema.ts`, `days-until.fn.ts`, `index.ts`
 - `src/app/capabilities/maps/distance.fn.ts`, `index.ts`
 - `src/app/testing/bound-property.ts`, `src/app/app.config.ts`
+- `agent/requests.http`, `README.md`
 
 **Key Discoveries**
 

@@ -1,0 +1,49 @@
+# Manual requests against the AG-UI endpoint (JetBrains HTTP Client).
+# Start the server first: `npm run start:agent`. The server binds to loopback
+# (127.0.0.1:3001) and validates every body against RunAgentInputSchema.
+#
+# A dummy API key is enough to explore the transport: the run then terminates
+# with a RUN_ERROR event naming the provider failure. Real answers need a real
+# key in `.env`.
+
+### Valid run — streams AG-UI events as SSE (RUN_STARTED … RUN_FINISHED/RUN_ERROR)
+POST http://localhost:3001/ag-ui/assistant
+Content-Type: application/json
+Accept: text/event-stream
+
+{
+  "threadId": "http-client-thread",
+  "runId": "http-client-run-1",
+  "messages": [
+    { "id": "m1", "role": "user", "content": "Welche Angular-Konferenzen gibt es?" }
+  ],
+  "tools": [],
+  "context": [],
+  "state": {}
+}
+
+### Invalid body — 400 with the zod issues
+POST http://localhost:3001/ag-ui/assistant
+Content-Type: application/json
+
+{
+  "threadId": "only-this"
+}
+
+### Unknown agent id — 404
+POST http://localhost:3001/ag-ui/does-not-exist
+Content-Type: application/json
+
+{
+  "threadId": "http-client-thread",
+  "runId": "http-client-run-2",
+  "messages": [],
+  "tools": [],
+  "context": [],
+  "state": {}
+}
+
+### CORS preflight — 204, allow-origin echoes the shell origin
+OPTIONS http://localhost:3001/ag-ui/assistant
+Origin: http://localhost:4200
+Access-Control-Request-Method: POST

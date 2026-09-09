@@ -14,6 +14,10 @@ Milestone M1 — monolith spike. The shell, the agent server and the assistant
 catalog live in this single Angular workspace; the Native Federation split
 follows in M2.
 
+The system architecture — big picture, the AG-UI run, which package owns which
+layer, and the invariants behind it all — is described in
+[docs/architecture.md](./docs/architecture.md).
+
 ## Setup
 
 ```bash
@@ -36,6 +40,9 @@ cp .env.example .env
 
 `AGENT_PROVIDER` picks `anthropic` (default), `openai` or `deepseek`; `AGENT_MODEL`
 overrides the model id of that provider.
+
+To poke the AG-UI endpoint by hand, open [`agent/requests.http`](./agent/requests.http)
+in a JetBrains IDE with a running `npm run start:agent`.
 
 ## Scripts
 
