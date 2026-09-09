@@ -1,7 +1,7 @@
 # Plan: ConferenceFinder — M1 Spike im Monolith
 
-Spec: `docs/spec.md` (v3.2, 2026-08-27; copy of `a2ui/docs/spec/spec-federated-capabilities.md`). Background: `docs/book-learnings.md`.
-Scope: Milestone M1 only — Agent + Shell + `renderSurface` + `findConferences` + `Timeline`/`Map`/`Gauge` as in-shell catalog components, demo requests 1–4, **no Native Federation**. M2 (NF split), M3 (maps/embed remotes, requests 5–6) and M4 (hosting/replay) are planned separately.
+Spec: `docs/spec.md` (v3.3, 2026-09-09; copy of `a2ui/docs/spec/spec-federated-capabilities.md`). Background: `docs/book-learnings.md`.
+Scope: Milestone M1 only — Agent + Shell + `renderSurface` + `findConferences` + `Timeline`/`Map`/`Gauge` as in-shell catalog components, demo requests 1–3, **no Native Federation**. The M1 gate is Task 9 (requests 1–3; request 4's `reserve`-button contract is scored inside request 3). M2 (NF split: charts + maps remotes) and M3 (reserve, MapLibre upgrade, hosting/replay publication) are planned separately. **v3.3 re-scoping (2026-09-09, user-approved): Task 8 moved out of this scope into M3 — task order here is 6 → 7 → 9.**
 Repo: `~/projects/conference-finder` (MIT, Angular CLI workspace, npm, Node ≥ 24). Ports: shell 4200, agent 3001. Tests: Vitest (Browser Mode for the shell, Node for `agent/`).
 Data-model conventions: catalog id `https://conference-finder.dev/catalogs/assistant`; paths `/confs` (last `findConferences` result), `/conf` (selected/next conference, pre-set by the client), `/me` (location) — mounted by the client, never written by the model.
 Code conventions: code that becomes a remote later lives in `src/app/capabilities/charts/` and `src/app/capabilities/maps/` and must not import from `src/app/domain/`. Shared, framework-free pieces (schemas, descriptions, pure logic) stay importable from Node so the eval harness reuses them.
@@ -304,6 +304,10 @@ Depends on Task 6 (tools, `RENDER_FAILURE_HANDLER`, `SurfaceDataStore`).
 
 ## Task 8: `ConferenceStore` with a `reserve` handler that updates the surface without a model call
 
+> **MOVED (spec v3.3 re-scoping, 2026-09-09):** no longer part of the m1-spike scope — lands in
+> the M3 scope after the NF proof, together with its prompt/eval extensions. The block below is
+> retained unchanged for ID traceability (`T8-AC-*`, XC-02); do not `/start-task 8` on this branch.
+
 Depends on Task 6 (`SurfaceDataStore`, `findConferences` handler, action bus from the renderer config).
 
 **Instructions**
@@ -380,7 +384,7 @@ Depends on Task 7 (running shell loop; tool definitions and context serializer t
 ## Cross-Cutting Acceptance
 
 - **XC-01** — Request 3 in the running app: a marker click changes name, countdown, distance and gauge with zero network requests (spec acceptance 2). **Touches:** T5, T6, T7, T9.
-- **XC-02** — Request 4: "Reservieren" lowers the gauge with no agent run; the store keeps the reservation and a later `findConferences` reflects it (spec acceptance 3). **Touches:** T6, T8.
+- **XC-02** — Request 4: "Reservieren" lowers the gauge with no agent run; the store keeps the reservation and a later `findConferences` reflects it (spec acceptance 3). **Touches:** T6, T8. *(Completes in the M3 scope — T8 moved there, spec v3.3.)*
 - **XC-03** — The model never writes `/confs` or `/me`: guard (T6), prompt rule (T9) and eval check (T9) agree on the same reserved paths. **Touches:** T6, T9.
 - **XC-04** — Shell and eval harness build `tools[]` and `context[]` (components + functions + `me`) from the same framework-free definitions and serializer; no drift. **Touches:** T4, T6, T7, T9.
 - **XC-05** — `src/app/capabilities/**` contains no import from `src/app/domain/**` or `src/app/agent/**` (vocabulary stays domain-neutral so M2/M3 can move it into remotes unchanged). **Touches:** T4, T5.
