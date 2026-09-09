@@ -192,6 +192,7 @@ Depends on Task 4 (`binding`, `createCustomComponent`, fragments, bound-property
 - Descriptions are prompt engineering: `Map` — "shows items that have `lat`/`lon`; a click writes the whole clicked object to the path bound to `selected`; bind `center` to the user's location"; `Timeline` — analogous for items with `date`.
 - Only extract shared SVG scale helpers (`src/app/capabilities/shared/`) if both components need the same code.
 - Register both in the fragments (`charts/index.ts`, `maps/index.ts`).
+- Playground route (user-approved amendment, 2026-09-09 — minimal effort): `src/app/playground/` page at `/playground` that renders a hand-built surface through the real `A2uiRendererService` — real conferences on `/confs`, Berlin on `/me`, `Gauge` plus `Timeline`/`Map` once they exist — so the visual primitives are visible and clickable via `npm start` before Task 7. One page, fixture surface, no styling beyond basic layout; lives in the shell, not under `capabilities/`.
 
 **Acceptance** (Browser Mode; bound-property fakes with `onUpdate = vi.fn()` unless a real renderer is named)
 
@@ -206,6 +207,7 @@ Depends on Task 4 (`binding`, `createCustomComponent`, fragments, bound-property
 - `src/app/capabilities/charts/timeline.component.ts`, `timeline.schema.ts`, `index.ts`
 - `src/app/capabilities/maps/map.component.ts`, `map.schema.ts`, `index.ts`
 - `src/app/capabilities/shared/` (only if needed)
+- `src/app/playground/` (dev showcase, amendment)
 
 **Key Discoveries**
 

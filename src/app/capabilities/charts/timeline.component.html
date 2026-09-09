@@ -1,0 +1,25 @@
+<svg viewBox="0 0 400 92" role="img" aria-label="Timeline">
+  <line [attr.x1]="xMin" [attr.y1]="axisY" [attr.x2]="xMax" [attr.y2]="axisY" class="cf-axis" />
+  @for (marker of markers(); track marker.item.id) {
+    <g
+      class="cf-marker"
+      [class.cf-selected]="marker.item.id === selectedId()"
+      (click)="pick(marker.item)"
+    >
+      <line
+        [attr.x1]="marker.x"
+        [attr.y1]="marker.labelY + 3"
+        [attr.x2]="marker.x"
+        [attr.y2]="axisY"
+        class="cf-stem"
+      />
+      <circle [attr.cx]="marker.x" [attr.cy]="axisY" r="5" class="cf-dot" />
+      <text [attr.x]="marker.x" [attr.y]="marker.labelY" text-anchor="middle" class="cf-label">
+        {{ labelOf(marker.item) }}
+      </text>
+      <text [attr.x]="marker.x" [attr.y]="marker.dateY" text-anchor="middle" class="cf-date">
+        {{ marker.item.date }}
+      </text>
+    </g>
+  }
+</svg>

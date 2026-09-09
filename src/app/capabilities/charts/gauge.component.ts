@@ -14,24 +14,7 @@ const ARC_LENGTH = Math.PI * 40;
 @Component({
   selector: 'app-gauge',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <svg viewBox="0 0 100 70" role="img" [attr.aria-label]="ariaLabel()">
-      <path d="M 10 52 A 40 40 0 0 1 90 52" fill="none" stroke="#e5e5e5" stroke-width="8" stroke-linecap="round" />
-      <path
-        d="M 10 52 A 40 40 0 0 1 90 52"
-        fill="none"
-        stroke="#3f51b5"
-        stroke-width="8"
-        stroke-linecap="round"
-        [attr.stroke-dasharray]="dashArray()"
-      />
-      <text x="50" y="44" text-anchor="middle" class="cf-gauge-value">{{ value() }}</text>
-      <text x="50" y="56" text-anchor="middle" class="cf-gauge-max">/ {{ max() }}</text>
-      @if (label(); as caption) {
-        <text x="50" y="67" text-anchor="middle" class="cf-gauge-label">{{ caption }}</text>
-      }
-    </svg>
-  `,
+  templateUrl: './gauge.component.html',
   styles: `
     /* Explicit width: a viewBox-only svg has no intrinsic size, so inside the
        renderer's flex rows host and svg would both collapse to 0x0. */
