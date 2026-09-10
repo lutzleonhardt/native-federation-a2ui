@@ -5,7 +5,7 @@ import { dispatchSurfaceAction } from '../shared/surface-action';
 
 /**
  * `label` is optional at runtime: path-bound items bypass schema validation,
- * and the conference objects on `/confs` carry `name` instead.
+ * and the conference objects on `/filteredConfs` carry `name` instead.
  */
 export interface TimelineItem {
   readonly id: string;

@@ -27,7 +27,7 @@ function playgroundMessages(): A2uiMessage[] {
     { nearKm: 300 },
     { confs: loadConferences(today), me: BERLIN, today },
   );
-  const pick = { event: { name: 'pick', context: { id: { path: '/conf/id' } } } };
+  const pick = { event: { name: 'pick', context: { id: { path: '/selectedConf/id' } } } };
 
   return [
     { version: 'v0.9', createSurface: { surfaceId: SURFACE_ID, catalogId: ASSISTANT_CATALOG_ID } },
@@ -40,36 +40,36 @@ function playgroundMessages(): A2uiMessage[] {
           {
             id: 'timeline',
             component: 'Timeline',
-            items: { path: '/confs' },
-            selected: { path: '/conf' },
+            items: { path: '/filteredConfs' },
+            selected: { path: '/selectedConf' },
             action: pick,
           },
           {
             id: 'map',
             component: 'Map',
-            points: { path: '/confs' },
+            points: { path: '/filteredConfs' },
             center: { path: '/me' },
-            selected: { path: '/conf' },
+            selected: { path: '/selectedConf' },
             action: pick,
           },
           { id: 'details', component: 'Row', children: ['gauge', 'summary'] },
           {
             id: 'gauge',
             component: 'Gauge',
-            value: { path: '/conf/remaining' },
-            max: { path: '/conf/capacity' },
+            value: { path: '/selectedConf/remaining' },
+            max: { path: '/selectedConf/capacity' },
             label: 'Restkarten',
           },
           { id: 'summary', component: 'Column', children: ['conf-name', 'conf-date', 'conf-city'] },
-          { id: 'conf-name', component: 'Text', text: { path: '/conf/name' } },
-          { id: 'conf-date', component: 'Text', text: { path: '/conf/date' } },
-          { id: 'conf-city', component: 'Text', text: { path: '/conf/city' } },
+          { id: 'conf-name', component: 'Text', text: { path: '/selectedConf/name' } },
+          { id: 'conf-date', component: 'Text', text: { path: '/selectedConf/date' } },
+          { id: 'conf-city', component: 'Text', text: { path: '/selectedConf/city' } },
         ],
       },
     },
-    { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/confs', value: [...confs] } },
+    { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/filteredConfs', value: [...confs] } },
     { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/me', value: BERLIN } },
-    { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/conf', value: confs[0] } },
+    { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/selectedConf', value: confs[0] } },
   ];
 }
 

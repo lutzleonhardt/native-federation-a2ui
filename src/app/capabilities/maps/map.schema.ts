@@ -31,6 +31,6 @@ export const MAP_META = {
     'Shows items that have `lat`/`lon` as labelled markers on a simple projected map. ' +
     'A click writes the whole clicked object (all fields) to the path bound to `selected`; ' +
     "bind `center` to the user's location, e.g. center {\"path\": \"/me\"} and " +
-    'selected {"path": "/conf"}.',
+    'selected {"path": "/selectedConf"}.',
   schema: mapSchema,
 } satisfies ComponentMeta<typeof mapSchema>;

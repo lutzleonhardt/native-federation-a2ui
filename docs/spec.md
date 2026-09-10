@@ -24,7 +24,7 @@ Die Formel: *Die Anfrage bestimmt, welche Ein-/Ausgaben zusammengestellt und wie
 Warum das kein Plugin-System ist — die Demo zeigt es, sie behauptet es nicht:
 
 1. **Neutrale Primitive multiplizieren die Antwortmöglichkeiten.** Eine Karte zeigt alles mit Koordinaten, eine Zeitachse alles mit Datum. Mehr Remotes → mehr *Arten* von Antworten auf *beliebige* Fragen.
-2. **Primitive verschiedener Remotes sind über Pfade verdrahtet.** `Map.selected → /conf`, `Gauge.value ← /conf/remaining`. Kein Remote kennt das andere; die Kopplung ist ein Pfad, den das Modell gewählt hat.
+2. **Primitive verschiedener Remotes sind über Pfade verdrahtet.** `Map.selected → /selectedConf`, `Gauge.value ← /selectedConf/remaining`. Kein Remote kennt das andere; die Kopplung ist ein Pfad, den das Modell gewählt hat.
 3. **Teams erweitern die Ausdruckssprache.** Katalog-Funktionen (`distance`, `daysUntil`) laufen in gewöhnlichen `Text`-Komponenten.
 4. **Domänenaktionen bleiben in der Shell.** „Reservieren" ist ein Basic-`Button` mit `action: reserve`; der Handler gehört der Shell, nicht einem Remote.
 
@@ -36,10 +36,10 @@ Wann sich das lohnt (README-Regel): mehrere Teams, Anfragen quer zu den Teams, U
 
 | # | Anfrage | Was entsteht | Beweist |
 |---|---|---|---|
-| 1 | „Welche Angular-Konferenzen gibt es in den nächsten Monaten?" | `Timeline` an `/confs` (vom Client montiert) | Remote liefert Ausgabe-Vokabular |
-| 2 | „Zeig sie auf einer Karte" | `Map` an `/confs`, `center ← /me` | zweites Remote, gleicher Pfad |
-| 3 | „Wann ist die nächste in meiner Nähe? Wenn ich eine anklicke, will ich Details." | `Row [ Map(selected → /conf), Column [ Text /conf/name, Text daysUntil(/conf/date), Text distance(/me, /conf), Gauge(/conf/remaining, /conf/capacity), Button reserve ] ]`, `/conf` mit der nächsten vorbelegt | **Auswahl in einem Remote treibt Anzeige aus einem zweiten Remote und der Shell — ohne Modell-Roundtrip** |
-| 4 | „Reservier mir eine Karte" (Klick auf den Button) | `action: reserve { id: { path: '/conf/id' } }` → Shell-Handler → Store → `updateDataModel /conf/remaining` → `Gauge` sinkt | Domänenaktion ohne Modell, Vokabular neutral |
+| 1 | „Welche Angular-Konferenzen gibt es in den nächsten Monaten?" | `Timeline` an `/filteredConfs` (vom Client montiert) | Remote liefert Ausgabe-Vokabular |
+| 2 | „Zeig sie auf einer Karte" | `Map` an `/filteredConfs`, `center ← /me` | zweites Remote, gleicher Pfad |
+| 3 | „Wann ist die nächste in meiner Nähe? Wenn ich eine anklicke, will ich Details." | `Row [ Map(selected → /selectedConf), Column [ Text /selectedConf/name, Text daysUntil(/selectedConf/date), Text distance(/me, /selectedConf), Gauge(/selectedConf/remaining, /selectedConf/capacity), Button reserve ] ]`, `/selectedConf` mit der nächsten vorbelegt | **Auswahl in einem Remote treibt Anzeige aus einem zweiten Remote und der Shell — ohne Modell-Roundtrip** |
+| 4 | „Reservier mir eine Karte" (Klick auf den Button) | `action: reserve { id: { path: '/selectedConf/id' } }` → Shell-Handler → Store → `updateDataModel /selectedConf/remaining` → `Gauge` sinkt | Domänenaktion ohne Modell, Vokabular neutral |
 
 Weitere Anfragen (ehemals 5–7) sind in die Späteren Erweiterungen verschoben und Teil keiner verbindlichen Abnahme.
 
@@ -101,7 +101,7 @@ Nicht erreichbares Remote → loggen, überspringen. Bindung zur Bootstrap-Zeit;
 
 Der Agent-Server weiß nichts von A2UI; der offizielle Adapter reicht. Umstieg auf `ACTIVITY_SNAPSHOT` bleibt möglich, ohne Katalog oder Primitive anzufassen.
 
-**Datenmontage durch den Client.** Das Modell kopiert Tool-Ergebnisse **nie** in `updateDataModel`. Der `renderSurface`-Handler montiert nach den Nachrichten des Modells die zuletzt geladenen Daten selbst ins Datenmodell der Surface: `/confs` (letztes `findConferences`-Ergebnis), `/me` (Standort). Das Modell bindet nur Pfade (`points: { path: '/confs' }`). Gründe: Struktur vom Modell, Daten vom Code (DSL-Erkenntnis aus dem Buch, auf den Client übertragen); deutlich weniger Tokens; keine abgeschriebenen Zahlen; Replay-Aufnahmen (M3) enthalten nur Struktur und bleiben mit dem Offset-Datenmodell (Abschnitt 5) dauerhaft gültig. Abgeleitete Sichten (`/byMonth`, `/byTopic`) liefert das Tool auf Anfrage (`groupBy`), nicht das Modell.
+**Datenmontage durch den Client.** Das Modell kopiert Tool-Ergebnisse **nie** in `updateDataModel`. Der `renderSurface`-Handler montiert nach den Nachrichten des Modells die zuletzt geladenen Daten selbst ins Datenmodell der Surface: `/filteredConfs` (letztes `findConferences`-Ergebnis), `/me` (Standort). Das Modell bindet nur Pfade (`points: { path: '/filteredConfs' }`). Gründe: Struktur vom Modell, Daten vom Code (DSL-Erkenntnis aus dem Buch, auf den Client übertragen); deutlich weniger Tokens; keine abgeschriebenen Zahlen; Replay-Aufnahmen (M3) enthalten nur Struktur und bleiben mit dem Offset-Datenmodell (Abschnitt 5) dauerhaft gültig. Abgeleitete Sichten (`/byMonth`, `/byTopic`) liefert das Tool auf Anfrage (`groupBy`), nicht das Modell.
 
 ### 3.6 Katalog-Merge und Kontext
 
@@ -123,7 +123,7 @@ Der Agent-Server weiß nichts von A2UI; der offizielle Adapter reicht. Umstieg a
 
 ## 4. Primitive
 
-Alle Props sind `binding(...)`. Eingabe-Primitive schreiben über `props().selected.onUpdate(obj)` → `dataContext.set(path, obj)`; bei Literal No-op (Prompt-Regel). **Auswahl schreibt das ganze Element, nicht die Id** — dann binden Basic-Komponenten direkt `/conf/name`, `/conf/url` usw. Optionales `action` (`ActionSchema`) macht aus dem Klick zusätzlich ein Client-Event.
+Alle Props sind `binding(...)`. Eingabe-Primitive schreiben über `props().selected.onUpdate(obj)` → `dataContext.set(path, obj)`; bei Literal No-op (Prompt-Regel). **Auswahl schreibt das ganze Element, nicht die Id** — dann binden Basic-Komponenten direkt `/selectedConf/name`, `/selectedConf/url` usw. Optionales `action` (`ActionSchema`) macht aus dem Klick zusätzlich ein Client-Event.
 
 | Remote | Primitive | liest | Klick schreibt | `action` | Bemerkung |
 |---|---|---|---|---|---|
@@ -140,9 +140,9 @@ Listen-Templates (`children: { componentId, path }`) sind im Renderer vorhanden 
 ## 5. Daten, Standort, Domänenlogik (Shell)
 
 - `data/conferences.json`: ~30 **fiktive, plausible** Konferenzen (Name mit Themenbezug wie „ng-summit Berlin", Thema `angular | dotnet | web | ai | …`, reale Stadt + GPS, `capacity`, `remaining`, `price`) mit **`dayOffset` statt Datum**. Der Loader setzt bei jedem Aufruf `date = heute + dayOffset`: Die Demo veraltet nie, „die nächste" existiert immer, der Countdown ist immer sinnvoll. Reale Konferenzen bewusst nicht — erfundene Termine zu echten Events wären Falschinformation.
-- Client-Tool `findConferences({ topic?, withinDays?, nearKm?, limit?, groupBy? })` → Array inkl. `distanceKm` (berechnet mit `/me`) und optional abgeleitete Sichten; der Client montiert das Ergebnis unter `/confs` (3.5), das Modell bindet nur.
+- Client-Tool `findConferences({ topic?, withinDays?, nearKm?, limit?, groupBy? })` → Array inkl. `distanceKm` (berechnet mit `/me`) und optional abgeleitete Sichten; der Client montiert das Ergebnis unter `/filteredConfs` (3.5), das Modell bindet nur.
 - `/me`: Geolocation nach Erlaubnis, sonst Stadtwahl; als Kontext-Entry und im Datenmodell.
-- `ConferenceStore` (Signal Store): Reservierungen lokal. Handler `reserve(action)` → Store → `renderer.processMessages([updateDataModel /conf/remaining …])` und `/confs/<i>/remaining` (Buch-Muster `increaseMiles`). Kein Modell beteiligt.
+- `ConferenceStore` (Signal Store): Reservierungen lokal. Handler `reserve(action)` → Store → `renderer.processMessages([updateDataModel /selectedConf/remaining …])` und `/filteredConfs/<i>/remaining` (Buch-Muster `increaseMiles`). Kein Modell beteiligt.
 
 ## 6. Prompt-Grundsätze (Agent)
 
@@ -150,7 +150,7 @@ Listen-Templates (`children: { componentId, path }`) sind im Renderer vorhanden 
 - A2UI-Formatregeln mit zwei Beispielen (Version, `component`-Feld, flache Liste, `child` vs `children`).
 - **Verdrahtungsregel — lokal bevorzugen:** Beschreibt der User eine Interaktion, deren Daten schon da sind, verdrahte sie per Bindung in *einer* Surface (`selected` auf einen Pfad, alle Detailanzeigen auf Unterpfade davon, Startwert setzen). **Nie** dafür eine Rückfrage bauen. Braucht die Interaktion neue Daten oder eine Agenten-Entscheidung, benennt der Agent die Grenze (das Rückfrage-Tool `submitAnswer` ist eine Spätere Erweiterung).
 - **Pfad statt Literal** für alles, was sich ändern oder zurückkommen soll.
-- **Daten nie kopieren:** `findConferences`-Ergebnisse liegen unter `/confs`, der Standort unter `/me` — binden, nicht abschreiben. Zeitangaben und Distanzen im UI über `daysUntil`/`formatDate`/`distance` in der Surface, nicht im Text ausrechnen.
+- **Daten nie kopieren:** `findConferences`-Ergebnisse liegen unter `/filteredConfs`, der Standort unter `/me` — binden, nicht abschreiben. Zeitangaben und Distanzen im UI über `daysUntil`/`formatDate`/`distance` in der Surface, nicht im Text ausrechnen.
 - Domänenaktionen: genau ein Client-Event `reserve { id: { path } }`; keine anderen Event-Namen erfinden.
 - Katalogabschnitt (Komponenten + Funktionen) und `me` aus dem Kontext. Fehlt Vokabular: sagen, was fehlt, beste verfügbare Darstellung wählen, nie Namen erfinden.
 
@@ -160,7 +160,7 @@ Damit jede Task als „Diff + Test" landen kann (Vorgabe für `/plan`):
 
 | Ebene | Was | Wie |
 |---|---|---|
-| Pure Functions | `mergeCatalog`, Kontext-Serialisierung (Komponenten + Funktionen), `resolveCapabilityRemotes`, `findConferences`-Filter/Distanz, `dayOffset`-Loader, `daysUntil`, `distance`, Datenmontage-Guard (`/confs`, `/me` abgelehnt) | Vitest, Node |
+| Pure Functions | `mergeCatalog`, Kontext-Serialisierung (Komponenten + Funktionen), `resolveCapabilityRemotes`, `findConferences`-Filter/Distanz, `dayOffset`-Loader, `daysUntil`, `distance`, Datenmontage-Guard (`/filteredConfs`, `/me` abgelehnt) | Vitest, Node |
 | Primitive | jede Katalogkomponente mit gebundenen Props: rendert, `selected.onUpdate` wird mit dem ganzen Element gerufen, `action` dispatcht | Vitest Browser Mode (Buch Kap. 9), `BoundProperty`-Fakes wie `initialProperty` im Buch |
 | Renderer-Integration | `renderSurface`-Handler: valide Nachrichten → Surface erscheint, Daten montiert; invalide → `{ ok: false, result }`; Klick auf `Map` aktualisiert gebundenen `Text` ohne Agentenrequest | Vitest Browser Mode mit echtem `A2uiRendererService` |
 | Agent-Loop ohne Modell | Agent-Store mit `ReplayAgent`/Mock-Agent (Kap. 9): Anfrage → aufgezeichnete Events → Surface | Vitest Browser Mode; dieselben Aufnahmen wie der M3-Replay-Modus |
@@ -193,7 +193,7 @@ die Demo nach der Veröffentlichung wächst.
    Vorher kann das Modell den Regler zeichnen, ihn aber an nichts binden; nachher filtert derselbe
    Regler live, ohne einen einzigen Token. Die Lücke ist **Verhalten**, nicht Aussehen — föderiert
    wird die zweite der zwei gleichrangigen Kataloglisten (`functions`). Ehemalige Anfrage 7:
-   `Column [ Slider(value → /filter/maxKm), Map(points ← withinKm(/confs, /filter/maxKm)) ]`.
+   `Column [ Slider(value → /filter/maxKm), Map(points ← withinKm(/filteredConfs, /filter/maxKm)) ]`.
    Voraussetzung: die „Fehlendes Vokabular"-Eval-Zeile (§7) — die Vorher-Hälfte trägt nur, wenn
    das Modell den toten Regler *nicht* baut, sondern die Lücke benennt. Risiko liegt im Modell
    (verschachteltes `functionCall`-Binding), nicht im Renderer.
@@ -201,7 +201,7 @@ die Demo nach der Veröffentlichung wächst.
    — drittes Remote, in 30 Minuten gebaut: vorher „Website: <Link>", nachher eingebettet. Zeigt,
    dass ein Vokabular-Remote klein ist.
 3. **`BarChart` + `ChartGrid` und die ehemalige Anfrage 5** („Vergleiche nach Monat, Karte
-   daneben": `ChartGrid [ BarChart(/byMonth, selected → /month), Map(points ← /confs,
+   daneben": `ChartGrid [ BarChart(/byMonth, selected → /month), Map(points ← /filteredConfs,
    filter ← /month) ]`) — Verschachtelung über Remote-Grenzen; trägt den Plugin-Unterschieds-Claim
    „Container eines Remotes halten Primitive eines anderen". `findConferences` liefert `/byMonth`/
    `/byTopic` bereits. Bringt die `Map`-Props `filter?`/`mode?` mit.
@@ -227,7 +227,7 @@ die Demo nach der Veröffentlichung wächst.
 - **Literal statt `{ path }`** — bekanntes Modellverhalten; Beispiele im Prompt.
 - **Zod-Doppelinstanzen** über Remote-Grenzen — früh testen (M2).
 - **NF-Version** gegen Angular 21.x prüfen.
-- **Modell kopiert trotzdem Daten** in `updateDataModel` — Prompt-Regel plus Client-Validierung: `renderSurface` lehnt `updateDataModel` auf `/confs` und `/me` ab (`{ ok: false }`), das Modell korrigiert.
+- **Modell kopiert trotzdem Daten** in `updateDataModel` — Prompt-Regel plus Client-Validierung: `renderSurface` lehnt `updateDataModel` auf `/filteredConfs` und `/me` ab (`{ ok: false }`), das Modell korrigiert.
 - **Replay-Aufnahmen** bleiben nur frisch, wenn kein Datum im Modell-Output steht — Aufnahmen beim Capture darauf prüfen.
 
 ## 11. Nicht-Ziele

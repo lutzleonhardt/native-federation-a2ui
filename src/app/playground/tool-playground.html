@@ -1,0 +1,45 @@
+<section>
+  <h2>Tool Playground</h2>
+  <p>
+    Treibt die echte Client-Tool-Pipeline: gebundene Handler (Boundary-Validierung), Guards,
+    Client-Mount und die Tool-Renderer-Komponenten. Failure-Handler-Aufrufe erscheinen unten im
+    Log — dieselbe Bindung übernimmt später die Chat-Seite.
+  </p>
+
+  <h3>1 · Standort</h3>
+  <button type="button" (click)="setCity('berlin')">Berlin</button>
+  <button type="button" (click)="setCity('muenchen')">München</button>
+  <span>Aktuell: {{ me()?.city ?? 'unbekannt' }}</span>
+
+  <h3>2 · findConferences</h3>
+  <button type="button" (click)="runFindConferences()">Suche: nearKm 300</button>
+
+  <h3>3 · renderSurface</h3>
+  @for (scenario of scenarios; track scenario.key) {
+    <button type="button" (click)="runScenario(scenario)">{{ scenario.label }}</button>
+  }
+  @if (surfaceCall(); as call) {
+    <app-surface-tool-renderer [toolCall]="call" />
+  } @else {
+    <p class="muted">Noch keine Surface — erst suchen, dann ein Szenario starten.</p>
+  }
+
+  <h3>4 · messageWidget</h3>
+  <button type="button" (click)="runMessageWidget()">Markdown-Antwort anzeigen</button>
+  @if (messageCall(); as call) {
+    <app-message-widget [toolCall]="call" />
+  }
+
+  <h3>Ergebnisse &amp; Failure-Handler</h3>
+  @if (entries().length === 0) {
+    <p class="muted">Noch keine Aufrufe.</p>
+  } @else {
+    <ol>
+      @for (entry of entries(); track $index) {
+        <li>
+          <code>{{ entry }}</code>
+        </li>
+      }
+    </ol>
+  }
+</section>

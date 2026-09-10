@@ -142,13 +142,13 @@ function timelineSurfaceMessages(): A2uiMessage[] {
           {
             id: 'root',
             component: 'Timeline',
-            items: { path: '/confs' },
+            items: { path: '/filteredConfs' },
             action: { event: { name: 'pick', context: { id: { path: '/x/id' } } } },
           },
         ],
       },
     },
-    { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/confs', value: ITEMS } },
+    { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/filteredConfs', value: ITEMS } },
     { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/x', value: { id: 'x-marks' } } },
   ];
 }
@@ -189,11 +189,11 @@ describe('Timeline through the real renderer', () => {
         updateComponents: {
           surfaceId: SURFACE_ID,
           components: [
-            { id: 'root', component: 'Timeline', items: { path: '/confs' }, selected: 'unbound' },
+            { id: 'root', component: 'Timeline', items: { path: '/filteredConfs' }, selected: 'unbound' },
           ],
         },
       },
-      { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/confs', value: ITEMS } },
+      { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/filteredConfs', value: ITEMS } },
     ]);
 
     const fixture = TestBed.createComponent(SurfaceHost);
@@ -203,7 +203,7 @@ describe('Timeline through the real renderer', () => {
     await fixture.whenStable();
 
     expect(renderer.surfaceGroup.getSurface(SURFACE_ID)?.dataModel.get('/')).toEqual({
-      confs: ITEMS,
+      filteredConfs: ITEMS,
     });
   });
 });

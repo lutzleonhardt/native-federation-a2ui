@@ -146,13 +146,13 @@ describe('Map through the real renderer', () => {
             {
               id: 'root',
               component: 'Map',
-              points: { path: '/confs' },
+              points: { path: '/filteredConfs' },
               action: { event: { name: 'pick', context: { id: { path: '/x/id' } } } },
             },
           ],
         },
       },
-      { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/confs', value: POINTS } },
+      { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/filteredConfs', value: POINTS } },
       { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/x', value: { id: 'x-marks' } } },
     ]);
 
@@ -168,7 +168,7 @@ describe('Map through the real renderer', () => {
     });
   });
 
-  it('T5-AC-05 clicking a marker writes the point to /conf and re-renders a Text bound to /conf/name without any fetch', async () => {
+  it('T5-AC-05 clicking a marker writes the point to /selectedConf and re-renders a Text bound to /selectedConf/name without any fetch', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const renderer = configureRenderer();
     renderer.processMessages([
@@ -182,10 +182,10 @@ describe('Map through the real renderer', () => {
             {
               id: 'map',
               component: 'Map',
-              points: { path: '/confs' },
-              selected: { path: '/conf' },
+              points: { path: '/filteredConfs' },
+              selected: { path: '/selectedConf' },
             },
-            { id: 'conf-name', component: 'Text', text: { path: '/conf/name' } },
+            { id: 'conf-name', component: 'Text', text: { path: '/selectedConf/name' } },
           ],
         },
       },
@@ -193,7 +193,7 @@ describe('Map through the real renderer', () => {
         version: 'v0.9',
         updateDataModel: {
           surfaceId: SURFACE_ID,
-          path: '/confs',
+          path: '/filteredConfs',
           value: POINTS.map(({ label, ...point }) => ({ ...point, name: `${label} Days` })),
         },
       },
@@ -212,7 +212,7 @@ describe('Map through the real renderer', () => {
 
     await vi.waitFor(() => expect(textEl()?.textContent).toContain('München Days'));
     const surface = renderer.surfaceGroup.getSurface(SURFACE_ID);
-    expect(surface?.dataModel.get('/conf')).toMatchObject({ id: 'muc-conf', name: 'München Days' });
+    expect(surface?.dataModel.get('/selectedConf')).toMatchObject({ id: 'muc-conf', name: 'München Days' });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

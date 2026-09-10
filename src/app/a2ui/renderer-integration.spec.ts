@@ -31,8 +31,8 @@ function gaugeSurfaceMessages(): A2uiMessage[] {
           {
             id: 'root',
             component: 'Gauge',
-            value: { path: '/conf/remaining' },
-            max: { path: '/conf/capacity' },
+            value: { path: '/selectedConf/remaining' },
+            max: { path: '/selectedConf/capacity' },
             label: 'Restkarten',
           },
         ],
@@ -42,7 +42,7 @@ function gaugeSurfaceMessages(): A2uiMessage[] {
       version: 'v0.9',
       updateDataModel: {
         surfaceId: SURFACE_ID,
-        path: '/conf',
+        path: '/selectedConf',
         value: { remaining: 12, capacity: 100 },
       },
     },
@@ -56,7 +56,7 @@ describe('assistant catalog in the real renderer', () => {
     });
   });
 
-  it('T4-AC-06 renders a Gauge bound to /conf through createSurface + updateComponents + updateDataModel', async () => {
+  it('T4-AC-06 renders a Gauge bound to /selectedConf through createSurface + updateComponents + updateDataModel', async () => {
     TestBed.inject(A2uiRendererService).processMessages(gaugeSurfaceMessages());
 
     const fixture = TestBed.createComponent(SurfaceHost);
@@ -79,7 +79,7 @@ describe('assistant catalog in the real renderer', () => {
     renderer.processMessages([
       {
         version: 'v0.9',
-        updateDataModel: { surfaceId: SURFACE_ID, path: '/conf/remaining', value: 3 },
+        updateDataModel: { surfaceId: SURFACE_ID, path: '/selectedConf/remaining', value: 3 },
       },
     ]);
     await fixture.whenStable();

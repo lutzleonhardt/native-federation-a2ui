@@ -12,7 +12,7 @@ export const GAUGE_META = {
   name: 'Gauge',
   description:
     'Semicircular gauge showing a quantity against its maximum — built for remaining tickets ' +
-    '("Restkarten"). Bind value and max to data paths, e.g. value {"path": "/conf/remaining"} ' +
-    'and max {"path": "/conf/capacity"}; the numbers are rendered inside the arc.',
+    '("Restkarten"). Bind value and max to data paths, e.g. value {"path": "/selectedConf/remaining"} ' +
+    'and max {"path": "/selectedConf/capacity"}; the numbers are rendered inside the arc.',
   schema: gaugeSchema,
 } satisfies ComponentMeta<typeof gaugeSchema>;

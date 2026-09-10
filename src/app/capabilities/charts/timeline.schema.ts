@@ -30,6 +30,6 @@ export const TIMELINE_META = {
     'Horizontal time axis for items that have a `date` — one labelled marker per item, ' +
     'ordered by date. A click writes the whole clicked object (all fields) to the path ' +
     'bound to `selected`, so other components can bind sub-paths of that target, e.g. ' +
-    'selected {"path": "/conf"} and a Text with text {"path": "/conf/name"}.',
+    'selected {"path": "/selectedConf"} and a Text with text {"path": "/selectedConf/name"}.',
   schema: timelineSchema,
 } satisfies ComponentMeta<typeof timelineSchema>;

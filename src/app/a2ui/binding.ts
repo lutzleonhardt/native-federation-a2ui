@@ -6,7 +6,7 @@ import { z } from 'zod/v3';
  */
 const dataBindingSchema = z.object({ path: z.string() });
 
-/** A component prop: a literal value or a data-model binding like `{ path: '/conf/remaining' }`. */
+/** A component prop: a literal value or a data-model binding like `{ path: '/selectedConf/remaining' }`. */
 export function binding<Schema extends z.ZodTypeAny>(schema: Schema) {
   return z.union([schema, dataBindingSchema]);
 }

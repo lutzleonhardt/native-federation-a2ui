@@ -3,7 +3,7 @@
 Spec: `docs/spec.md` (v3.3, 2026-09-09; copy of `a2ui/docs/spec/spec-federated-capabilities.md`). Background: `docs/book-learnings.md`.
 Scope: Milestone M1 only — Agent + Shell + `renderSurface` + `findConferences` + `Timeline`/`Map`/`Gauge` as in-shell catalog components, demo requests 1–3, **no Native Federation**. The M1 gate is Task 9 (requests 1–3; request 4's `reserve`-button contract is scored inside request 3). M2 (NF split: charts + maps remotes) and M3 (reserve, MapLibre upgrade, hosting/replay publication) are planned separately. **v3.3 re-scoping (2026-09-09, user-approved): Task 8 moved out of this scope into M3 — task order here is 6 → 7 → 9.**
 Repo: `~/projects/conference-finder` (MIT, Angular CLI workspace, npm, Node ≥ 24). Ports: shell 4200, agent 3001. Tests: Vitest (Browser Mode for the shell, Node for `agent/`).
-Data-model conventions: catalog id `https://conference-finder.dev/catalogs/assistant`; paths `/confs` (last `findConferences` result), `/conf` (selected/next conference, pre-set by the client), `/me` (location) — mounted by the client, never written by the model.
+Data-model conventions: catalog id `https://conference-finder.dev/catalogs/assistant`; paths `/filteredConfs` (last `findConferences` result), `/selectedConf` (selection within each surface, initially the first result), `/me` (location). The client mounts these values; `/filteredConfs` and `/me` are never written by the model.
 Code conventions: code that becomes a remote later lives in `src/app/capabilities/charts/` and `src/app/capabilities/maps/` and must not import from `src/app/domain/`. Shared, framework-free pieces (schemas, descriptions, pure logic) stay importable from Node so the eval harness reuses them.
 Angular conventions: zoneless (no `zone.js`), every component `OnPush`, signals-first (`input()`/`output()`/`model()`, `signal`/`computed`/`linkedSignal`, signal stores instead of Subjects), `inject()` instead of constructor injection, standalone, `@if`/`@for`, `host` metadata instead of `@HostBinding`. RxJS only at the AG-UI boundary (`AbstractAgent.run()` returns Observables), converted to signals immediately.
 Licensing: nothing is copied from the flights42 example repo (no license). Helpers named after the book (`initAgentStore`, `createFrontendTool`, `provideA2uiCatalog`, `binding`, `createCustomComponent`, `catalogToContextEntry`, `registerHandlers`) are own implementations.
@@ -121,7 +121,7 @@ Depends on Task 1.
 
 **Key Discoveries**
 
-- The model binds paths only; the client mounts `findConferences` results under `/confs` and the location under `/me`. Distances are relative to `/me`.
+- The model binds paths only; the client mounts `findConferences` results under `/filteredConfs` and the location under `/me`. Distances are relative to `/me`.
 - Replay recordings (M4) contain only structure and stay valid because dates are derived from `dayOffset` at load time.
 - zod 4 for tool schemas; `zod/v3` only for A2UI catalog schemas. Both coexist.
 
@@ -161,7 +161,7 @@ Depends on Task 3 (`haversineKm` from `src/app/domain/geo.ts` backs the `distanc
 - T4-AC-03 — `distance(Berlin, München)` is 504 ± 5.
 - T4-AC-04 — `createAssistantCatalog` yields a catalog whose components include all basic names plus `Gauge`, and whose functions include `formatDate` (basic) plus `daysUntil` and `distance`; a duplicate component name across fragments logs a warning and keeps the first.
 - T4-AC-05 — `catalogToContextEntry` JSON contains `catalogId`, `components.Gauge.schema` with `value` and `max`, and `functions.daysUntil` with an args schema and `returnType: 'number'`.
-- T4-AC-06 — (Browser Mode, real `A2uiRendererService`) processing `createSurface` (assistant id) + `updateComponents` with a `Gauge` bound to `/conf/remaining` and `/conf/capacity` + `updateDataModel` renders the gauge with those values.
+- T4-AC-06 — (Browser Mode, real `A2uiRendererService`) processing `createSurface` (assistant id) + `updateComponents` with a `Gauge` bound to `/selectedConf/remaining` and `/selectedConf/capacity` + `updateDataModel` renders the gauge with those values.
 - T4-AC-07 — `agent/requests.http` contains the four requests above and the README references it; manual check: the valid request against a running agent streams SSE in the IDE.
 
 **Key Locations**
@@ -192,7 +192,7 @@ Depends on Task 4 (`binding`, `createCustomComponent`, fragments, bound-property
 - Descriptions are prompt engineering: `Map` — "shows items that have `lat`/`lon`; a click writes the whole clicked object to the path bound to `selected`; bind `center` to the user's location"; `Timeline` — analogous for items with `date`.
 - Only extract shared SVG scale helpers (`src/app/capabilities/shared/`) if both components need the same code.
 - Register both in the fragments (`charts/index.ts`, `maps/index.ts`).
-- Playground route (user-approved amendment, 2026-09-09 — minimal effort): `src/app/playground/` page at `/playground` that renders a hand-built surface through the real `A2uiRendererService` — real conferences on `/confs`, Berlin on `/me`, `Gauge` plus `Timeline`/`Map` once they exist — so the visual primitives are visible and clickable via `npm start` before Task 7. One page, fixture surface, no styling beyond basic layout; lives in the shell, not under `capabilities/`.
+- Playground route (user-approved amendment, 2026-09-09 — minimal effort): `src/app/playground/` page at `/playground` that renders a hand-built surface through the real `A2uiRendererService` — real conferences on `/filteredConfs`, Berlin on `/me`, `Gauge` plus `Timeline`/`Map` once they exist — so the visual primitives are visible and clickable via `npm start` before Task 7. One page, fixture surface, no styling beyond basic layout; lives in the shell, not under `capabilities/`.
 
 **Acceptance** (Browser Mode; bound-property fakes with `onUpdate = vi.fn()` unless a real renderer is named)
 
@@ -200,7 +200,7 @@ Depends on Task 4 (`binding`, `createCustomComponent`, fragments, bound-property
 - T5-AC-02 — With a literal (unbound) `selected`, clicking a marker is a no-op and does not throw.
 - T5-AC-03 — `Map` with 3 points renders 3 markers inside the SVG viewport plus a distinct center marker when `center` is set; clicking a point calls `selected.onUpdate` with the whole point object.
 - T5-AC-04 — (real `A2uiRendererService` with an `actionHandler` spy) `Map` and `Timeline` with `action: { event: { name: 'pick', context: { id: { path: '/x/id' } } } }` emit an `A2uiClientAction` named `pick` with the resolved id on click.
-- T5-AC-05 — (real renderer) a surface with `Map(points ← /confs, selected → /conf)` and `Text(text ← /conf/name)`: clicking a marker updates the text to that point's name; `fetch` is never called.
+- T5-AC-05 — (real renderer) a surface with `Map(points ← /filteredConfs, selected → /selectedConf)` and `Text(text ← /selectedConf/name)`: clicking a marker updates the text to that point's name; `fetch` is never called.
 
 **Key Locations**
 
@@ -211,7 +211,7 @@ Depends on Task 4 (`binding`, `createCustomComponent`, fragments, bound-property
 
 **Key Discoveries**
 
-- Selection writes the whole element, not the id — that is what lets basic `Text`/`Gauge` components bind `/conf/name`, `/conf/remaining` without a lookup function. Elements in `items`/`points` may carry arbitrary extra fields and must pass through unchanged.
+- Selection writes the whole element, not the id — that is what lets basic `Text`/`Gauge` components bind `/selectedConf/name`, `/selectedConf/remaining` without a lookup function. Elements in `items`/`points` may carry arbitrary extra fields and must pass through unchanged.
 - `ComponentBinder` sets `onUpdate = isBoundPath ? v => dataContext.set(path, v) : () => {}` — writing to a literal prop is a silent no-op. All bindings on the same path are signals and re-render.
 - `ActionSchema` = `{ event: { name, context } }` (context values: literal, `{ path }`, `{ call, args }`) or `{ functionCall }`. Nothing in the renderer talks to the server; whether a click stays local (binding) or triggers a run (action → handler → message) is decided by markup and registered handlers.
 - No chart/map library: everything is SVG. No real map tiles (non-goal).
@@ -224,24 +224,26 @@ Depends on Task 5 (the mount test renders a `Timeline`).
 
 - `src/app/agent/create-frontend-tool.ts`: own typed wrapper over `registerFrontendTool`/`FrontendToolConfig` (`{ name, description, parameters, component?, handler(args, ctx), followUp?, agentId? }`). When `followUp: false`, append "Calling this tool ends your turn." to the description. Results follow `{ ok: boolean, code?: string, result?: unknown }`. Keep each tool's `name`, `description`, `parameters` in a framework-free `*.definition.ts`; the Angular registration imports it (the Node eval harness reuses the same definitions).
 - `src/app/agent/surface-data.store.ts` (root signals): `confs`, `byMonth`, `byTopic` (last `findConferences` result), `me` (read from `LocationStore`).
-- `findConferences` tool (`src/app/agent/tools/find-conferences.tool.ts`): parameters = the zod-4 schema from `src/app/domain/find-conferences.schema.ts`; handler runs the pure `findConferences` with `loadConferences(today)` and `me`, writes the store, and returns a **compact** result `{ ok: true, count, mountedAt: '/confs', next: { id, name, city, date, distanceKm? } }` — never the list. The model binds; it does not copy.
-- `renderSurface` tool (`src/app/agent/tools/render-surface.tool.ts`): `parameters: { messages: unknown[] }` (loose — the full A2UI schema is too large for a tool definition; format rules and examples come from the prompt), `followUp: false`, `component: SurfaceToolRenderer`. Handler steps, in order:
+- `findConferences` tool (`src/app/agent/tools/find-conferences.tool.ts`): parameters = the zod-4 schema from `src/app/domain/find-conferences.schema.ts`; handler runs the pure `findConferences` with `loadConferences(today)` and `me`, writes the store, and returns a **compact** result `{ ok: true, count, mountedAt: '/filteredConfs', next: { id, name, city, date, distanceKm? } }` — never the list. The model binds; it does not copy.
+- `renderSurface` tool (`src/app/agent/tools/render-surface.tool.ts`): `parameters` = the protocol-envelope schema (message forms `createSurface`/`updateComponents`/`updateDataModel` with their required fields; component props stay open — the catalog and prompt carry them; amended 2026-09-10, see review amendments below), `followUp: false`, `component: SurfaceToolRenderer`. Handler steps, in order:
   1. `A2uiMessageListWrapperSchema.safeParse(args)` (`@a2ui/web_core/v0_9`) → on failure `{ ok: false, code: 'invalid_messages', result: issues }`.
-  2. Guard: any `updateDataModel` whose `path` is `/confs`, `/me`, `/byMonth`, `/byTopic` or below → `{ ok: false, code: 'reserved_path', result: 'Bind /confs and /me; the client mounts them' }`.
+  2. Guard: collect all `updateDataModel` writes whose `path` is `/filteredConfs`, `/me`, `/byMonth`, `/byTopic` or below → `{ ok: false, code: 'forbidden_model_writes', result: <message listing all forbidden paths> }`.
   3. `A2uiRendererService.processMessages(messages)` in try/catch → `{ ok: false, code: 'catalog', result: error.message }` on catalog/state errors (unknown component, wrong child form, unknown catalog id).
-  4. Mount: `processMessages([updateDataModel /confs, /me, /byMonth?, /byTopic?])` for the created surface, and `/conf = confs[0]` unless the model's messages already wrote `/conf`.
+  4. Mount: `processMessages([updateDataModel /filteredConfs, /me, /byMonth?, /byTopic?])` for the created surface, and `/selectedConf = confs[0]` unless the model's messages already wrote `/selectedConf`.
   5. Return `{ ok: true, surfaceId }`.
   On any failure invoke the `RENDER_FAILURE_HANDLER` token (default: `console.warn`) exactly once with `{ toolCallId, code, issues }`. `followUp` is static in CopilotKit 0.3, so the shell has to trigger the correction run itself; the chat task binds this token to a developer message.
-- `src/app/agent/tools/surface-tool-renderer.component.ts` (`ToolRenderer<Args>`, `OnPush`): derives the `surfaceId` from the `createSurface` message in `toolCall().args.messages`; renders `<a2ui-v09-surface [surfaceId]>` once `toolCall().status === 'complete'` and the parsed result is `ok`; shows a small "Baue Oberfläche …" placeholder while streaming/executing and the error text for `ok: false`. The surface itself lives in the root `A2uiRendererService`, so re-instantiation of the renderer component is harmless.
+- `src/app/agent/tools/surface-tool-renderer.component.ts` (`ToolRenderer<Args>`, `OnPush`): derives the `surfaceId` from the `createSurface` message in `toolCall().args.messages`; renders `<a2ui-v09-surface [surfaceId]>` once `toolCall().status === 'complete'` and the parsed result is `ok`; shows a small "Building surface …" placeholder while streaming/executing and the error text for `ok: false`. The surface itself lives in the root `A2uiRendererService`, so re-instantiation of the renderer component is harmless.
 - `messageWidget({ text })` (`src/app/agent/tools/message-widget.tool.ts`): `followUp: false`, handler returns `{ ok: true }`, component renders the text (markdown allowed).
+- **Review amendments (2026-09-10, user-approved):** the tool schema describes the full protocol envelope (~2.7 kB serialized — the "too large" rationale only holds for component-level schemas); the forbidden-write guard decides on parsed path segments (`me` ≡ `/me`; root writes forbidden as a whole); the client mount runs inside the same try/catch and rolls the surface back on failure; one fresh surface per call is enforced (`deleteSurface` rejected, existing surfaceIds refused); `createFrontendTool` exposes `onValidationFailure` so boundary rejections reach `RENDER_FAILURE_HANDLER` too. Consequence: a message missing `version` now fails at the boundary as `invalid_args` (T6-AC-04's substance — zod issues in `result` — unchanged); the surfaceId-mismatch check stays `invalid_messages`.
+- Tool playground (user-approved amendment, 2026-09-10): `/playground/tools` drives the real bound pipeline — location picker, `findConferences`, `renderSurface` scenarios incl. failure cases, `messageWidget` — with `RENDER_FAILURE_HANDLER` bound to a visible log, so the Task-6 layer is visible via `npm start` before Task 7.
 
 **Acceptance** (Browser Mode, real `A2uiRendererService` + assistant catalog)
 
-- T6-AC-01 — With 3 conferences in the store and messages `createSurface` + `updateComponents` containing `Timeline(items ← /confs)`, the handler returns `{ ok: true }` and 3 markers render without any `updateDataModel` from the model.
-- T6-AC-02 — Messages containing `updateDataModel` on `/confs`, `/me` or `/confs/0` return `{ ok: false, code: 'reserved_path' }` and no surface is created.
+- T6-AC-01 — With 3 conferences in the store and messages `createSurface` + `updateComponents` containing `Timeline(items ← /filteredConfs)`, the handler returns `{ ok: true }` and 3 markers render without any `updateDataModel` from the model.
+- T6-AC-02 — Messages containing `updateDataModel` on `/filteredConfs`, `/me` or `/filteredConfs/0` return `{ ok: false, code: 'forbidden_model_writes' }` and no surface is created.
 - T6-AC-03 — An unknown component name or a `Card` with `children` returns `{ ok: false }` with the issue in `result`; `surfaceGroup` has no new surface.
 - T6-AC-04 — Messages missing `version` or with a `surfaceId` mismatch fail schema validation with zod issues in `result`.
-- T6-AC-05 — After a successful call, `/me` equals the location store value, `/conf` equals the first mounted conference, and the model's own `updateDataModel` on another path (e.g. `/title`) is applied; if the model wrote `/conf`, it is not overwritten.
+- T6-AC-05 — After a successful call, `/me` equals the location store value, `/selectedConf` equals the first mounted conference, and the model's own `updateDataModel` on another path (e.g. `/title`) is applied; if the model wrote `/selectedConf`, it is not overwritten.
 - T6-AC-06 — On failure `RENDER_FAILURE_HANDLER` is invoked exactly once with the issues; on success never.
 - T6-AC-07 — `SurfaceToolRenderer` shows the `a2ui-v09-surface` for a complete `ok` call and the error text for an `ok: false` result.
 - T6-AC-08 — The `findConferences` handler writes `confs` (with `distanceKm`) to the store and its returned result contains no `lat`, `lon` or `capacity` fields.
@@ -252,6 +254,7 @@ Depends on Task 5 (the mount test renders a `Timeline`).
 - `src/app/agent/tools/render-surface.definition.ts`, `render-surface.tool.ts`, `surface-tool-renderer.component.ts`
 - `src/app/agent/tools/find-conferences.definition.ts`, `find-conferences.tool.ts`
 - `src/app/agent/tools/message-widget.definition.ts`, `message-widget.tool.ts`, `message-widget.component.ts`
+- `src/app/playground/tool-playground.ts` (dev sandbox, amendment)
 
 **Key Discoveries**
 
@@ -276,14 +279,14 @@ Depends on Task 6 (tools, `RENDER_FAILURE_HANDLER`, `SurfaceDataStore`).
   2. „Zeig sie auf einer Karte"
   3. „Wann ist die nächste in meiner Nähe? Wenn ich eine anklicke, will ich Details."
   4. „Reservier mir eine Karte"
-- `src/app/testing/mock-agent.ts`: `MockAgent extends AbstractAgent` whose `run(input)` returns an Observable of a scripted event list chosen per run (e.g. by run index or by the last message): run 1 → `RUN_STARTED`, `TOOL_CALL_START/ARGS/END` for `findConferences`, `RUN_FINISHED`; run 2 → the same for `renderSurface` with the request-3 surface (`Row [ Map(points ← /confs, center ← /me, selected → /conf), Column [ Text /conf/name, Text daysUntil(/conf/date), Text distance(/me, /conf), Gauge(/conf/remaining, /conf/capacity), Button reserve ] ]`). This is the "agent mock" test seam from the book and the seed for M4's `ReplayAgent`.
+- `src/app/testing/mock-agent.ts`: `MockAgent extends AbstractAgent` whose `run(input)` returns an Observable of a scripted event list chosen per run (e.g. by run index or by the last message): run 1 → `RUN_STARTED`, `TOOL_CALL_START/ARGS/END` for `findConferences`, `RUN_FINISHED`; run 2 → the same for `renderSurface` with the request-3 surface (`Row [ Map(points ← /filteredConfs, center ← /me, selected → /selectedConf), Column [ Text /selectedConf/name, Text daysUntil(/selectedConf/date), Text distance(/me, /selectedConf), Gauge(/selectedConf/remaining, /selectedConf/capacity), Button reserve ] ]`). This is the "agent mock" test seam from the book and the seed for M4's `ReplayAgent`.
 - Wire `LocationStore.init()` and `initAgentStore` at chat-page creation; app routes/root render the chat page.
 
 **Acceptance**
 
 - T7-AC-01 — With `HttpAgent.fetch` replaced by a spy, the run request body contains `tools[]` with `renderSurface`, `findConferences`, `messageWidget` and `context[]` with the catalog entry (naming `Gauge` and `daysUntil`) and the `me` entry.
 - T7-AC-02 — Changing the city via `LocationStore.setCity` changes the `me` context value in the next run's request body.
-- T7-AC-03 — (mock-agent loop, Browser Mode) clicking example button 3 yields a surface with `Map` and `Text(/conf/name)`; clicking the second marker changes the text to that conference's name; `fetch` is never called.
+- T7-AC-03 — (mock-agent loop, Browser Mode) clicking example button 3 yields a surface with `Map` and `Text(/selectedConf/name)`; clicking the second marker changes the text to that conference's name; `fetch` is never called.
 - T7-AC-04 — A scripted `renderSurface` call with invalid messages produces exactly one developer message containing the issues and starts a new run.
 - T7-AC-05 — The four example buttons send exactly the German texts above as user messages.
 - T7-AC-06 — `messageWidget({ text })` renders its text inside the chat.
@@ -315,12 +318,12 @@ Depends on Task 6 (`SurfaceDataStore`, `findConferences` handler, action bus fro
 - `src/app/domain/conference.store.ts` (root signal store): `reservations: Signal<Record<string, number>>`, `conferences()` = `loadConferences(today)` with reservations applied (the store is the source of truth for `remaining`), `remainingFor(id)`, `reserve(id)` decrements by one; a sold-out conference (remaining 0) is a no-op; unknown id ignored. In-memory only ("Reservierungen lokal").
 - Switch the `findConferences` tool handler from `loadConferences(today)` to `store.conferences()` so results reflect reservations.
 - `src/app/a2ui/register-handlers.ts`: own `registerHandlers({ reserve })` subscribing to the action bus fed by the renderer's `actionHandler` (the config callback; `surfaceGroup.onAction` is not an RxJS Observable). Unknown event names are logged and ignored.
-- `src/app/domain/handlers/reserve.handler.ts`: `reserve(action)` reads `action.context.id` (the model's button is `action: { event: { name: 'reserve', context: { id: { path: '/conf/id' } } } }`; the renderer resolves `{ path }` to the value), calls `store.reserve(id)`, then `renderer.processMessages([updateDataModel { surfaceId: action.surfaceId, path: '/conf/remaining', value }, updateDataModel { path: '/confs/<i>/remaining', value }])` where `i` is the index of the id in the mounted `/confs` (`SurfaceDataStore`). No agent involved.
+- `src/app/domain/handlers/reserve.handler.ts`: `reserve(action)` reads `action.context.id` (the model's button is `action: { event: { name: 'reserve', context: { id: { path: '/selectedConf/id' } } } }`; the renderer resolves `{ path }` to the value), calls `store.reserve(id)`, then `renderer.processMessages([updateDataModel { surfaceId: action.surfaceId, path: '/selectedConf/remaining', value }, updateDataModel { path: '/filteredConfs/<i>/remaining', value }])` where `i` is the index of the id in the mounted `/filteredConfs` (`SurfaceDataStore`). No agent involved.
 - Register the handlers where the chat page initializes the agent store.
 
 **Acceptance** (Browser Mode, real renderer + assistant catalog)
 
-- T8-AC-01 — Given a surface with `Gauge(value ← /conf/remaining, max ← /conf/capacity)` and mounted `/confs` whose first entry has remaining 20 and `/conf` = that entry, dispatching the action `reserve { id: <first id> }` shows 19 in the gauge and sets `/confs/0/remaining` to 19; `fetch` is not called and `isRunning` stays false.
+- T8-AC-01 — Given a surface with `Gauge(value ← /selectedConf/remaining, max ← /selectedConf/capacity)` and mounted `/filteredConfs` whose first entry has remaining 20 and `/selectedConf` = that entry, dispatching the action `reserve { id: <first id> }` shows 19 in the gauge and sets `/filteredConfs/0/remaining` to 19; `fetch` is not called and `isRunning` stays false.
 - T8-AC-02 — `reserve(id)` twice reduces `remainingFor(id)` by 2; reserving a sold-out conference leaves 0.
 - T8-AC-03 — A subsequent `findConferences` call returns the reduced `remaining` for that conference.
 - T8-AC-04 — An action with an unknown event name is ignored without throwing (and logged).
@@ -345,10 +348,10 @@ Depends on Task 7 (running shell loop; tool definitions and context serializer t
 
 - `agent/src/prompt.ts` + `agent/src/catalog-instructions.ts`; the agent's `instructions` are assembled per run from `requestContext.get('ag-ui').context` (catalog entry → "Custom Catalog" section listing components and functions with descriptions/schemas; `me` entry → location line). Rules, in this order:
   - Output rules: fetch data **first** with `findConferences`, then call `renderSurface` **once**, then stop; text only via `messageWidget`; never plain-text answers.
-  - A2UI format rules with two complete examples: request 1 → `Timeline(items ← /confs)`; request 3 → `Row [ Map(points ← /confs, center ← /me, selected → /conf), Column [ Text /conf/name, Text formatString("in {0} Tagen", daysUntil(/conf/date)), Text distance(/me, /conf) km, Gauge(/conf/remaining, /conf/capacity), Button "Reservieren" action reserve { id: { path: '/conf/id' } } ] ]`. Version `v0.9`, `component` field, flat component list, `child` vs `children`, fresh `surfaceId` per answer, `catalogId` from the context, `updateComponents` before any `updateDataModel`.
-  - Wiring rule — local first: if the user describes an interaction whose data is already present, wire it inside **one** surface (`selected` → a path, all detail views on sub-paths of it; `/conf` is pre-set by the client to the first result). Never build a follow-up question for that. Only when the interaction needs new data or an agent decision → `Button` with `submitAnswer` and `{ path }` context (M3).
+  - A2UI format rules with two complete examples: request 1 → `Timeline(items ← /filteredConfs)`; request 3 → `Row [ Map(points ← /filteredConfs, center ← /me, selected → /selectedConf), Column [ Text /selectedConf/name, Text formatString("in {0} Tagen", daysUntil(/selectedConf/date)), Text distance(/me, /selectedConf) km, Gauge(/selectedConf/remaining, /selectedConf/capacity), Button "Reservieren" action reserve { id: { path: '/selectedConf/id' } } ] ]`. Version `v0.9`, `component` field, flat component list, `child` vs `children`, fresh `surfaceId` per answer, `catalogId` from the context, `updateComponents` before any `updateDataModel`.
+  - Wiring rule — local first: if the user describes an interaction whose data is already present, wire it inside **one** surface (`selected` → a path, all detail views on sub-paths of it; `/selectedConf` is pre-set by the client to the first result). Never build a follow-up question for that. Only when the interaction needs new data or an agent decision → `Button` with `submitAnswer` and `{ path }` context (M3).
   - Path instead of literal for everything that can change or comes back.
-  - Never copy data: `findConferences` results are mounted at `/confs` (derived views at `/byMonth`, `/byTopic`), the location at `/me` — bind, do not transcribe; dates and distances via `daysUntil`/`formatDate`/`distance` in the surface, not computed in text.
+  - Never copy data: `findConferences` results are mounted at `/filteredConfs` (derived views at `/byMonth`, `/byTopic`), the location at `/me` — bind, do not transcribe; dates and distances via `daysUntil`/`formatDate`/`distance` in the surface, not computed in text.
   - Exactly one client event `reserve { id: { path } }`; no other event names.
   - Vocabulary comes from the context (components + functions) and `me`; if vocabulary is missing, say what is missing, choose the best available representation, never invent component names.
 - `eval/` at the repo root (Node, `tsx`, script `npm run eval`, not in CI): for each request × 5 runs drive the **real** server via `HttpAgent` (`@ag-ui/client`) with the same `tools[]` (from `src/app/agent/tools/*.definition.ts`) and `context[]` (from `catalogToContextEntry` over the `*.schema.ts` metadata plus a fixed `me` = Berlin); execute client tools locally (`findConferences` logic from `src/app/domain/`, `renderSurface` recorded, `messageWidget` recorded) and continue the run loop like the shell does. Requests:
@@ -356,7 +359,7 @@ Depends on Task 7 (running shell loop; tool definitions and context serializer t
   2. „Zeig sie auf einer Karte"
   3. „Wann ist die nächste in meiner Nähe? Wenn ich eine anklicke, will ich Details."
   (Request 4 „Reservier mir eine Karte" is a button click without a model call; its contract — the `reserve` button — is scored inside request 3. Requests 2 and 3 run as a conversation after request 1.)
-- `eval/score.ts` (pure): A1 — exactly one `renderSurface`, a `Timeline` with `items: { path: '/confs' }`; A2 — a `Map` with `points: { path: '/confs' }` and `center: { path: '/me' }`; A3 — a `Map` with `selected: { path: P }`, a `Text` bound to `P/name`, a `Gauge` bound to `P/remaining`, a `Button` whose action event is `reserve` with `id: { path: P + '/id' }`, and `daysUntil` and `distance` used in the surface. Any run fails if it writes `/confs` or `/me` via `updateDataModel` or if an `updateDataModel` value contains a date literal (`\d{4}-\d{2}-\d{2}`) — the replay-freshness risk.
+- `eval/score.ts` (pure): A1 — exactly one `renderSurface`, a `Timeline` with `items: { path: '/filteredConfs' }`; A2 — a `Map` with `points: { path: '/filteredConfs' }` and `center: { path: '/me' }`; A3 — a `Map` with `selected: { path: P }`, a `Text` bound to `P/name`, a `Gauge` bound to `P/remaining`, a `Button` whose action event is `reserve` with `id: { path: P + '/id' }`, and `daysUntil` and `distance` used in the surface. Any run fails if it writes `/filteredConfs` or `/me` via `updateDataModel` or if an `updateDataModel` value contains a date literal (`\d{4}-\d{2}-\d{2}`) — the replay-freshness risk.
 - `eval/report.ts`: writes `docs/eval/<date>-<provider>-<model>.md` with per-request `k/5`, failure reasons, duration and token usage per run; exit code 0 iff every request scores ≥ 4/5. Provider/model from `agent/src/config.ts` with `AGENT_PROVIDER`/`AGENT_MODEL` env overrides so the cross-check with the cheap OpenAI model is one variable.
 - Prompt iteration is expected inside this task: run, sharpen examples, re-run. Record the go/no-go decision on the wiring risk in the task log (options if the gate fails: prompt examples, model switch; a follow-up question via `submitAnswer` is the fallback path, not the goal).
 - `agent/` unit test for the prompt assembly (mirrors the book's `addCustomCatalogInstructions`).
@@ -364,7 +367,7 @@ Depends on Task 7 (running shell loop; tool definitions and context serializer t
 **Acceptance**
 
 - T9-AC-01 — (Node) prompt assembly with a catalog context entry lists every component and function name from the entry under a "Custom Catalog" section; without a catalog entry it emits a "no custom vocabulary available" note.
-- T9-AC-02 — (Node) the scorer, fed recorded `renderSurface` args, passes A3 for the wired surface above and fails it when `selected` is a literal, when `/confs` is written via `updateDataModel`, or when a date literal appears in a data-model value.
+- T9-AC-02 — (Node) the scorer, fed recorded `renderSurface` args, passes A3 for the wired surface above and fails it when `selected` is a literal, when `/filteredConfs` is written via `updateDataModel`, or when a date literal appears in a data-model value.
 - T9-AC-03 — `npm run eval` against the development model writes `docs/eval/<date>-<provider>-<model>.md`, and each of requests 1–3 scores ≥ 4/5 (spec acceptance 1, the "Verdrahtung" risk). If the gate is not reached, the task log records the prompt variants tried and the decision.
 
 **Key Locations**
@@ -385,6 +388,6 @@ Depends on Task 7 (running shell loop; tool definitions and context serializer t
 
 - **XC-01** — Request 3 in the running app: a marker click changes name, countdown, distance and gauge with zero network requests (spec acceptance 2). **Touches:** T5, T6, T7, T9.
 - **XC-02** — Request 4: "Reservieren" lowers the gauge with no agent run; the store keeps the reservation and a later `findConferences` reflects it (spec acceptance 3). **Touches:** T6, T8. *(Completes in the M3 scope — T8 moved there, spec v3.3.)*
-- **XC-03** — The model never writes `/confs` or `/me`: guard (T6), prompt rule (T9) and eval check (T9) agree on the same reserved paths. **Touches:** T6, T9.
+- **XC-03** — The model never writes `/filteredConfs` or `/me`: guard (T6), prompt rule (T9) and eval check (T9) agree on the same reserved paths. **Touches:** T6, T9.
 - **XC-04** — Shell and eval harness build `tools[]` and `context[]` (components + functions + `me`) from the same framework-free definitions and serializer; no drift. **Touches:** T4, T6, T7, T9.
 - **XC-05** — `src/app/capabilities/**` contains no import from `src/app/domain/**` or `src/app/agent/**` (vocabulary stays domain-neutral so M2/M3 can move it into remotes unchanged). **Touches:** T4, T5.

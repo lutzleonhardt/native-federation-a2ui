@@ -13,11 +13,11 @@ export const distanceFn: AssistantFunction = createCatalogFunction(
     name: 'distance',
     description:
       'Distance in whole kilometres between two points with lat/lon fields. ' +
-      'Use it for "N km entfernt" labels, e.g. distance between /me and /conf.',
+      'Use it for "N km entfernt" labels, e.g. distance between /me and /selectedConf.',
     returnType: 'number',
     schema: z.object({
       a: geoPointSchema.describe('First point, e.g. the user location /me.'),
-      b: geoPointSchema.describe('Second point, e.g. the selected conference /conf.'),
+      b: geoPointSchema.describe('Second point, e.g. the selected conference /selectedConf.'),
     }),
   },
   (args) => Math.round(haversineKm(args.a, args.b)),

@@ -1,0 +1,7 @@
+@if (pending()) {
+  <p class="cf-placeholder">Building surface …</p>
+} @else if (surfaceId(); as id) {
+  <a2ui-v09-surface [surfaceId]="id" />
+} @else {
+  <p class="cf-error">{{ errorText() }}</p>
+}
