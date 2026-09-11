@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CONFIG, loadConfig, resolveModel } from './config.js';
+import { DEFAULT_CONFIG, DEFAULT_SHELL_ORIGIN, loadConfig, resolveModel, resolveShellOrigin } from './config.js';
 
 const PROVIDER_CASES = [
   { provider: 'anthropic', envVar: 'ANTHROPIC_API_KEY', providerId: /anthropic/ },
@@ -20,6 +20,17 @@ describe('loadConfig', () => {
 
   it('rejects an unknown AGENT_PROVIDER instead of silently defaulting', () => {
     expect(() => loadConfig({ AGENT_PROVIDER: 'llama' })).toThrow(/AGENT_PROVIDER/);
+  });
+});
+
+describe('resolveShellOrigin', () => {
+  it('falls back to the default shell origin when SHELL_ORIGIN is unset or blank', () => {
+    expect(resolveShellOrigin({})).toBe(DEFAULT_SHELL_ORIGIN);
+    expect(resolveShellOrigin({ SHELL_ORIGIN: '  ' })).toBe(DEFAULT_SHELL_ORIGIN);
+  });
+
+  it('takes SHELL_ORIGIN as the CORS origin', () => {
+    expect(resolveShellOrigin({ SHELL_ORIGIN: ' http://localhost:4300 ' })).toBe('http://localhost:4300');
   });
 });
 

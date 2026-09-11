@@ -5,6 +5,8 @@ import type { LanguageModelV4 } from '@ai-sdk/provider';
 
 export type AgentProvider = 'anthropic' | 'openai' | 'deepseek';
 
+export const DEFAULT_SHELL_ORIGIN = 'http://localhost:4200';
+
 export interface ProviderSettings {
   readonly model: string;
   readonly apiKeyEnvVar: string;
@@ -23,6 +25,11 @@ export const DEFAULT_CONFIG: AgentConfig = {
     deepseek: { model: 'deepseek-chat', apiKeyEnvVar: 'DEEPSEEK_API_KEY' },
   },
 };
+
+/** `SHELL_ORIGIN` lets a shell on another port through CORS; the server itself stays on loopback. */
+export function resolveShellOrigin(env: NodeJS.ProcessEnv): string {
+  return env['SHELL_ORIGIN']?.trim() || DEFAULT_SHELL_ORIGIN;
+}
 
 /** Reads `AGENT_PROVIDER` / `AGENT_MODEL`; an unknown provider fails loudly instead of silently defaulting. */
 export function loadConfig(env: NodeJS.ProcessEnv): AgentConfig {

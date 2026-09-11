@@ -9,4 +9,8 @@ export const routes: Routes = [
     path: 'playground',
     loadComponent: () => import('./playground/playground').then((m) => m.Playground),
   },
+  {
+    path: '',
+    loadComponent: () => import('./chat/chat.page').then((m) => m.ChatPage),
+  },
 ];

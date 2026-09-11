@@ -5,7 +5,8 @@ import { MockLanguageModelV4, simulateReadableStream } from 'ai/test';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ASSISTANT_AGENT_ID } from './agent.js';
-import { SHELL_ORIGIN, createApp } from './server.js';
+import { DEFAULT_SHELL_ORIGIN } from './config.js';
+import { createApp } from './server.js';
 
 const HELLO_CHUNKS: LanguageModelV4StreamPart[] = [
   { type: 'stream-start', warnings: [] },
@@ -43,14 +44,15 @@ interface RunningServer {
   readonly close: () => Promise<void>;
 }
 
-async function startServer(model: MockLanguageModelV4): Promise<RunningServer> {
+async function startServer(model: MockLanguageModelV4, shellOrigin?: string): Promise<RunningServer> {
   const agent = new Agent({
     id: ASSISTANT_AGENT_ID,
     name: ASSISTANT_AGENT_ID,
     instructions: 'test agent',
     model,
   });
-  const server = serve({ fetch: createApp(new Map([[ASSISTANT_AGENT_ID, agent]])).fetch, port: 0 });
+  const app = createApp(new Map([[ASSISTANT_AGENT_ID, agent]]), shellOrigin);
+  const server = serve({ fetch: app.fetch, port: 0 });
   await new Promise((resolve) => server.once('listening', resolve));
   return {
     baseUrl: `http://localhost:${(server.address() as AddressInfo).port}`,
@@ -67,6 +69,13 @@ function runAgentInput(): unknown {
     context: [],
     state: {},
   };
+}
+
+function preflight(baseUrl: string, origin: string): Promise<Response> {
+  return fetch(`${baseUrl}/ag-ui/${ASSISTANT_AGENT_ID}`, {
+    method: 'OPTIONS',
+    headers: { Origin: origin, 'Access-Control-Request-Method': 'POST' },
+  });
 }
 
 function postRun(baseUrl: string, agentId: string, body: unknown): Promise<Response> {
@@ -143,13 +152,29 @@ describe('POST /ag-ui/:agentId', () => {
     expect(response.status).toBe(400);
   });
 
-  it('allows the shell origin on the CORS preflight', async () => {
-    const response = await fetch(`${server.baseUrl}/ag-ui/${ASSISTANT_AGENT_ID}`, {
-      method: 'OPTIONS',
-      headers: { Origin: SHELL_ORIGIN, 'Access-Control-Request-Method': 'POST' },
-    });
+  it('allows the default shell origin on the CORS preflight', async () => {
+    const response = await preflight(server.baseUrl, DEFAULT_SHELL_ORIGIN);
 
-    expect(response.headers.get('access-control-allow-origin')).toBe(SHELL_ORIGIN);
+    expect(response.headers.get('access-control-allow-origin')).toBe(DEFAULT_SHELL_ORIGIN);
+  });
+});
+
+describe('POST /ag-ui/:agentId with a configured shell origin', () => {
+  const OTHER_ORIGIN = 'http://localhost:4300';
+  let server: RunningServer;
+
+  beforeAll(async () => {
+    server = await startServer(helloModel(), OTHER_ORIGIN);
+  });
+
+  afterAll(() => server.close());
+
+  it('replaces the default origin instead of adding to it', async () => {
+    const allowed = await preflight(server.baseUrl, OTHER_ORIGIN);
+    const refused = await preflight(server.baseUrl, DEFAULT_SHELL_ORIGIN);
+
+    expect(allowed.headers.get('access-control-allow-origin')).toBe(OTHER_ORIGIN);
+    expect(refused.headers.get('access-control-allow-origin')).toBeNull();
   });
 });
 

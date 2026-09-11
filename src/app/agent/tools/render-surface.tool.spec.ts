@@ -180,6 +180,18 @@ describe('renderSurfaceTool', () => {
     expect(onFailure).toHaveBeenCalledTimes(1);
   });
 
+  it('rejects an invented catalogId at the boundary and names the expected one', async () => {
+    const outcome = await runTool([
+      { version: 'v0.9', createSurface: { surfaceId: SURFACE_ID, catalogId: 'conference-list' } },
+      timelineMsg(),
+    ]);
+
+    expect(outcome).toMatchObject({ ok: false, code: 'invalid_args' });
+    expect(JSON.stringify(outcome.result)).toContain(ASSISTANT_CATALOG_ID);
+    expect(surfaceOf(SURFACE_ID)).toBeUndefined();
+    expect(onFailure).toHaveBeenCalledTimes(1);
+  });
+
   it('T6-AC-04 fails when a message targets another surfaceId', async () => {
     const outcome = await runTool([
       createMsg(),

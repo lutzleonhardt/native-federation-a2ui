@@ -39,7 +39,8 @@ cp .env.example .env
 ```
 
 `AGENT_PROVIDER` picks `anthropic` (default), `openai` or `deepseek`; `AGENT_MODEL`
-overrides the model id of that provider.
+overrides the model id of that provider. `SHELL_ORIGIN` is the browser origin the
+agent accepts (CORS); set it when the shell runs on a port other than 4200.
 
 To poke the AG-UI endpoint by hand, open [`agent/requests.http`](./agent/requests.http)
 in a JetBrains IDE with a running `npm run start:agent`.

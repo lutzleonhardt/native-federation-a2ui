@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog-id';
 
 /**
  * The tool schema describes the A2UI protocol envelope — message forms and
@@ -11,7 +12,8 @@ const createSurfaceMessageSchema = z.object({
   version: z.literal('v0.9'),
   createSurface: z.object({
     surfaceId: z.string().describe('Fresh id for this surface; never reuse an earlier one.'),
-    catalogId: z.string(),
+    // A literal, not prompt text: an invented id fails at the boundary with the expected value in the issue.
+    catalogId: z.literal(ASSISTANT_CATALOG_ID).describe('The one catalog this shell renders.'),
   }),
 });
 

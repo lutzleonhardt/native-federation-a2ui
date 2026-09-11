@@ -1,0 +1,14 @@
+@if (picking()) {
+  <label>
+    Your location
+    <select (change)="pick($event)">
+      <option value="">Choose a city …</option>
+      @for (city of cities; track city.id) {
+        <option [value]="city.id" [selected]="city.name === me()?.city">{{ city.name }}</option>
+      }
+    </select>
+  </label>
+} @else {
+  <span>Your location: <strong>{{ me()?.city }}</strong></span>
+  <button type="button" (click)="change()">Change</button>
+}

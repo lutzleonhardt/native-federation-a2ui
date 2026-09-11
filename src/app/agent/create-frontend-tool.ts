@@ -29,10 +29,18 @@ export interface FrontendToolSpec<Args extends Record<string, unknown>> {
   /** Required by design: CopilotKit's implicit default (run the model again) is insider knowledge. */
   readonly followUp: boolean;
   readonly agentId?: string;
-  readonly handler: (args: Args, context: FrontendToolContext) => Promise<ToolResult>;
+  /**
+   * Method syntax on purpose: it lets one list mix specs of different `Args`
+   * (method parameters are bivariant), which `initAgentStore` relies on.
+   * Nothing is lost — the boundary validates the arguments at runtime.
+   */
+  handler(args: Args, context: FrontendToolContext): Promise<ToolResult>;
   /** Invoked when the boundary rejects the raw arguments (code `invalid_args`). */
   readonly onValidationFailure?: (context: FrontendToolContext, issues: unknown) => void;
 }
+
+/** A spec whose argument type was checked where it was declared. */
+export type AnyFrontendToolSpec = FrontendToolSpec<Record<string, unknown>>;
 
 /** What actually gets registered: same spec, but the handler takes untrusted input. */
 export interface BoundFrontendTool<Args extends Record<string, unknown>> {

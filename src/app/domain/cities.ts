@@ -8,6 +8,7 @@ export interface City extends GeoPoint {
 /** Fallback locations offered by the picker when geolocation is unavailable or denied. */
 export const CITIES: readonly City[] = [
   { id: 'berlin', name: 'Berlin', lat: 52.52, lon: 13.405 },
+  { id: 'dresden', name: 'Dresden', lat: 51.0504, lon: 13.7373 },
   { id: 'muenchen', name: 'München', lat: 48.1372, lon: 11.5756 },
   { id: 'wien', name: 'Wien', lat: 48.2082, lon: 16.3738 },
   { id: 'zuerich', name: 'Zürich', lat: 47.3769, lon: 8.5417 },

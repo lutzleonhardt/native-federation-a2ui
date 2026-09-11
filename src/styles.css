@@ -1,1 +1,19 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global layout: the chat page fills the viewport below the app title. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+app-root > h1 {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-size: 1.25rem;
+}

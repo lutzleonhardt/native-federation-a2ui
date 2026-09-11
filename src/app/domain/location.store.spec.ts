@@ -39,15 +39,41 @@ describe('LocationStore', () => {
     expect(store.me()).toEqual({ city: 'Berlin', lat: 52.52, lon: 13.405 });
   });
 
-  it('restores the chosen city and asks for geolocation only while none is known', () => {
-    new LocationStore().setCity('wien');
+  it('refreshes a saved city from geolocation on every page load', () => {
+    new LocationStore().setCity('berlin');
 
-    const askForPosition = vi.spyOn(navigator.geolocation, 'getCurrentPosition');
+    let answerPrompt: PositionCallback | undefined;
+    const askForPosition = vi
+      .spyOn(navigator.geolocation, 'getCurrentPosition')
+      .mockImplementation((onPosition) => {
+        answerPrompt = onPosition;
+      });
     const returning = new LocationStore();
     returning.init();
 
-    expect(returning.me()?.city).toBe('Wien');
-    expect(askForPosition).not.toHaveBeenCalled();
+    expect(returning.me()?.city).toBe('Berlin');
+    expect(askForPosition).toHaveBeenCalledTimes(1);
+    answerPrompt?.({
+      coords: { latitude: 51.0504, longitude: 13.7373 },
+    } as unknown as GeolocationPosition);
+
+    expect(returning.me()?.city).toBe('Dresden');
+    expect(localStorage.getItem('conference-finder.city')).toBe('dresden');
+
+    const reloaded = new LocationStore();
+    reloaded.init();
+    expect(reloaded.me()?.city).toBe('Dresden');
+    expect(askForPosition).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the saved city as a fallback if geolocation is denied', () => {
+    new LocationStore().setCity('berlin');
+    denyPermission();
+    const returning = new LocationStore();
+
+    returning.init();
+
+    expect(returning.me()?.city).toBe('Berlin');
   });
 
   it('asks for geolocation only once, however often init runs', () => {
@@ -64,6 +90,7 @@ describe('LocationStore', () => {
   });
 
   it('keeps a city picked while the permission prompt is still open', () => {
+    new LocationStore().setCity('berlin');
     let answerPrompt: PositionCallback | undefined;
     vi.spyOn(navigator.geolocation, 'getCurrentPosition').mockImplementation((onPosition) => {
       answerPrompt = onPosition;

@@ -1,8 +1,9 @@
 import { BASIC_COMPONENTS, BASIC_FUNCTIONS, BasicCatalogBase } from '@a2ui/angular/v0_9';
 import type { FunctionImplementation } from '@a2ui/web_core/v0_9';
+import { ASSISTANT_CATALOG_ID } from './assistant-catalog-id';
 import type { CustomComponent } from './custom-component';
 
-export const ASSISTANT_CATALOG_ID = 'https://conference-finder.dev/catalogs/assistant';
+export { ASSISTANT_CATALOG_ID };
 
 /** An assistant-catalog function: implementation plus prompt metadata. */
 export interface AssistantFunction extends FunctionImplementation {

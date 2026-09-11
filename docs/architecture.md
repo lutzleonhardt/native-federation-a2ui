@@ -6,10 +6,10 @@ questions, and the answer is rendered as an A2UI surface built from a shared
 component vocabulary rather than from hand-written screens. Spec:
 [`docs/spec.md`](./spec.md); plan: [`docs/work/m1-spike/plan.md`](./work/m1-spike/plan.md).
 
-Solid nodes and arrows exist today (Tasks 1–6); dashed ones are planned
-(Task 7). Status as of 2026-09-10. Until the chat page lands, the playground
-routes are the visual anchors: `/playground` (catalog components on a
-hand-built surface) and `/playground/tools` (the real client-tool pipeline).
+Everything drawn exists today (Tasks 1–7). Status as of 2026-09-10. The chat
+page at `/` is the visual anchor; the playground routes stay as dev sandboxes:
+`/playground` (catalog components on a hand-built surface) and
+`/playground/tools` (the real client-tool pipeline).
 
 ## One chat turn, in plain words
 
@@ -30,14 +30,16 @@ steps 3–5.
    transcript: "Building surface …" while streaming, then the surface — or the
    error text.
 6. The turn ends (`followUp: false`). On failure, `RENDER_FAILURE_HANDLER`
-   carries the one signal that starts the correction run (Task 7).
+   carries the one signal; `initAgentStore` starts the correction run once the
+   failed call has its result — the tool result itself tells the model what
+   went wrong. Three corrections per user turn, then the shell stops.
 
 ## Big picture
 
 ```mermaid
 flowchart TB
     subgraph shell["Browser — Angular shell (localhost:4200)"]
-        chat["Chat page (CopilotKit)<br/>example prompts, location picker"]
+        chat["Chat page (CopilotKit)<br/>example prompts, location picker,<br/>ASSISTANT_AGENT token + initAgentStore"]
         tools["Client tools<br/>renderSurface, findConferences, messageWidget"]
         httpAgent["HttpAgent (@ag-ui/client)<br/>fetch + ReadableStream,<br/>expands TEXT_MESSAGE_CHUNK"]
         renderer["A2UI renderer (@a2ui/angular)<br/>surfaces, data model, bindings"]
@@ -46,7 +48,7 @@ flowchart TB
     end
 
     subgraph agent["Node — agent server (Hono, 127.0.0.1:3001)"]
-        route["POST /ag-ui/:agentId<br/>zod-validates RunAgentInput,<br/>CORS for the shell origin"]
+        route["POST /ag-ui/:agentId<br/>zod-validates RunAgentInput,<br/>CORS for SHELL_ORIGIN (default :4200)"]
         adapter["MastraAgent adapter (@ag-ui/mastra)<br/>RxJS Observable → SSE encoder,<br/>terminal RUN_ERROR on failure"]
         assistant["Mastra Agent 'assistant'<br/>no server tools — knows no A2UI"]
         model["resolveModel provider switch<br/>AI SDK (spec v4)"]
@@ -55,12 +57,12 @@ flowchart TB
     llm["LLM API<br/>Anthropic (default), OpenAI, DeepSeek"]
     env[".env<br/>AGENT_PROVIDER, AGENT_MODEL, API keys"]
 
-    chat -.-> httpAgent
-    chat -.-> tools
+    chat -->|"sendMessage → core.runAgent<br/>+ correction run on render failure"| httpAgent
+    chat -->|"registers per agentId"| tools
     tools -->|"processMessages"| renderer
     tools -->|"runs pure logic, mounts /filteredConfs, /me"| domain
     catalog --> renderer
-    catalog -.->|"catalogToContextEntry → run context"| httpAgent
+    catalog -->|"catalogToContextEntry + meToContextEntry → run context"| httpAgent
 
     httpAgent == "POST RunAgentInput<br/>(messages, tools, context, state)" ==> route
     route == "SSE: AG-UI events<br/>RUN_STARTED, TEXT_MESSAGE_CHUNK,<br/>TOOL_CALL_*, RUN_FINISHED / RUN_ERROR" ==> httpAgent
@@ -70,9 +72,6 @@ flowchart TB
     assistant --> model
     model -- "HTTPS" --> llm
     env --> model
-
-    classDef planned stroke-dasharray: 6 4;
-    class chat planned;
 ```
 
 ## One AG-UI run
@@ -98,22 +97,33 @@ sequenceDiagram
 
 The one mechanism Task 6 added: a tool call whose handler runs entirely in the
 browser, guarded before anything mutates, with a single failure signal feeding
-the correction loop.
+the correction loop. Task 7 added the two steps after the handler — both live
+in `initAgentStore`, both deferred by one macrotask because CopilotKit splices
+the tool result only after the handler has returned.
 
 ```mermaid
 sequenceDiagram
     participant A as Agent server
     participant C as CopilotKit (shell)
+    participant S as initAgentStore
     participant H as renderSurface handler
     participant R as A2UI renderer
 
     A-->>C: TOOL_CALL renderSurface(messages) — run ends (followUp: false)
     C->>H: bound handler (envelope schema validates at the boundary)
     H->>H: guards (see order below)
-    H->>R: processMessages(model messages)
-    H->>R: processMessages(client mount: /filteredConfs, /me, /selectedConf, …)
-    H-->>C: { ok: true, surfaceId } — surface renders inline in the chat
-    Note over C,H: Any failure: the created surface is rolled back and<br/>RENDER_FAILURE_HANDLER fires exactly once — Task 7 binds it<br/>to a developer message that starts the correction run.
+    alt valid
+        H->>R: processMessages(model messages)
+        H->>R: processMessages(client mount: /filteredConfs, /me, /selectedConf, …)
+        H-->>C: { ok: true, surfaceId }
+    else any failure
+        H->>R: roll the created surface back
+        H->>S: RENDER_FAILURE_HANDLER({ toolCallId, code, issues }) — exactly once
+        H-->>C: { ok: false, code, result }
+    end
+    C->>C: splice the tool result into agent.messages — no agent-level notification
+    S->>C: one macrotask later: setMessages(agent.messages) — renderer flips to "complete" (CopilotKit 0.3.1 workaround)
+    S->>A: on failure, same timing: correction run — the tool result already answers the failed call (max 3 per user turn)
 ```
 
 Guard order and failure codes (each also the model-facing feedback):
@@ -141,8 +151,8 @@ evidence for each):
 | --- | --- | --- | --- | --- |
 | LLM | Anthropic (default), OpenAI, DeepSeek via AI SDK | generate text and tool calls | no | — |
 | Agent runtime | `@mastra/core` | the `assistant` agent in the Node process: instructions, model wiring | no (server-side) | `resolveModel` — `.env`-driven provider switch |
-| Transport | `@ag-ui/core`/`encoder`/`mastra` (server), `@ag-ui/client` (browser) | **AG-UI**: one protocol between any agent backend and any frontend — `RunAgentInput` in, event stream out; the adapter translates Mastra's stream, `HttpAgent` consumes it | framework-free | route zod-validates `RunAgentInput` and pins CORS to the shell origin; `uuid` browser-build alias in the test runner |
-| Chat & tools | `@copilotkit/angular` | chat UI, agent store, frontend-tool registration on top of AG-UI | Angular binding | `createFrontendTool`/`bindFrontendTool` — CopilotKit only JSON-parses tool args, so the boundary validates here; adds the turn-end suffix and routes boundary rejections into `RENDER_FAILURE_HANDLER` |
+| Transport | `@ag-ui/core`/`encoder`/`mastra` (server), `@ag-ui/client` (browser) | **AG-UI**: one protocol between any agent backend and any frontend — `RunAgentInput` in, event stream out; the adapter translates Mastra's stream, `HttpAgent` consumes it | framework-free | route zod-validates `RunAgentInput` and pins CORS to `SHELL_ORIGIN`; the shell pins `@ag-ui/*` to CopilotKit's exact version (one `AbstractAgent` class); `uuid` browser-build alias in the test runner |
+| Chat & tools | `@copilotkit/angular` | chat UI, agent store, frontend-tool registration on top of AG-UI | Angular binding | `createFrontendTool`/`bindFrontendTool` — CopilotKit only JSON-parses tool args, so the boundary validates here; adds the turn-end suffix and routes boundary rejections into `RENDER_FAILURE_HANDLER`. `initAgentStore` — registers tools and context for one agent, re-publishes a turn-ending tool's result to the store (CopilotKit splices it in silently), and defers the correction run until that result exists |
 | Surface protocol | `@a2ui/web_core` | **A2UI**: surface messages, data model, path bindings, the catalog contract (name + schema); even its reactivity is neutral (`@preact/signals-core`) | framework-free | the `renderSurface` guards — the wrapper schema validates messages only one by one, so the cross-message rules (one fresh surface, no `deleteSurface`, segment-based forbidden writes, rollback on failure) live in the handler |
 | Surface renderer | `@a2ui/angular` | binds the catalog contract to Angular components (`BoundProperty` signals, `a2ui-v09-surface`) | Angular binding | `provideA2uiCatalog` (action-bus wiring plus the `MarkdownRenderer` the basic `Text` injects but `provideA2Ui` does not provide); `createCustomComponent`/`createCatalogFunction` (the two documented zod-universe bridge casts; add the `description` their `ComponentApi` lacks) |
 | Vocabulary | `src/app/a2ui/`, `src/app/capabilities/` | the assistant catalog: framework-free metadata (`*.schema.ts`, catalog functions) + Angular implementations | split on purpose | — (this layer is our code) |
@@ -187,6 +197,21 @@ stay reserved to CopilotKit.
   failed `renderSurface` cannot ask for a correction itself;
   `RENDER_FAILURE_HANDLER` fires exactly once per failure (boundary rejections
   included) and is the whole correction channel.
+- **A correction run answers the failed call first.** `RENDER_FAILURE_HANDLER`
+  fires inside the failing tool call, before CopilotKit has spliced the tool
+  result into the transcript; `initAgentStore` defers the correction run until
+  that result exists, so the model never sees an unanswered tool call (the
+  T7-AC-04 spec pins the order). Failures of one run share one correction, and
+  three corrections per user turn are the budget — each is a top-level run,
+  outside CopilotKit's follow-up depth limit.
+- **Turn-ending tool results reach the store by hand.** CopilotKit splices a
+  tool result into `agent.messages` without an agent-level notification, so
+  after a `followUp: false` tool the agent store — and the tool renderer's
+  status — would only catch up on the next run. `initAgentStore` re-publishes
+  the messages after `onToolExecutionEnd`.
+- **One `@ag-ui` version in the shell.** CopilotKit 0.3.1 pins
+  `@ag-ui/client`/`core` to an exact version and checks `instanceof HttpAgent`;
+  the shell pins the same version so a single `AbstractAgent` class exists.
 - **Loopback only, CORS on top.** The agent binds to `127.0.0.1` — CORS
   restricts browsers, not access; without the bound host any LAN peer could
   spend the API key.
@@ -197,10 +222,11 @@ stay reserved to CopilotKit.
 
 ## Roadmap context
 
-M1 (this monolith): Tasks 1–6 are done — workspace, agent server, domain layer,
-assistant catalog, the selection primitives (`Timeline`, `Map`), and the client
-tools with the surface data store. Task 7 adds the chat page, Task 9 the agent
-prompt with the eval harness (the M1 gate); after the v3.3 re-scope the task
-order is 6 → 7 → 9, and the `reserve` handler moved to M3. M2 splits the
+M1 (this monolith): Tasks 1–7 are done — workspace, agent server, domain layer,
+assistant catalog, the selection primitives (`Timeline`, `Map`), the client
+tools with the surface data store, and the chat page (agent wiring, location
+picker, example prompts, scripted-agent loop). Task 9 adds the agent prompt
+with the eval harness (the M1 gate); after the v3.3 re-scope the task order is
+6 → 7 → 9, and the `reserve` handler moved to M3. M2 splits the
 capabilities into Native Federation remotes (charts + maps); M3 adds `reserve`,
 the MapLibre upgrade, and hosting with replay publication.

@@ -9,9 +9,8 @@ import { cors } from 'hono/cors';
 import type { Observable, Subscription } from 'rxjs';
 import { fileURLToPath } from 'node:url';
 import { ASSISTANT_AGENT_ID, createAssistantAgent } from './agent.js';
-import { loadConfig, resolveModel } from './config.js';
+import { DEFAULT_SHELL_ORIGIN, loadConfig, resolveModel, resolveShellOrigin } from './config.js';
 
-export const SHELL_ORIGIN = 'http://localhost:4200';
 export const AGENT_PORT = 3001;
 
 /**
@@ -20,10 +19,10 @@ export const AGENT_PORT = 3001;
  */
 export const AGENT_HOST = '127.0.0.1';
 
-export function createApp(agents: ReadonlyMap<string, Agent>): Hono {
+export function createApp(agents: ReadonlyMap<string, Agent>, shellOrigin = DEFAULT_SHELL_ORIGIN): Hono {
   const app = new Hono();
 
-  app.use('/ag-ui/*', cors({ origin: SHELL_ORIGIN }));
+  app.use('/ag-ui/*', cors({ origin: shellOrigin }));
 
   app.post('/ag-ui/:agentId', async (c) => {
     const agentId = c.req.param('agentId');
@@ -89,8 +88,9 @@ function main(): void {
   loadDotenv({ path: fileURLToPath(new URL('../../.env', import.meta.url)), quiet: true });
   const config = loadConfig(process.env);
   const agents = new Map([[ASSISTANT_AGENT_ID, createAssistantAgent(resolveModel(config, process.env))]]);
-  serve({ fetch: createApp(agents).fetch, hostname: AGENT_HOST, port: AGENT_PORT }, ({ port }) => {
-    console.log(`AG-UI agent on http://localhost:${port} (provider: ${config.provider})`);
+  const shellOrigin = resolveShellOrigin(process.env);
+  serve({ fetch: createApp(agents, shellOrigin).fetch, hostname: AGENT_HOST, port: AGENT_PORT }, ({ port }) => {
+    console.log(`AG-UI agent on http://localhost:${port} (provider: ${config.provider}, shell origin: ${shellOrigin})`);
   });
 }
 
