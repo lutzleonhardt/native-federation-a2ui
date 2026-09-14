@@ -14,10 +14,12 @@
     "start:shell": "ng serve shell --port 4200",
     "start:agent": "npm --prefix agent run dev",
     "build": "ng build shell",
-    "test": "npm run test:shell && npm run test:agent",
+    "test": "npm run test:shell && npm run test:agent && npm run test:eval",
     "test:shell": "ng test shell",
     "test:agent": "npm --prefix agent test",
-    "lint": "ng lint"
+    "test:eval": "tsc -p eval/tsconfig.json && vitest run --config eval/vitest.config.ts",
+    "lint": "ng lint",
+    "eval": "tsx eval/run-eval.ts"
   },
   "dependencies": {
     "@a2ui/angular": "~0.10.5",
@@ -43,6 +45,7 @@
     "@angular/cli": "~21.2.22",
     "@angular/compiler-cli": "~21.2.22",
     "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.2",
     "@vitest/browser": "~4.1.11",
     "@vitest/browser-playwright": "~4.1.11",
     "angular-eslint": "21.4.0",
@@ -51,6 +54,7 @@
     "playwright": "^1.58.0",
     "prettier": "^3.8.1",
     "supports-color": "^7.2.0",
+    "tsx": "^4.23.13",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.59.2",
     "vitest": "~4.1.11"

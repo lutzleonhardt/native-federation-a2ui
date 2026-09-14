@@ -129,7 +129,7 @@ Alle Props sind `binding(...)`. Eingabe-Primitive schreiben über `props().selec
 |---|---|---|---|---|---|
 | charts | `Timeline` | `items: {id, label, date, …}[]`, `range?`, `selected?` | `selected` (Element) | optional | horizontale Zeitachse, SVG |
 | charts | `Gauge` | `value`, `max`, `label?` | — | — | Restkarten |
-| charts | Fn `daysUntil(date)` → number | | | | „in 42 Tagen" mit `formatString` |
+| charts | Fn `daysUntil(date)` → number | | | | „42" plus eigenes `Text`-Label; der Basiskatalog hat keine Interpolation — `formatString` coerct nur einen einzelnen Wert zu String |
 | maps | `Map` | `points: {id, label, lat, lon, …}[]`, `center?`, `selected?` | `selected` (Element) | optional | SVG-Scatter über Bounding-Box; MapLibre-Upgrade in M3 |
 | maps | Fn `distance(a, b)` → km | | | | Haversine |
 

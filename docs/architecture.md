@@ -6,7 +6,7 @@ questions, and the answer is rendered as an A2UI surface built from a shared
 component vocabulary rather than from hand-written screens. Spec:
 [`docs/spec.md`](./spec.md); plan: [`docs/work/m1-spike/plan.md`](./work/m1-spike/plan.md).
 
-Everything drawn exists today (Tasks 1–7). Status as of 2026-09-10. The chat
+Everything drawn exists today (Tasks 1–7 and 9). Status as of 2026-09-14. The chat
 page at `/` is the visual anchor; the playground routes stay as dev sandboxes:
 `/playground` (catalog components on a hand-built surface) and
 `/playground/tools` (the real client-tool pipeline).
@@ -50,7 +50,7 @@ flowchart TB
     subgraph agent["Node — agent server (Hono, 127.0.0.1:3001)"]
         route["POST /ag-ui/:agentId<br/>zod-validates RunAgentInput,<br/>CORS for SHELL_ORIGIN (default :4200)"]
         adapter["MastraAgent adapter (@ag-ui/mastra)<br/>RxJS Observable → SSE encoder,<br/>terminal RUN_ERROR on failure"]
-        assistant["Mastra Agent 'assistant'<br/>no server tools — knows no A2UI"]
+        assistant["Mastra Agent 'assistant'<br/>no server tools — A2UI form, no vocabulary"]
         model["resolveModel provider switch<br/>AI SDK (spec v4)"]
     end
 
@@ -150,7 +150,7 @@ evidence for each):
 | Layer | Package(s) | Responsibility | Framework-bound? | Our seam code (why it exists) |
 | --- | --- | --- | --- | --- |
 | LLM | Anthropic (default), OpenAI, DeepSeek via AI SDK | generate text and tool calls | no | — |
-| Agent runtime | `@mastra/core` | the `assistant` agent in the Node process: instructions, model wiring | no (server-side) | `resolveModel` — `.env`-driven provider switch |
+| Agent runtime | `@mastra/core` | the `assistant` agent in the Node process: instructions, model wiring | no (server-side) | `resolveModel` — `.env`-driven provider switch; `buildInstructions` — the adapter parks the run's AG-UI context under the `ag-ui` key and nothing in Mastra reads it, so the prompt is assembled from it per run (dynamic `instructions`, resolved on every `getInstructions`) |
 | Transport | `@ag-ui/core`/`encoder`/`mastra` (server), `@ag-ui/client` (browser) | **AG-UI**: one protocol between any agent backend and any frontend — `RunAgentInput` in, event stream out; the adapter translates Mastra's stream, `HttpAgent` consumes it | framework-free | route zod-validates `RunAgentInput` and pins CORS to `SHELL_ORIGIN`; the shell pins `@ag-ui/*` to CopilotKit's exact version (one `AbstractAgent` class); `uuid` browser-build alias in the test runner |
 | Chat & tools | `@copilotkit/angular` | chat UI, agent store, frontend-tool registration on top of AG-UI | Angular binding | `createFrontendTool`/`bindFrontendTool` — CopilotKit only JSON-parses tool args, so the boundary validates here; adds the turn-end suffix and routes boundary rejections into `RENDER_FAILURE_HANDLER`. `initAgentStore` — registers tools and context for one agent, re-publishes a turn-ending tool's result to the store (CopilotKit splices it in silently), and defers the correction run until that result exists |
 | Surface protocol | `@a2ui/web_core` | **A2UI**: surface messages, data model, path bindings, the catalog contract (name + schema); even its reactivity is neutral (`@preact/signals-core`) | framework-free | the `renderSurface` guards — the wrapper schema validates messages only one by one, so the cross-message rules (one fresh surface, no `deleteSurface`, segment-based forbidden writes, rollback on failure) live in the handler |
@@ -172,10 +172,12 @@ stay reserved to CopilotKit.
 
 ## Invariants worth knowing
 
-- **The server knows no A2UI.** Surface structure is decided in the browser: the
-  model learns the vocabulary through the catalog context entry and emits A2UI
-  messages via the `renderSurface` client tool; the server only relays AG-UI
-  events.
+- **The server holds no vocabulary.** It teaches A2UI *form* — the prompt carries
+  the message envelope, the binding syntax and two worked examples — but never
+  learns which components exist: that reaches the model only through the catalog
+  context entry the browser sends per run. Surfaces are built by the model and
+  rendered in the browser via the `renderSurface` client tool; no server tool
+  touches a surface.
 - **Structure from the model, data from code.** The client mounts `/filteredConfs`,
   `/me` (and derived views) into the surface data model; the model binds paths
   instead of transcribing values. These paths are never written by the model.
@@ -225,8 +227,12 @@ stay reserved to CopilotKit.
 M1 (this monolith): Tasks 1–7 are done — workspace, agent server, domain layer,
 assistant catalog, the selection primitives (`Timeline`, `Map`), the client
 tools with the surface data store, and the chat page (agent wiring, location
-picker, example prompts, scripted-agent loop). Task 9 adds the agent prompt
-with the eval harness (the M1 gate); after the v3.3 re-scope the task order is
+picker, example prompts, scripted-agent loop) — and Task 9, the agent prompt
+with the `npm run eval` harness, which took the M1 gate (5/5, 5/5 and 4/5 across
+the three demo requests). That harness is the second consumer of the framework-free
+tool definitions and the context serializer — it plays the browser's part in Node,
+which is why `catalog-context.ts` and `surface-host-rules.ts` must not reach
+`@a2ui/angular`. It costs real model calls and is run by hand, never in CI. After the v3.3 re-scope the task order was
 6 → 7 → 9, and the `reserve` handler moved to M3. M2 splits the
 capabilities into Native Federation remotes (charts + maps); M3 adds `reserve`,
 the MapLibre upgrade, and hosting with replay publication.

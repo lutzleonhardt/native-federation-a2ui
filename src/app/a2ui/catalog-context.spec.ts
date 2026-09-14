@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { chartsFragment } from '../capabilities/charts';
-import { mapsFragment } from '../capabilities/maps';
-import { ASSISTANT_CATALOG_ID } from './assistant-catalog';
+import { mergeFragments } from './assistant-catalog';
+import { ASSISTANT_CATALOG_ID } from './assistant-catalog-id';
+import { ASSISTANT_FRAGMENTS } from './assistant-fragments';
 import { catalogToContextEntry } from './catalog-context';
 
 interface SerializedCatalog {
@@ -11,7 +11,7 @@ interface SerializedCatalog {
 }
 
 describe('catalogToContextEntry', () => {
-  const entry = catalogToContextEntry([chartsFragment, mapsFragment]);
+  const entry = catalogToContextEntry();
   const payload = JSON.parse(entry.value) as SerializedCatalog;
 
   it('T4-AC-05 names the catalog id and describes itself as a custom catalog', () => {
@@ -38,5 +38,19 @@ describe('catalogToContextEntry', () => {
   it('serializes distance and strips the $schema noise', () => {
     expect(payload.functions['distance'].returnType).toBe('number');
     expect(payload.components['Gauge'].schema).not.toHaveProperty('$schema');
+  });
+
+  // XC-04: the serializer lists the vocabulary framework-free so Node can import
+  // it, the renderer builds it from the Angular fragments — two lists that must
+  // not drift apart.
+  it('announces exactly the vocabulary the rendered catalog implements', () => {
+    const rendered = mergeFragments(ASSISTANT_FRAGMENTS, { warn: false });
+
+    expect(Object.keys(payload.components).sort()).toEqual(
+      rendered.components.map((component) => component.name).sort(),
+    );
+    expect(Object.keys(payload.functions).sort()).toEqual(
+      rendered.functions.map((fn) => fn.name).sort(),
+    );
   });
 });

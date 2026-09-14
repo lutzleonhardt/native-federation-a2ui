@@ -1,14 +1,17 @@
 import { inject } from '@angular/core';
 import { A2UI_RENDERER_CONFIG, A2uiRendererService, type AngularCatalog } from '@a2ui/angular/v0_9';
 import { A2uiMessageListWrapperSchema, type A2uiMessage } from '@a2ui/web_core/v0_9';
+import {
+  createdSurface,
+  findForbiddenModelWrites,
+  findStructuralViolations,
+  segmentsOf,
+} from '../../a2ui/surface-host-rules';
 import type { FrontendToolSpec, ToolResult } from '../create-frontend-tool';
 import { RENDER_FAILURE_HANDLER } from '../render-failure-handler.token';
 import { SurfaceDataStore } from '../surface-data.store';
 import { renderSurfaceDefinition, type RenderSurfaceArgs } from './render-surface.definition';
 import { SurfaceToolRendererComponent } from './surface-tool-renderer.component';
-
-/** First path segments mounted by the client after the model's messages; the model only binds them. */
-const CLIENT_OWNED_SEGMENTS = new Set(['filteredConfs', 'me', 'byMonth', 'byTopic']);
 
 export interface RenderSurfaceToolResult extends ToolResult {
   readonly ok: true;
@@ -32,13 +35,20 @@ export const renderSurfaceTool: FrontendToolSpec<RenderSurfaceArgs> = {
     if (!parsed.success) return fail('invalid_messages', parsed.error.issues);
     const messages = parsed.data.messages;
 
-    const surface = resolveSurfaceId(messages);
-    if ('issues' in surface) return fail('invalid_messages', surface.issues);
-    if (renderer.surfaceGroup.getSurface(surface.id) !== undefined) {
+    const violations = findStructuralViolations(messages);
+    if (violations.length > 0) return fail('invalid_messages', violations);
+
+    const surface = createdSurface(messages);
+    if (surface === undefined) {
+      return fail('invalid_messages', [
+        { path: ['messages'], message: 'createSurface needs both a surfaceId and a catalogId.' },
+      ]);
+    }
+    if (renderer.surfaceGroup.getSurface(surface.surfaceId) !== undefined) {
       return fail('invalid_messages', [
         {
           path: ['messages'],
-          message: `Surface '${surface.id}' already exists; use a fresh surfaceId.`,
+          message: `Surface '${surface.surfaceId}' already exists; use a fresh surfaceId.`,
         },
       ]);
     }
@@ -60,17 +70,17 @@ export const renderSurfaceTool: FrontendToolSpec<RenderSurfaceArgs> = {
     try {
       renderer.processMessages(messages);
       renderer.processMessages(
-        createClientDataMessages(surface.id, store, writesFirstSegment(messages, 'selectedConf')),
+        createClientDataMessages(surface.surfaceId, store, writesFirstSegment(messages, 'selectedConf')),
       );
     } catch (error) {
       // Messages apply one by one, so a failure can leave the surface of an
       // already-applied createSurface (or a half-mounted data model) behind —
       // take it back out. The fresh-id check above guarantees it is ours.
-      deleteSurface(renderer, surface.id);
+      deleteSurface(renderer, surface.surfaceId);
       return fail('catalog', error instanceof Error ? error.message : String(error));
     }
 
-    const success: RenderSurfaceToolResult = { ok: true, surfaceId: surface.id };
+    const success: RenderSurfaceToolResult = { ok: true, surfaceId: surface.surfaceId };
     return success;
   },
   onValidationFailure: (context, issues) => {
@@ -79,50 +89,6 @@ export const renderSurfaceTool: FrontendToolSpec<RenderSurfaceArgs> = {
     inject(RENDER_FAILURE_HANDLER)({ toolCallId: context.toolCall.id, code: 'invalid_args', issues });
   },
 };
-
-interface SurfaceIssue {
-  readonly path: readonly (string | number)[];
-  readonly message: string;
-}
-
-/**
- * The wrapper schema validates each message alone; one fresh surface per call
- * is the protocol contract, so the cross-message check lives here — issues are
- * shaped like the zod issues they sit next to.
- */
-function resolveSurfaceId(
-  messages: readonly A2uiMessage[],
-): { readonly id: string; readonly catalogId: string } | { readonly issues: readonly SurfaceIssue[] } {
-  const created = messages.flatMap((message) =>
-    'createSurface' in message ? [message.createSurface] : [],
-  );
-  if (created.length !== 1) {
-    return { issues: [{ path: ['messages'], message: 'Expected exactly one createSurface message.' }] };
-  }
-
-  const { surfaceId: id, catalogId } = created[0];
-  const issues = messages.flatMap((message, index): SurfaceIssue[] => {
-    if ('deleteSurface' in message) {
-      return [
-        {
-          path: ['messages', index],
-          message: 'deleteSurface is not allowed; create a fresh surface instead.',
-        },
-      ];
-    }
-    return surfaceIdOf(message) === id
-      ? []
-      : [{ path: ['messages', index], message: `surfaceId mismatch: expected '${id}'.` }];
-  });
-  return issues.length === 0 ? { id, catalogId } : { issues };
-}
-
-function surfaceIdOf(message: A2uiMessage): string {
-  if ('createSurface' in message) return message.createSurface.surfaceId;
-  if ('updateComponents' in message) return message.updateComponents.surfaceId;
-  if ('updateDataModel' in message) return message.updateDataModel.surfaceId;
-  return message.deleteSurface.surfaceId;
-}
 
 /**
  * The processor validates props only for names the catalog knows and skips the
@@ -149,35 +115,11 @@ function findUnknownComponents(
   return [...unknown];
 }
 
-/**
- * Decides on parsed segments, mirroring the data model's own path handling:
- * 'me', '/me' and '/me/' address the same location, and a root write ('',
- * '/', or an absent path) replaces every client-owned path at once — so it
- * counts as forbidden as a whole.
- */
-function findForbiddenModelWrites(messages: readonly A2uiMessage[]): string[] {
-  const paths: string[] = [];
-  for (const message of messages) {
-    if (!('updateDataModel' in message)) continue;
-    const { path } = message.updateDataModel;
-    const segments = segmentsOf(path);
-    if (segments.length === 0 || CLIENT_OWNED_SEGMENTS.has(segments[0])) {
-      paths.push(path ?? '/');
-    }
-  }
-  return paths;
-}
-
 function writesFirstSegment(messages: readonly A2uiMessage[], segment: string): boolean {
   return messages.some(
     (message) =>
       'updateDataModel' in message && segmentsOf(message.updateDataModel.path)[0] === segment,
   );
-}
-
-/** Same splitting as the data model's `parsePath`: '/'-separated, empty segments dropped. */
-function segmentsOf(path: string | undefined): string[] {
-  return (path ?? '').split('/').filter((segment) => segment.length > 0);
 }
 
 function createClientDataMessages(

@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CopilotChat } from '@copilotkit/angular';
-import { ASSISTANT_FRAGMENTS } from '../a2ui/assistant-fragments';
 import { catalogToContextEntry } from '../a2ui/catalog-context';
 import { createAgentStoreHelper } from '../agent/agent-store-helper';
 import { ASSISTANT_AGENT_ID } from '../agent/assistant-agent.token';
@@ -49,7 +48,7 @@ export class ChatPage {
   private readonly store = initAgentStore({
     agentId: ASSISTANT_AGENT_ID,
     frontendTools: [findConferencesTool, renderSurfaceTool, messageWidgetTool],
-    context: [catalogToContextEntry(ASSISTANT_FRAGMENTS), () => meToContextEntry(this.location.me())],
+    context: [catalogToContextEntry(), () => meToContextEntry(this.location.me())],
   });
   private readonly chat = createAgentStoreHelper(this.store);
 

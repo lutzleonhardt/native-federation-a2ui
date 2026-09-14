@@ -342,6 +342,13 @@ Depends on Task 6 (`SurfaceDataStore`, `findConferences` handler, action bus fro
 
 ## Task 9: Agent prompt for requests 1–3 and the `npm run eval` model-behavior harness (M1 gate)
 
+> **AMENDED (2026-09-12, user-approved):** the harness is trimmed to what the gate needs.
+> Dropped: the `docs/eval/*.md` report generator, token-usage accounting, and the provider
+> cross-check as a gate criterion (`AGENT_PROVIDER` stays an env override for manual runs).
+> `catalog-instructions.ts` folds into `prompt.ts`; `client-tools.ts` and `report.ts` fold into
+> `run-eval.ts`. Scoring semantics (A1–A3 and the global fail conditions) are unchanged.
+> Added: `catalogToContextEntry` must become Node-importable — see Instructions.
+
 Depends on Task 7 (running shell loop; tool definitions and context serializer to reuse).
 
 **Instructions**
@@ -360,7 +367,8 @@ Depends on Task 7 (running shell loop; tool definitions and context serializer t
   3. „Wann ist die nächste in meiner Nähe? Wenn ich eine anklicke, will ich Details."
   (Request 4 „Reservier mir eine Karte" is a button click without a model call; its contract — the `reserve` button — is scored inside request 3. Requests 2 and 3 run as a conversation after request 1.)
 - `eval/score.ts` (pure): A1 — exactly one `renderSurface`, a `Timeline` with `items: { path: '/filteredConfs' }`; A2 — a `Map` with `points: { path: '/filteredConfs' }` and `center: { path: '/me' }`; A3 — a `Map` with `selected: { path: P }`, a `Text` bound to `P/name`, a `Gauge` bound to `P/remaining`, a `Button` whose action event is `reserve` with `id: { path: P + '/id' }`, and `daysUntil` and `distance` used in the surface. Any run fails if it writes `/filteredConfs` or `/me` via `updateDataModel` or if an `updateDataModel` value contains a date literal (`\d{4}-\d{2}-\d{2}`) — the replay-freshness risk.
-- `eval/report.ts`: writes `docs/eval/<date>-<provider>-<model>.md` with per-request `k/5`, failure reasons, duration and token usage per run; exit code 0 iff every request scores ≥ 4/5. Provider/model from `agent/src/config.ts` with `AGENT_PROVIDER`/`AGENT_MODEL` env overrides so the cross-check with the cheap OpenAI model is one variable.
+- `eval/run-eval.ts` prints the per-request summary to stdout (`k/5`, failure reasons, duration per run) and exits 0 iff every request scores ≥ 4/5. Provider/model come from `agent/src/config.ts` with `AGENT_PROVIDER`/`AGENT_MODEL` env overrides, so pointing a run at another model stays one variable. The numbers go into the task log, not into a generated file.
+- `src/app/a2ui/catalog-context.ts` must build the context entry without Angular, so shell and harness share one serializer (XC-04): `@a2ui/angular/v0_9` does not load in Node ("partially compiled library"), while the framework-free `@a2ui/web_core/v0_9/basic_catalog` exports the same `BASIC_COMPONENTS`/`BASIC_FUNCTIONS` names for deduplication. The component metadata (`*_META`) and the catalog functions are already Node-importable; only the `@a2ui/angular` route through `assistant-catalog.ts` is not.
 - Prompt iteration is expected inside this task: run, sharpen examples, re-run. Record the go/no-go decision on the wiring risk in the task log (options if the gate fails: prompt examples, model switch; a follow-up question via `submitAnswer` is the fallback path, not the goal).
 - `agent/` unit test for the prompt assembly (mirrors the book's `addCustomCatalogInstructions`).
 
@@ -368,14 +376,15 @@ Depends on Task 7 (running shell loop; tool definitions and context serializer t
 
 - T9-AC-01 — (Node) prompt assembly with a catalog context entry lists every component and function name from the entry under a "Custom Catalog" section; without a catalog entry it emits a "no custom vocabulary available" note.
 - T9-AC-02 — (Node) the scorer, fed recorded `renderSurface` args, passes A3 for the wired surface above and fails it when `selected` is a literal, when `/filteredConfs` is written via `updateDataModel`, or when a date literal appears in a data-model value.
-- T9-AC-03 — `npm run eval` against the development model writes `docs/eval/<date>-<provider>-<model>.md`, and each of requests 1–3 scores ≥ 4/5 (spec acceptance 1, the "Verdrahtung" risk). If the gate is not reached, the task log records the prompt variants tried and the decision.
+- T9-AC-03 — `npm run eval` against the development model prints a per-request summary and each of requests 1–3 scores ≥ 4/5 (spec acceptance 1, the "Verdrahtung" risk); the task log records the numbers. If the gate is not reached, the task log records the prompt variants tried and the decision.
 
 **Key Locations**
 
-- `agent/src/prompt.ts`, `agent/src/catalog-instructions.ts`, `agent/src/agent.ts`
-- `eval/run-eval.ts`, `eval/client-tools.ts`, `eval/score.ts`, `eval/report.ts`, `eval/tsconfig.json`
-- root `package.json` (`eval` script), `docs/eval/`
-- reused: `src/app/agent/tools/*.definition.ts`, `src/app/a2ui/catalog-context.ts`, `src/app/capabilities/**/*.schema.ts`, `src/app/domain/find-conferences.ts`
+- `agent/src/prompt.ts`, `agent/src/agent.ts`
+- `eval/run-eval.ts` (runner + client tools), `eval/score.ts` (pure), `eval/tsconfig.json`, `eval/vitest.config.ts`
+- root `package.json` (`eval` + `test:eval` scripts, `tsx`)
+- changed for Node-importability: `src/app/a2ui/catalog-context.ts` and its call site `src/app/chat/chat.page.ts`
+- reused: `src/app/agent/tools/*.definition.ts`, `src/app/capabilities/**/*.schema.ts`, `src/app/domain/find-conferences.ts`
 
 **Key Discoveries**
 
