@@ -26,46 +26,15 @@ export const renderSurfaceTool: FrontendToolSpec<RenderSurfaceArgs> = {
     const renderer = inject(A2uiRendererService);
     const store = inject(SurfaceDataStore);
     const onFailure = inject(RENDER_FAILURE_HANDLER);
+    const catalogs = inject(A2UI_RENDERER_CONFIG).catalogs ?? [];
     const fail = (code: string, result: unknown): ToolResult => {
       onFailure({ toolCallId: context.toolCall.id, code, issues: result });
       return { ok: false, code, result };
     };
 
-    const parsed = A2uiMessageListWrapperSchema.safeParse(args);
-    if (!parsed.success) return fail('invalid_messages', parsed.error.issues);
-    const messages = parsed.data.messages;
-
-    const violations = findStructuralViolations(messages);
-    if (violations.length > 0) return fail('invalid_messages', violations);
-
-    const surface = createdSurface(messages);
-    if (surface === undefined) {
-      return fail('invalid_messages', [
-        { path: ['messages'], message: 'createSurface needs both a surfaceId and a catalogId.' },
-      ]);
-    }
-    if (renderer.surfaceGroup.getSurface(surface.surfaceId) !== undefined) {
-      return fail('invalid_messages', [
-        {
-          path: ['messages'],
-          message: `Surface '${surface.surfaceId}' already exists; use a fresh surfaceId.`,
-        },
-      ]);
-    }
-
-    const forbiddenModelWrites = findForbiddenModelWrites(messages);
-    if (forbiddenModelWrites.length > 0) {
-      return fail(
-        'forbidden_model_writes',
-        `Bind these paths instead of writing them; the client mounts their values: ${forbiddenModelWrites.join(', ')}.`,
-      );
-    }
-
-    const catalogs = inject(A2UI_RENDERER_CONFIG).catalogs ?? [];
-    const unknown = findUnknownComponents(messages, catalogs, surface.catalogId);
-    if (unknown.length > 0) {
-      return fail('catalog', `Unknown component(s): ${unknown.join(', ')}.`);
-    }
+    const request = validateRenderRequest(args, renderer, catalogs);
+    if (!request.ok) return fail(request.code, request.result);
+    const { messages, surface } = request;
 
     try {
       renderer.processMessages(messages);
@@ -75,7 +44,7 @@ export const renderSurfaceTool: FrontendToolSpec<RenderSurfaceArgs> = {
     } catch (error) {
       // Messages apply one by one, so a failure can leave the surface of an
       // already-applied createSurface (or a half-mounted data model) behind —
-      // take it back out. The fresh-id check above guarantees it is ours.
+      // take it back out. The fresh-id check in validateRenderRequest guarantees it is ours.
       deleteSurface(renderer, surface.surfaceId);
       return fail('catalog', error instanceof Error ? error.message : String(error));
     }
@@ -89,6 +58,76 @@ export const renderSurfaceTool: FrontendToolSpec<RenderSurfaceArgs> = {
     inject(RENDER_FAILURE_HANDLER)({ toolCallId: context.toolCall.id, code: 'invalid_args', issues });
   },
 };
+
+/** A render request that may be applied, or the `fail` code and payload the model gets back. */
+type RenderRequest =
+  | {
+      readonly ok: true;
+      readonly messages: A2uiMessage[];
+      readonly surface: { readonly surfaceId: string; readonly catalogId: string };
+    }
+  | { readonly ok: false; readonly code: string; readonly result: unknown };
+
+/**
+ * Everything that must hold before a single message is applied: envelope schema,
+ * the cross-message rules, a `createSurface` with a fresh id, no writes to
+ * client-owned paths, no unknown component name. The first violation wins.
+ */
+function validateRenderRequest(
+  args: unknown,
+  renderer: A2uiRendererService,
+  catalogs: readonly AngularCatalog[],
+): RenderRequest {
+  const parsed = A2uiMessageListWrapperSchema.safeParse(args);
+  if (!parsed.success) {
+    return { ok: false, code: 'invalid_messages', result: parsed.error.issues };
+  }
+  const messages = parsed.data.messages;
+
+  const violations = findStructuralViolations(messages);
+  if (violations.length > 0) {
+    return { ok: false, code: 'invalid_messages', result: violations };
+  }
+
+  const surface = createdSurface(messages);
+  if (surface === undefined) {
+    return {
+      ok: false,
+      code: 'invalid_messages',
+      result: [
+        { path: ['messages'], message: 'createSurface needs both a surfaceId and a catalogId.' },
+      ],
+    };
+  }
+  if (renderer.surfaceGroup.getSurface(surface.surfaceId) !== undefined) {
+    return {
+      ok: false,
+      code: 'invalid_messages',
+      result: [
+        {
+          path: ['messages'],
+          message: `Surface '${surface.surfaceId}' already exists; use a fresh surfaceId.`,
+        },
+      ],
+    };
+  }
+
+  const forbiddenModelWrites = findForbiddenModelWrites(messages);
+  if (forbiddenModelWrites.length > 0) {
+    return {
+      ok: false,
+      code: 'forbidden_model_writes',
+      result: `Bind these paths instead of writing them; the client mounts their values: ${forbiddenModelWrites.join(', ')}.`,
+    };
+  }
+
+  const unknown = findUnknownComponents(messages, catalogs, surface.catalogId);
+  if (unknown.length > 0) {
+    return { ok: false, code: 'catalog', result: `Unknown component(s): ${unknown.join(', ')}.` };
+  }
+
+  return { ok: true, messages, surface };
+}
 
 /**
  * The processor validates props only for names the catalog knows and skips the
