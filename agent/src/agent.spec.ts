@@ -1,6 +1,10 @@
 import type { Context } from '@ag-ui/core';
 import { RequestContext } from '@mastra/core/request-context';
 import { describe, expect, it } from 'vitest';
+import {
+  CATALOG_CONTEXT_DESCRIPTION,
+  LOCATION_CONTEXT_DESCRIPTION,
+} from '../../shared/agent-contract.js';
 import { createAssistantAgent } from './agent.js';
 
 /**
@@ -11,7 +15,7 @@ import { createAssistantAgent } from './agent.js';
 const AG_UI_KEY = 'ag-ui';
 
 const catalogEntry: Context = {
-  description: 'A2UI Custom Catalog',
+  description: CATALOG_CONTEXT_DESCRIPTION,
   value: JSON.stringify({ catalogId: 'c', components: { Gauge: {} }, functions: { daysUntil: {} } }),
 };
 
@@ -26,7 +30,7 @@ describe('createAssistantAgent', () => {
   it('T9-AC-01 builds the instructions from the context parked under the ag-ui key', async () => {
     const instructions = await agentWithContext([
       catalogEntry,
-      { description: 'User location (me)', value: JSON.stringify({ city: 'Berlin' }) },
+      { description: LOCATION_CONTEXT_DESCRIPTION, value: JSON.stringify({ city: 'Berlin' }) },
     ]);
 
     expect(instructions).toContain('Gauge');
@@ -40,11 +44,11 @@ describe('createAssistantAgent', () => {
   it('resolves the instructions per call, so a changed location reaches the next run', async () => {
     const first = await agentWithContext([
       catalogEntry,
-      { description: 'User location (me)', value: JSON.stringify({ city: 'Berlin' }) },
+      { description: LOCATION_CONTEXT_DESCRIPTION, value: JSON.stringify({ city: 'Berlin' }) },
     ]);
     const second = await agentWithContext([
       catalogEntry,
-      { description: 'User location (me)', value: JSON.stringify({ city: 'Wien' }) },
+      { description: LOCATION_CONTEXT_DESCRIPTION, value: JSON.stringify({ city: 'Wien' }) },
     ]);
 
     expect(first).toContain('Berlin');

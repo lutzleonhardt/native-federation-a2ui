@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CopilotChat } from '@copilotkit/angular';
+import { ASSISTANT_AGENT_ID } from '../../../shared/agent-contract';
 import { catalogToContextEntry } from '../a2ui/catalog-context';
 import { createAgentStoreHelper } from '../agent/agent-store-helper';
-import { ASSISTANT_AGENT_ID } from '../agent/assistant-agent.token';
 import { initAgentStore } from '../agent/init-agent-store';
 import { meToContextEntry } from '../agent/me-context-entry';
 import { findConferencesTool } from '../agent/tools/find-conferences.tool';

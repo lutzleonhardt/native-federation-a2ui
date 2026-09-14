@@ -14,3 +14,4 @@ from it.
 - [ ] The eval's A3 prompt example is close to the request-3 answer, so the gate measures example-following rather than derived wiring; vary the request phrasing or thin the example — from task 9, scope m1-spike · source: wrap-up
 - [ ] Prompt caching is not enabled (no `cacheControl` in the provider options); the prompt is already ordered stable-first for a breakpoint behind the vocabulary — from task 9, scope m1-spike · source: wrap-up
 - [ ] `ng lint` covers only `src/**`, so `eval/` and `agent/` stay unlinted — from task 9, scope m1-spike · source: wrap-up
+- [ ] A rename of the `ag-ui` request-context key by `@ag-ui/mastra` would silently empty the prompt's vocabulary section — `agent.spec.ts` sets the key itself and stays green; a spec driving the real adapter (`MastraAgent.applyInputContext`) would catch it — from chore-agent-contract, scope m1-spike · source: wrap-up

@@ -8,10 +8,9 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { Observable, Subscription } from 'rxjs';
 import { fileURLToPath } from 'node:url';
-import { ASSISTANT_AGENT_ID, createAssistantAgent } from './agent.js';
+import { AGENT_PORT, ASSISTANT_AGENT_ID, agUiPath } from '../../shared/agent-contract.js';
+import { createAssistantAgent } from './agent.js';
 import { DEFAULT_SHELL_ORIGIN, loadConfig, resolveModel, resolveShellOrigin } from './config.js';
-
-export const AGENT_PORT = 3001;
 
 /**
  * Loopback only. CORS restricts browsers, not access: without a bound host the
@@ -22,9 +21,9 @@ export const AGENT_HOST = '127.0.0.1';
 export function createApp(agents: ReadonlyMap<string, Agent>, shellOrigin = DEFAULT_SHELL_ORIGIN): Hono {
   const app = new Hono();
 
-  app.use('/ag-ui/*', cors({ origin: shellOrigin }));
+  app.use(agUiPath('*'), cors({ origin: shellOrigin }));
 
-  app.post('/ag-ui/:agentId', async (c) => {
+  app.post(agUiPath(':agentId'), async (c) => {
     const agentId = c.req.param('agentId');
     const agent = agents.get(agentId);
     if (!agent) {

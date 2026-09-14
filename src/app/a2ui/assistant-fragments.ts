@@ -3,8 +3,8 @@ import { mapsFragment } from '../capabilities/maps';
 import type { CatalogFragment } from './assistant-catalog';
 
 /**
- * What the renderer implements. The model-facing twin lives in `catalog-context.ts`,
- * which must stay Angular-free; a spec there pins that both lists name the same
- * components and functions.
+ * What the renderer implements: each capability's vocabulary paired with its
+ * Angular components. `catalog-context.ts` announces the same vocabulary to the
+ * model without the Angular half; a spec there pins that both name the same set.
  */
 export const ASSISTANT_FRAGMENTS: readonly CatalogFragment[] = [chartsFragment, mapsFragment];

@@ -1,5 +1,9 @@
 import type { Context } from '@ag-ui/core';
 import { describe, expect, it } from 'vitest';
+import {
+  CATALOG_CONTEXT_DESCRIPTION,
+  LOCATION_CONTEXT_DESCRIPTION,
+} from '../../shared/agent-contract.js';
 import { buildInstructions } from './prompt.js';
 
 const CATALOG_PAYLOAD = {
@@ -14,12 +18,12 @@ const CATALOG_PAYLOAD = {
 };
 
 const catalogEntry: Context = {
-  description: 'A2UI Custom Catalog',
+  description: CATALOG_CONTEXT_DESCRIPTION,
   value: JSON.stringify(CATALOG_PAYLOAD),
 };
 
 const locationEntry: Context = {
-  description: 'User location (me)',
+  description: LOCATION_CONTEXT_DESCRIPTION,
   value: JSON.stringify({ city: 'Berlin', lat: 52.52, lon: 13.405 }),
 };
 

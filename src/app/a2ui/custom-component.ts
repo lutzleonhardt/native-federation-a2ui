@@ -1,6 +1,7 @@
 import type { Type } from '@angular/core';
 import type { AngularComponentImplementation } from '@a2ui/angular/v0_9';
 import type { z } from 'zod/v3';
+import type { AssistantFunction, CatalogFragment } from './assistant-catalog';
 
 /**
  * The model-facing half of a component: name, prompt description, and prop
@@ -12,6 +13,18 @@ export interface ComponentMeta<Schema extends z.ZodTypeAny = z.ZodTypeAny> {
   readonly description: string;
   readonly schema: Schema;
 }
+
+/**
+ * One capability's model-facing vocabulary, keyed by component name so that the
+ * announced set and the Angular implementations are closed over the same union.
+ */
+export interface CapabilityVocabulary<Names extends string> {
+  readonly components: Record<Names, ComponentMeta>;
+  readonly functions: readonly AssistantFunction[];
+}
+
+/** Every announced component needs an implementation; a missing or unknown name is a compile error. */
+export type ComponentImplementations<Names extends string> = Record<Names, Type<unknown>>;
 
 /** An assistant-catalog component: renderer implementation plus prompt metadata. */
 export interface CustomComponent extends AngularComponentImplementation {
@@ -39,5 +52,18 @@ export function createCustomComponent(
     description: config.description,
     schema: config.schema as unknown as AngularComponentImplementation['schema'],
     component: config.component as AngularComponentImplementation['component'],
+  };
+}
+
+/** Joins a capability's vocabulary with its Angular implementations. */
+export function toFragment(
+  vocabulary: CapabilityVocabulary<string>,
+  implementations: ComponentImplementations<string>,
+): CatalogFragment {
+  return {
+    components: Object.entries(vocabulary.components).map(([name, meta]) =>
+      createCustomComponent({ ...meta, component: implementations[name] }),
+    ),
+    functions: vocabulary.functions,
   };
 }

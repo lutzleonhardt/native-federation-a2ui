@@ -4,7 +4,7 @@ import { Agent } from '@mastra/core/agent';
 import { MockLanguageModelV4, simulateReadableStream } from 'ai/test';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ASSISTANT_AGENT_ID } from './agent.js';
+import { ASSISTANT_AGENT_ID } from '../../shared/agent-contract.js';
 import { DEFAULT_SHELL_ORIGIN } from './config.js';
 import { createApp } from './server.js';
 

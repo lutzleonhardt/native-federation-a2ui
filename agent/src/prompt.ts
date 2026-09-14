@@ -1,12 +1,8 @@
 import type { Context } from '@ag-ui/core';
-
-/**
- * The client's context entries are addressed by their `description` — that is
- * the only handle AG-UI's `Context` gives. These two strings mirror
- * `catalogToContextEntry` and `meToContextEntry` in the shell.
- */
-const CATALOG_ENTRY = 'A2UI Custom Catalog';
-const LOCATION_ENTRY = 'User location (me)';
+import {
+  CATALOG_CONTEXT_DESCRIPTION,
+  LOCATION_CONTEXT_DESCRIPTION,
+} from '../../shared/agent-contract.js';
 
 const OUTPUT_RULES = `# How you answer
 
@@ -129,8 +125,8 @@ export function buildInstructions(context: readonly Context[]): string {
     OUTPUT_RULES,
     FORMAT_RULES,
     WIRING_RULES,
-    catalogSection(findEntry(context, CATALOG_ENTRY)),
-    locationSection(findEntry(context, LOCATION_ENTRY)),
+    catalogSection(findEntry(context, CATALOG_CONTEXT_DESCRIPTION)),
+    locationSection(findEntry(context, LOCATION_CONTEXT_DESCRIPTION)),
   ].join('\n\n');
 }
 

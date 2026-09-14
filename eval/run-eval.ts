@@ -5,6 +5,7 @@ import { A2uiMessageListWrapperSchema } from '@a2ui/web_core/v0_9';
 import { schemaToJsonSchema } from '@copilotkit/shared';
 import type { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { ASSISTANT_AGENT_ID, localAgentUrl } from '../shared/agent-contract';
 import { catalogToContextEntry } from '../src/app/a2ui/catalog-context';
 import { createdSurface } from '../src/app/a2ui/surface-host-rules';
 import { meToContextEntry } from '../src/app/agent/me-context-entry';
@@ -25,7 +26,7 @@ import { score, type RecordedCall, type Requirement } from './score';
  * Costs real model calls. Not a test, not in CI: `npm run eval`.
  */
 
-const AGENT_URL = process.env['EVAL_AGENT_URL'] ?? 'http://localhost:3001/ag-ui/assistant';
+const AGENT_URL = process.env['EVAL_AGENT_URL'] ?? localAgentUrl(ASSISTANT_AGENT_ID);
 const RUNS_PER_REQUEST = positiveInteger(process.env['EVAL_RUNS'], 5, 'EVAL_RUNS');
 /** The gate is "4 out of 5" — as a ratio, so a shorter smoke run is judged by the same bar. */
 const PASS_RATIO = 4 / 5;
@@ -105,7 +106,7 @@ async function runEval(): Promise<boolean> {
   const records: RunRecord[][] = REQUESTS.map(() => []);
 
   for (let run = 0; run < RUNS_PER_REQUEST; run += 1) {
-    const agent = new HttpAgent({ url: AGENT_URL, agentId: 'assistant' });
+    const agent = new HttpAgent({ url: AGENT_URL, agentId: ASSISTANT_AGENT_ID });
     const session = newSession();
     for (const [index, request] of REQUESTS.entries()) {
       process.stdout.write(`run ${run + 1}/${RUNS_PER_REQUEST} · ${request.requirement} … `);

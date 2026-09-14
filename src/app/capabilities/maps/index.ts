@@ -1,10 +1,10 @@
 import type { CatalogFragment } from '../../a2ui/assistant-catalog';
-import { createCustomComponent } from '../../a2ui/custom-component';
-import { distanceFn } from './distance.fn';
+import { toFragment, type ComponentImplementations } from '../../a2ui/custom-component';
 import { MapComponent } from './map.component';
-import { MAP_META } from './map.schema';
+import { mapsVocabulary, type MapsComponentName } from './vocabulary';
 
-export const mapsFragment: CatalogFragment = {
-  components: [createCustomComponent({ ...MAP_META, component: MapComponent })],
-  functions: [distanceFn],
+const IMPLEMENTATIONS: ComponentImplementations<MapsComponentName> = {
+  Map: MapComponent,
 };
+
+export const mapsFragment: CatalogFragment = toFragment(mapsVocabulary, IMPLEMENTATIONS);

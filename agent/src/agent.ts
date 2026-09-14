@@ -1,9 +1,8 @@
 import type { Context } from '@ag-ui/core';
 import { Agent } from '@mastra/core/agent';
 import type { MastraModelConfig } from '@mastra/core/llm';
+import { ASSISTANT_AGENT_ID } from '../../shared/agent-contract.js';
 import { buildInstructions } from './prompt.js';
-
-export const ASSISTANT_AGENT_ID = 'assistant';
 
 /** `@ag-ui/mastra` parks the run's AG-UI input here (`applyInputContext`); Mastra itself never reads it. */
 const AG_UI_KEY = 'ag-ui';

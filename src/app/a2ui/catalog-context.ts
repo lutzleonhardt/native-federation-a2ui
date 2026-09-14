@@ -1,11 +1,9 @@
 import type { Context } from '@ag-ui/core';
 import { BASIC_COMPONENTS, BASIC_FUNCTIONS } from '@a2ui/web_core/v0_9/basic_catalog';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { daysUntilFn } from '../capabilities/charts/days-until.fn';
-import { GAUGE_META } from '../capabilities/charts/gauge.schema';
-import { TIMELINE_META } from '../capabilities/charts/timeline.schema';
-import { distanceFn } from '../capabilities/maps/distance.fn';
-import { MAP_META } from '../capabilities/maps/map.schema';
+import { CATALOG_CONTEXT_DESCRIPTION } from '../../../shared/agent-contract';
+import { chartsVocabulary } from '../capabilities/charts/vocabulary';
+import { mapsVocabulary } from '../capabilities/maps/vocabulary';
 import { ASSISTANT_CATALOG_ID } from './assistant-catalog-id';
 
 /**
@@ -27,13 +25,16 @@ interface FunctionVocabulary extends ComponentVocabulary {
   readonly returnType: string;
 }
 
-/** Paired with the Angular implementations in `assistant-fragments.ts`; a spec pins that both lists agree. */
+/** The same per-capability lists the renderer pairs with Angular components in `assistant-fragments.ts`. */
 const ASSISTANT_VOCABULARY: {
   readonly components: readonly ComponentVocabulary[];
   readonly functions: readonly FunctionVocabulary[];
 } = {
-  components: [GAUGE_META, TIMELINE_META, MAP_META],
-  functions: [daysUntilFn, distanceFn],
+  components: [
+    ...Object.values(chartsVocabulary.components),
+    ...Object.values(mapsVocabulary.components),
+  ],
+  functions: [...chartsVocabulary.functions, ...mapsVocabulary.functions],
 };
 
 /**
@@ -57,7 +58,7 @@ export function catalogToContextEntry(): Context {
       ]),
     ),
   };
-  return { description: 'A2UI Custom Catalog', value: JSON.stringify(payload) };
+  return { description: CATALOG_CONTEXT_DESCRIPTION, value: JSON.stringify(payload) };
 }
 
 /** Names the model already knows from the basic catalog; announcing them twice invites collisions. */

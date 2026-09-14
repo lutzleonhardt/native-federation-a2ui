@@ -1,9 +1,9 @@
 import { inject, InjectionToken, type Provider } from '@angular/core';
 import { type AbstractAgent, HttpAgent } from '@ag-ui/client';
 import { COPILOT_KIT_CONFIG, type CopilotKitConfig } from '@copilotkit/angular';
+import { ASSISTANT_AGENT_ID, localAgentUrl } from '../../../shared/agent-contract';
 
-export const ASSISTANT_AGENT_ID = 'assistant';
-export const ASSISTANT_AGENT_URL = 'http://localhost:3001/ag-ui/assistant';
+export const ASSISTANT_AGENT_URL = localAgentUrl(ASSISTANT_AGENT_ID);
 
 /**
  * The AG-UI agent behind the chat. Production talks to the local agent server;

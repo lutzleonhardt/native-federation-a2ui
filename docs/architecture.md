@@ -217,6 +217,16 @@ stay reserved to CopilotKit.
 - **Loopback only, CORS on top.** The agent binds to `127.0.0.1` — CORS
   restricts browsers, not access; without the bound host any LAN peer could
   spend the API key.
+- **One enumeration per capability.** `capabilities/<area>/vocabulary.ts` names
+  the components and functions that area contributes; `index.ts` pairs the same
+  names with Angular components, and `catalog-context.ts` serializes them for
+  the model. Both halves are keyed by one name union, so an announced component
+  without an implementation (or the reverse) is a compile error.
+- **The shell/agent/eval contract is one file.** Agent id, port, route shape and
+  the two context-entry descriptions live in `shared/agent-contract.ts`, which
+  all three projects import; it stays import-free because it has to load under
+  three module resolutions (Angular bundler, the agent's `nodenext`, eval). The
+  specs that assert the literal values are the place where a rename is decided.
 - **`src/app/capabilities/**` never imports `src/app/domain/`.** Charts and
   maps become Native Federation remotes in M2; the cut must stay mechanical.
   That is why `capabilities/maps` carries its own haversine copy, pinned to the
