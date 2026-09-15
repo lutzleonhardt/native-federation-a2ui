@@ -1,4 +1,4 @@
-import type { CapabilityVocabulary } from '../../a2ui/custom-component';
+import type { CapabilityVocabulary } from '../../../../shared/capabilities/agent-capability';
 import { daysUntilFn } from './days-until.fn';
 import { GAUGE_META } from './gauge.schema';
 import { TIMELINE_META } from './timeline.schema';

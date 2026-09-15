@@ -4,8 +4,9 @@ import { chartsFragment } from '../capabilities/charts';
 import { GaugeComponent } from '../capabilities/charts/gauge.component';
 import { GAUGE_META } from '../capabilities/charts/gauge.schema';
 import { mapsFragment } from '../capabilities/maps';
-import { ASSISTANT_CATALOG_ID, CatalogFragment, createAssistantCatalog } from './assistant-catalog';
-import { createCustomComponent } from './custom-component';
+import { ASSISTANT_CATALOG_ID, createAssistantCatalog } from './assistant-catalog';
+import type { CatalogFragment } from '../../../shared/capabilities/agent-capability';
+import { createCustomComponent } from '../../../shared/capabilities/custom-component';
 
 class SecondGauge {}
 

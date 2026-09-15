@@ -1,20 +1,8 @@
 import { BASIC_COMPONENTS, BASIC_FUNCTIONS, BasicCatalogBase } from '@a2ui/angular/v0_9';
-import type { FunctionImplementation } from '@a2ui/web_core/v0_9';
+import type { CatalogFragment } from '../../../shared/capabilities/agent-capability';
 import { ASSISTANT_CATALOG_ID } from './assistant-catalog-id';
-import type { CustomComponent } from './custom-component';
 
 export { ASSISTANT_CATALOG_ID };
-
-/** An assistant-catalog function: implementation plus prompt metadata. */
-export interface AssistantFunction extends FunctionImplementation {
-  readonly description: string;
-}
-
-/** What one capability area (charts, maps, …) contributes to the assistant catalog. */
-export interface CatalogFragment {
-  readonly components: readonly CustomComponent[];
-  readonly functions: readonly AssistantFunction[];
-}
 
 /**
  * Merges fragments into one deduplicated vocabulary. Names already taken by the

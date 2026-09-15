@@ -1,7 +1,7 @@
 import { z } from 'zod/v3';
-import { actionSchema } from '../../a2ui/action-schema';
-import { binding } from '../../a2ui/binding';
-import type { ComponentMeta } from '../../a2ui/custom-component';
+import { actionSchema } from '../../../../shared/capabilities/action-schema';
+import { binding } from '../../../../shared/capabilities/binding';
+import type { ComponentMeta } from '../../../../shared/capabilities/custom-component';
 
 const timelineItemSchema = z
   .object({

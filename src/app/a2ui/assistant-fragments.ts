@@ -1,6 +1,6 @@
 import { chartsFragment } from '../capabilities/charts';
 import { mapsFragment } from '../capabilities/maps';
-import type { CatalogFragment } from './assistant-catalog';
+import type { CatalogFragment } from '../../../shared/capabilities/agent-capability';
 
 /**
  * What the renderer implements: each capability's vocabulary paired with its

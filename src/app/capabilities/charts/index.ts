@@ -1,5 +1,8 @@
-import type { CatalogFragment } from '../../a2ui/assistant-catalog';
-import { toFragment, type ComponentImplementations } from '../../a2ui/custom-component';
+import {
+  toFragment,
+  type CatalogFragment,
+  type ComponentImplementations,
+} from '../../../../shared/capabilities/agent-capability';
 import { GaugeComponent } from './gauge.component';
 import { TimelineComponent } from './timeline.component';
 import { chartsVocabulary, type ChartsComponentName } from './vocabulary';

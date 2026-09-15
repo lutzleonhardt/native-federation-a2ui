@@ -1,6 +1,6 @@
 import { z } from 'zod/v3';
-import { binding } from '../../a2ui/binding';
-import type { ComponentMeta } from '../../a2ui/custom-component';
+import { binding } from '../../../../shared/capabilities/binding';
+import type { ComponentMeta } from '../../../../shared/capabilities/custom-component';
 
 export const gaugeSchema = z.object({
   value: binding(z.number()).describe('Current amount, e.g. remaining tickets.'),

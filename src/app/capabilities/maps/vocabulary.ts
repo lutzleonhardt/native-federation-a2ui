@@ -1,4 +1,4 @@
-import type { CapabilityVocabulary } from '../../a2ui/custom-component';
+import type { CapabilityVocabulary } from '../../../../shared/capabilities/agent-capability';
 import { distanceFn } from './distance.fn';
 import { MAP_META } from './map.schema';
 

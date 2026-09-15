@@ -155,7 +155,7 @@ evidence for each):
 | Chat & tools | `@copilotkit/angular` | chat UI, agent store, frontend-tool registration on top of AG-UI | Angular binding | `createFrontendTool`/`bindFrontendTool` — CopilotKit only JSON-parses tool args, so the boundary validates here; adds the turn-end suffix and routes boundary rejections into `RENDER_FAILURE_HANDLER`. `initAgentStore` — registers tools and context for one agent, re-publishes a turn-ending tool's result to the store (CopilotKit splices it in silently), and defers the correction run until that result exists |
 | Surface protocol | `@a2ui/web_core` | **A2UI**: surface messages, data model, path bindings, the catalog contract (name + schema); even its reactivity is neutral (`@preact/signals-core`) | framework-free | the `renderSurface` guards — the wrapper schema validates messages only one by one, so the cross-message rules (one fresh surface, no `deleteSurface`, segment-based forbidden writes, rollback on failure) live in the handler |
 | Surface renderer | `@a2ui/angular` | binds the catalog contract to Angular components (`BoundProperty` signals, `a2ui-v09-surface`) | Angular binding | `provideA2uiCatalog` (action-bus wiring plus the `MarkdownRenderer` the basic `Text` injects but `provideA2Ui` does not provide); `createCustomComponent`/`createCatalogFunction` (the two documented zod-universe bridge casts; add the `description` their `ComponentApi` lacks) |
-| Vocabulary | `src/app/a2ui/`, `src/app/capabilities/` | the assistant catalog: framework-free metadata (`*.schema.ts`, catalog functions) + Angular implementations | split on purpose | — (this layer is our code) |
+| Vocabulary | `shared/capabilities/` (contract), `src/app/capabilities/` (charts, maps), `src/app/a2ui/` (merge + model context) | the assistant catalog: framework-free metadata (`*.schema.ts`, catalog functions) + Angular implementations | split on purpose | — (this layer is our code) |
 
 How they interlock: A2UI never touches the wire on its own — it rides **inside**
 AG-UI, as the arguments of the `renderSurface` client tool call. CopilotKit
@@ -227,6 +227,14 @@ stay reserved to CopilotKit.
   all three projects import; it stays import-free because it has to load under
   three module resolutions (Angular bundler, the agent's `nodenext`, eval). The
   specs that assert the literal values are the place where a rename is decided.
+- **The capability contract is `shared/capabilities/`.** Everything a remote needs
+  to describe a capability (`AgentCapability`, `CapabilityVocabulary`, the
+  schema helpers, `dispatchSurfaceAction`) lives there; the shell keeps only
+  the merge (`assistant-catalog.ts`) and the model context. The Node rule holds
+  per file, not per folder: `surface-action.ts` needs Angular at runtime, and
+  an ESM import evaluates every module a barrel re-exports (tree-shaking is a
+  bundler step, Node has none), so there is no `index.ts` and a `vocabulary.ts`
+  must never reach it.
 - **`src/app/capabilities/**` never imports `src/app/domain/`.** Charts and
   maps become Native Federation remotes in M2; the cut must stay mechanical.
   That is why `capabilities/maps` carries its own haversine copy, pinned to the

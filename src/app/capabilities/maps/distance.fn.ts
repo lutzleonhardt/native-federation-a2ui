@@ -1,6 +1,8 @@
 import { z } from 'zod/v3';
-import type { AssistantFunction } from '../../a2ui/assistant-catalog';
-import { createCatalogFunction } from '../../a2ui/catalog-function';
+import {
+  createCatalogFunction,
+  type AssistantFunction,
+} from '../../../../shared/capabilities/catalog-function';
 import { haversineKm } from './geo';
 
 const geoPointSchema = z.object({

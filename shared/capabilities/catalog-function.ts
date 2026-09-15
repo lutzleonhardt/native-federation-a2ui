@@ -1,6 +1,10 @@
 import type { A2uiReturnType, FunctionImplementation } from '@a2ui/web_core/v0_9';
 import type { z } from 'zod/v3';
-import type { AssistantFunction } from './assistant-catalog';
+
+/** An assistant-catalog function: implementation plus prompt metadata. */
+export interface AssistantFunction extends FunctionImplementation {
+  readonly description: string;
+}
 
 export interface CatalogFunctionApi<Schema extends z.ZodTypeAny> {
   readonly name: string;

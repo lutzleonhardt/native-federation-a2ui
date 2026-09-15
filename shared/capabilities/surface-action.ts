@@ -9,6 +9,9 @@ import { DataContext, type Action } from '@a2ui/web_core/v0_9';
  *
  * The renderer service is resolved lazily through the injector: constructing
  * it needs the provideA2Ui config, which prop-fake component tests run without.
+ *
+ * Angular at runtime: reachable from components and `index.ts` only, never
+ * from a `vocabulary.ts` — those must keep loading under Node.
  */
 export function dispatchSurfaceAction(
   injector: Injector,

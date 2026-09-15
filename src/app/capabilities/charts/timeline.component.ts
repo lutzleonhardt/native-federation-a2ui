@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Injector, computed, inject, input } from '@angular/core';
 import type { BoundProperty } from '@a2ui/angular/v0_9';
 import type { Action } from '@a2ui/web_core/v0_9';
-import { dispatchSurfaceAction } from '../shared/surface-action';
+import { dispatchSurfaceAction } from '../../../../shared/capabilities/surface-action';
 
 /**
  * `label` is optional at runtime: path-bound items bypass schema validation,

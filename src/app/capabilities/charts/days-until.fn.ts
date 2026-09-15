@@ -1,6 +1,8 @@
 import { z } from 'zod/v3';
-import type { AssistantFunction } from '../../a2ui/assistant-catalog';
-import { createCatalogFunction } from '../../a2ui/catalog-function';
+import {
+  createCatalogFunction,
+  type AssistantFunction,
+} from '../../../../shared/capabilities/catalog-function';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
