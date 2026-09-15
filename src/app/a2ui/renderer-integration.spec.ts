@@ -3,10 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { chartsFragment } from '../capabilities/charts';
-import { mapsFragment } from '../capabilities/maps';
-import { ASSISTANT_CATALOG_ID, createAssistantCatalog } from './assistant-catalog';
-import { provideA2uiCatalog } from './provide-a2ui-catalog';
+import { chartsCapability } from '../capabilities/charts';
+import { mapsCapability } from '../capabilities/maps';
+import { provideAgentCapabilities } from './agent-capabilities.token';
+import { ASSISTANT_CATALOG_ID } from './assistant-catalog';
 
 const SURFACE_ID = 'renderer-spec-surface';
 
@@ -52,7 +52,7 @@ function gaugeSurfaceMessages(): A2uiMessage[] {
 describe('assistant catalog in the real renderer', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideA2uiCatalog(createAssistantCatalog([chartsFragment, mapsFragment]))],
+      providers: [provideAgentCapabilities([chartsCapability, mapsCapability])],
     });
   });
 

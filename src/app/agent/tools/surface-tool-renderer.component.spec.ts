@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { A2uiRendererService } from '@a2ui/angular/v0_9';
 import type { AngularToolCall } from '@copilotkit/angular';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ASSISTANT_CATALOG_ID, createAssistantCatalog } from '../../a2ui/assistant-catalog';
-import { provideA2uiCatalog } from '../../a2ui/provide-a2ui-catalog';
-import { chartsFragment } from '../../capabilities/charts';
-import { mapsFragment } from '../../capabilities/maps';
+import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
+import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
+import { chartsCapability } from '../../capabilities/charts';
+import { mapsCapability } from '../../capabilities/maps';
 import type { RenderSurfaceArgs } from './render-surface.definition';
 import { SurfaceToolRendererComponent } from './surface-tool-renderer.component';
 
@@ -27,7 +27,7 @@ async function render(toolCall: AngularToolCall<RenderSurfaceArgs>) {
 describe('SurfaceToolRendererComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideA2uiCatalog(createAssistantCatalog([chartsFragment, mapsFragment]))],
+      providers: [provideAgentCapabilities([chartsCapability, mapsCapability])],
     });
   });
 

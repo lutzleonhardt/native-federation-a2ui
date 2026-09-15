@@ -1,7 +1,6 @@
-import {
-  toFragment,
-  type CatalogFragment,
-  type ComponentImplementations,
+import type {
+  AgentCapability,
+  ComponentImplementations,
 } from '../../../../shared/capabilities/agent-capability';
 import { GaugeComponent } from './gauge.component';
 import { TimelineComponent } from './timeline.component';
@@ -12,4 +11,8 @@ const IMPLEMENTATIONS: ComponentImplementations<ChartsComponentName> = {
   Timeline: TimelineComponent,
 };
 
-export const chartsFragment: CatalogFragment = toFragment(chartsVocabulary, IMPLEMENTATIONS);
+export const chartsCapability: AgentCapability = {
+  name: 'charts',
+  vocabulary: chartsVocabulary,
+  components: IMPLEMENTATIONS,
+};

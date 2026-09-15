@@ -221,7 +221,10 @@ stay reserved to CopilotKit.
   the components and functions that area contributes; `index.ts` pairs the same
   names with Angular components, and `catalog-context.ts` serializes them for
   the model. Both halves are keyed by one name union, so an announced component
-  without an implementation (or the reverse) is a compile error.
+  without an implementation (or the reverse) is a compile error. Which
+  capabilities are loaded is decided by whoever bootstraps
+  (`createAppConfig(capabilities)`), never by an import in the shell;
+  `AGENT_CAPABILITIES` is where the rest of the app reads that list.
 - **The shell/agent/eval contract is one file.** Agent id, port, route shape and
   the two context-entry descriptions live in `shared/agent-contract.ts`, which
   all three projects import; it stays import-free because it has to load under

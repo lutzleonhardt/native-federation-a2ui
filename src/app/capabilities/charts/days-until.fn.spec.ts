@@ -1,8 +1,9 @@
 import type { DataContext } from '@a2ui/web_core/v0_9';
 import { describe, expect, it } from 'vitest';
+import { toFragment } from '../../../../shared/capabilities/agent-capability';
 import { createAssistantCatalog } from '../../a2ui/assistant-catalog';
 import { daysUntil, daysUntilFn } from './days-until.fn';
-import { chartsFragment } from './index';
+import { chartsCapability } from './index';
 
 // Fixed clock: `today` is an explicit argument, so no fake timers are needed.
 const TODAY = new Date(2026, 0, 1);
@@ -33,7 +34,7 @@ describe('daysUntil', () => {
   // renderer degrades a validation failure to `undefined` instead of showing a
   // silently wrong number.
   it('rejects a non-date string at the catalog invoker', () => {
-    const catalog = createAssistantCatalog([chartsFragment]);
+    const catalog = createAssistantCatalog([toFragment(chartsCapability)]);
 
     expect(() => catalog.invoker('daysUntil', { date: 'not-a-date' }, NO_CONTEXT)).toThrowError(
       /Validation failed/,
@@ -41,7 +42,7 @@ describe('daysUntil', () => {
   });
 
   it('rejects an impossible calendar date instead of rolling it over', () => {
-    const catalog = createAssistantCatalog([chartsFragment]);
+    const catalog = createAssistantCatalog([toFragment(chartsCapability)]);
 
     expect(() => catalog.invoker('daysUntil', { date: '2026-02-30' }, NO_CONTEXT)).toThrowError(
       /Validation failed/,

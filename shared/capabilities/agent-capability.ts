@@ -35,13 +35,10 @@ export interface CatalogFragment {
 }
 
 /** Joins a capability's vocabulary with its Angular implementations. */
-export function toFragment(
-  vocabulary: CapabilityVocabulary<string>,
-  implementations: ComponentImplementations<string>,
-): CatalogFragment {
+export function toFragment({ vocabulary, components }: AgentCapability): CatalogFragment {
   return {
     components: Object.entries(vocabulary.components).map(([name, meta]) =>
-      createCustomComponent({ ...meta, component: implementations[name] }),
+      createCustomComponent({ ...meta, component: components[name] }),
     ),
     functions: vocabulary.functions,
   };

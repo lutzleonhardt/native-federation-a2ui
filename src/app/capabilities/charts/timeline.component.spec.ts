@@ -4,11 +4,11 @@ import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
 import type { A2uiClientAction, A2uiMessage } from '@a2ui/web_core/v0_9';
 import { describe, expect, it, vi } from 'vitest';
 import { A2uiActionBus } from '../../a2ui/action-bus';
-import { ASSISTANT_CATALOG_ID, createAssistantCatalog } from '../../a2ui/assistant-catalog';
-import { provideA2uiCatalog } from '../../a2ui/provide-a2ui-catalog';
+import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
+import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
 import { boundProperty } from '../../testing/bound-property';
-import { mapsFragment } from '../maps';
-import { chartsFragment } from './index';
+import { mapsCapability } from '../maps';
+import { chartsCapability } from './index';
 import { TimelineComponent, TimelineItem, TimelineProps } from './timeline.component';
 
 const ITEMS: TimelineItem[] = [
@@ -156,7 +156,7 @@ function timelineSurfaceMessages(): A2uiMessage[] {
 describe('Timeline through the real renderer', () => {
   it('T5-AC-04 dispatches the pick action with the resolved context to the action bus', async () => {
     TestBed.configureTestingModule({
-      providers: [provideA2uiCatalog(createAssistantCatalog([chartsFragment, mapsFragment]))],
+      providers: [provideAgentCapabilities([chartsCapability, mapsCapability])],
     });
     const seen: A2uiClientAction[] = [];
     TestBed.inject(A2uiActionBus).subscribe((action) => seen.push(action));
@@ -176,7 +176,7 @@ describe('Timeline through the real renderer', () => {
 
   it('T5-AC-02 a literal selected renders a no-op onUpdate: clicking neither throws nor writes', async () => {
     TestBed.configureTestingModule({
-      providers: [provideA2uiCatalog(createAssistantCatalog([chartsFragment, mapsFragment]))],
+      providers: [provideAgentCapabilities([chartsCapability, mapsCapability])],
     });
     const renderer = TestBed.inject(A2uiRendererService);
     renderer.processMessages([

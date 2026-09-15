@@ -4,11 +4,11 @@ import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
 import type { A2uiClientAction, A2uiMessage } from '@a2ui/web_core/v0_9';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { A2uiActionBus } from '../../a2ui/action-bus';
-import { ASSISTANT_CATALOG_ID, createAssistantCatalog } from '../../a2ui/assistant-catalog';
-import { provideA2uiCatalog } from '../../a2ui/provide-a2ui-catalog';
+import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
+import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
 import { boundProperty } from '../../testing/bound-property';
-import { chartsFragment } from '../charts';
-import { mapsFragment } from './index';
+import { chartsCapability } from '../charts';
+import { mapsCapability } from './index';
 import { MapCenter, MapComponent, MapPoint, MapProps } from './map.component';
 
 const POINTS: MapPoint[] = [
@@ -117,7 +117,7 @@ class SurfaceHost {}
 
 function configureRenderer(): A2uiRendererService {
   TestBed.configureTestingModule({
-    providers: [provideA2uiCatalog(createAssistantCatalog([chartsFragment, mapsFragment]))],
+    providers: [provideAgentCapabilities([chartsCapability, mapsCapability])],
   });
   return TestBed.inject(A2uiRendererService);
 }

@@ -2,8 +2,7 @@ import type { Context } from '@ag-ui/core';
 import { BASIC_COMPONENTS, BASIC_FUNCTIONS } from '@a2ui/web_core/v0_9/basic_catalog';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { CATALOG_CONTEXT_DESCRIPTION } from '../../../shared/agent-contract';
-import { chartsVocabulary } from '../capabilities/charts/vocabulary';
-import { mapsVocabulary } from '../capabilities/maps/vocabulary';
+import type { CapabilityVocabulary } from '../../../shared/capabilities/agent-capability';
 import { ASSISTANT_CATALOG_ID } from './assistant-catalog-id';
 
 /**
@@ -14,45 +13,27 @@ import { ASSISTANT_CATALOG_ID } from './assistant-catalog-id';
  * through `assistant-catalog.ts`.
  */
 
-/** The model-facing half of a component: everything except the Angular implementation. */
-interface ComponentVocabulary {
-  readonly name: string;
-  readonly description: string;
-  readonly schema: unknown;
-}
-
-interface FunctionVocabulary extends ComponentVocabulary {
-  readonly returnType: string;
-}
-
-/** The same per-capability lists the renderer pairs with Angular components in `assistant-fragments.ts`. */
-const ASSISTANT_VOCABULARY: {
-  readonly components: readonly ComponentVocabulary[];
-  readonly functions: readonly FunctionVocabulary[];
-} = {
-  components: [
-    ...Object.values(chartsVocabulary.components),
-    ...Object.values(mapsVocabulary.components),
-  ],
-  functions: [...chartsVocabulary.functions, ...mapsVocabulary.functions],
-};
-
 /**
- * Serializes the custom vocabulary for the model's context. Unlike the book's
- * variant this includes the functions — the model only uses `daysUntil` and
- * `distance` if it knows they exist.
+ * Serializes the custom vocabulary for the model's context. Takes the
+ * framework-free half only: the shell passes what it loaded, the eval harness
+ * the `vocabulary.ts` files, since an `AgentCapability` cannot be built under
+ * Node. Includes the functions — the model only uses `daysUntil` if it knows it exists.
  */
-export function catalogToContextEntry(): Context {
+export function catalogToContextEntry(
+  vocabularies: readonly CapabilityVocabulary<string>[],
+): Context {
+  const components = vocabularies.flatMap((vocabulary) => Object.values(vocabulary.components));
+  const functions = vocabularies.flatMap((vocabulary) => vocabulary.functions);
   const payload = {
     catalogId: ASSISTANT_CATALOG_ID,
     components: Object.fromEntries(
-      withoutReservedNames(ASSISTANT_VOCABULARY.components, BASIC_COMPONENTS).map((component) => [
+      uniqueByName(components, BASIC_COMPONENTS).map((component) => [
         component.name,
         { description: component.description, schema: toJsonSchema(component.schema) },
       ]),
     ),
     functions: Object.fromEntries(
-      withoutReservedNames(ASSISTANT_VOCABULARY.functions, BASIC_FUNCTIONS).map((fn) => [
+      uniqueByName(functions, BASIC_FUNCTIONS).map((fn) => [
         fn.name,
         { description: fn.description, args: toJsonSchema(fn.schema), returnType: fn.returnType },
       ]),
@@ -61,13 +42,21 @@ export function catalogToContextEntry(): Context {
   return { description: CATALOG_CONTEXT_DESCRIPTION, value: JSON.stringify(payload) };
 }
 
-/** Names the model already knows from the basic catalog; announcing them twice invites collisions. */
-function withoutReservedNames<T extends { readonly name: string }>(
+/**
+ * One entry per name, first registration wins; names the basic catalog owns
+ * are dropped too. Same rule as `uniqueByName` in `assistant-catalog.ts`, so
+ * the announced schema is the rendered one.
+ */
+function uniqueByName<T extends { readonly name: string }>(
   items: readonly T[],
   reserved: readonly { readonly name: string }[],
 ): readonly T[] {
   const taken = new Set(reserved.map((entry) => entry.name));
-  return items.filter((item) => !taken.has(item.name));
+  return items.filter((item) => {
+    if (taken.has(item.name)) return false;
+    taken.add(item.name);
+    return true;
+  });
 }
 
 /** The cast re-crosses the zod-universe bridge (see `createCustomComponent`). */

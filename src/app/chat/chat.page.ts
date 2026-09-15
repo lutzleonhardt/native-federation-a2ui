@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CopilotChat } from '@copilotkit/angular';
 import { ASSISTANT_AGENT_ID } from '../../../shared/agent-contract';
+import { AGENT_CAPABILITIES } from '../a2ui/agent-capabilities.token';
 import { catalogToContextEntry } from '../a2ui/catalog-context';
 import { createAgentStoreHelper } from '../agent/agent-store-helper';
 import { initAgentStore } from '../agent/init-agent-store';
@@ -48,7 +49,13 @@ export class ChatPage {
   private readonly store = initAgentStore({
     agentId: ASSISTANT_AGENT_ID,
     frontendTools: [findConferencesTool, renderSurfaceTool, messageWidgetTool],
-    context: [catalogToContextEntry(), () => meToContextEntry(this.location.me())],
+    // Both entries travel with every run; the agent's prompt (`agent/src/prompt.ts`) turns
+    // them into its vocabulary and location sections. The loaded capabilities are fixed for
+    // the app's lifetime, `me` changes between runs — hence value vs. accessor.
+    context: [
+      catalogToContextEntry(inject(AGENT_CAPABILITIES).map((capability) => capability.vocabulary)),
+      () => meToContextEntry(this.location.me()),
+    ],
   });
   private readonly chat = createAgentStoreHelper(this.store);
 

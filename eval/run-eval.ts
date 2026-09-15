@@ -12,6 +12,8 @@ import { meToContextEntry } from '../src/app/agent/me-context-entry';
 import { findConferencesDefinition } from '../src/app/agent/tools/find-conferences.definition';
 import { messageWidgetDefinition } from '../src/app/agent/tools/message-widget.definition';
 import { renderSurfaceDefinition } from '../src/app/agent/tools/render-surface.definition';
+import { chartsVocabulary } from '../src/app/capabilities/charts/vocabulary';
+import { mapsVocabulary } from '../src/app/capabilities/maps/vocabulary';
 import { loadConferences } from '../src/app/domain/conference';
 import { findConferences, type ConferenceResult } from '../src/app/domain/find-conferences';
 import type { Me } from '../src/app/domain/location.store';
@@ -102,7 +104,11 @@ async function runEval(): Promise<boolean> {
   await assertAgentReachable();
 
   const tools = TOOL_SPECS.map(toAgUiTool);
-  const context: Context[] = [catalogToContextEntry(), meToContextEntry(ME)];
+  // The `vocabulary.ts` files, not the capabilities: their Angular half does not load under Node.
+  const context: Context[] = [
+    catalogToContextEntry([chartsVocabulary, mapsVocabulary]),
+    meToContextEntry(ME),
+  ];
   const records: RunRecord[][] = REQUESTS.map(() => []);
 
   for (let run = 0; run < RUNS_PER_REQUEST; run += 1) {

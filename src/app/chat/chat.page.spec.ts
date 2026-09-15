@@ -4,12 +4,14 @@ import type { BaseEvent, Context, RunAgentInput, ToolMessage } from '@ag-ui/core
 import { Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { ASSISTANT_AGENT_ID } from '../../../shared/agent-contract';
-import { ASSISTANT_CATALOG_ID, createAssistantCatalog } from '../a2ui/assistant-catalog';
-import { ASSISTANT_FRAGMENTS } from '../a2ui/assistant-fragments';
-import { provideA2uiCatalog } from '../a2ui/provide-a2ui-catalog';
+import type { AgentCapability } from '../../../shared/capabilities/agent-capability';
+import { provideAgentCapabilities } from '../a2ui/agent-capabilities.token';
+import { ASSISTANT_CATALOG_ID } from '../a2ui/assistant-catalog';
 import { ASSISTANT_AGENT, provideAssistantAgent } from '../agent/assistant-agent.token';
 import { MAX_CORRECTIONS_PER_TURN } from '../agent/render-failure-correction';
 import { SurfaceDataStore } from '../agent/surface-data.store';
+import { chartsCapability } from '../capabilities/charts';
+import { mapsCapability } from '../capabilities/maps';
 import { LocationStore } from '../domain/location.store';
 import { emptyRun, MockAgent, toolCallRun, toolCallsRun } from '../testing/mock-agent';
 import { ChatPage } from './chat.page';
@@ -22,10 +24,15 @@ const PROMPTS = [
   'Reservier mir eine Karte',
 ];
 
-async function renderChat(agent: AbstractAgent): Promise<ComponentFixture<ChatPage>> {
+const LOCAL: readonly AgentCapability[] = [chartsCapability, mapsCapability];
+
+async function renderChat(
+  agent: AbstractAgent,
+  capabilities: readonly AgentCapability[] = LOCAL,
+): Promise<ComponentFixture<ChatPage>> {
   TestBed.configureTestingModule({
     providers: [
-      provideA2uiCatalog(createAssistantCatalog(ASSISTANT_FRAGMENTS)),
+      provideAgentCapabilities(capabilities),
       provideAssistantAgent(),
       { provide: ASSISTANT_AGENT, useValue: agent },
     ],
@@ -124,6 +131,19 @@ function forbiddenWriteSurface(surfaceId: string): unknown[] {
       },
     },
     { version: 'v0.9', updateDataModel: { surfaceId, path: '/me', value: { city: 'Atlantis' } } },
+  ];
+}
+
+function mapSurface(surfaceId: string): unknown[] {
+  return [
+    { version: 'v0.9', createSurface: { surfaceId, catalogId: ASSISTANT_CATALOG_ID } },
+    {
+      version: 'v0.9',
+      updateComponents: {
+        surfaceId,
+        components: [{ id: 'root', component: 'Map', points: { path: '/filteredConfs' } }],
+      },
+    },
   ];
 }
 
@@ -324,6 +344,33 @@ describe('ChatPage with the scripted agent', () => {
       await vi.waitFor(() => expect(agent.inputs).toHaveLength(index + 1));
       expect(agent.inputs[index].messages.at(-1)).toMatchObject({ role: 'user', content: text });
     }
+  });
+
+  it('T2-AC-01 with charts only: the context announces neither Map nor distance, and a Map surface is rejected as unknown', async () => {
+    silenceRenderFailureLogs();
+    const agent = new MockAgent((input, run) =>
+      run === 0
+        ? toolCallRun(input, 'renderSurface', { messages: mapSurface('request-map') }, 'call-map')
+        : emptyRun(input),
+    );
+    const fixture = await renderChat(agent, [chartsCapability]);
+
+    clickPrompt(fixture, 1);
+
+    await vi.waitFor(() => expect(agent.inputs).toHaveLength(2));
+    const catalog = agent.inputs[0].context.find((entry) => entry.description === 'A2UI Custom Catalog');
+    const announced = JSON.parse(catalog?.value ?? '{}') as {
+      components: Record<string, unknown>;
+      functions: Record<string, unknown>;
+    };
+    expect(Object.keys(announced.components)).toEqual(['Gauge', 'Timeline']);
+    expect(Object.keys(announced.functions)).toEqual(['daysUntil']);
+
+    const last = agent.inputs[1].messages.at(-1) as ToolMessage;
+    expect(last).toMatchObject({ role: 'tool', toolCallId: 'call-map' });
+    const outcome = JSON.parse(last.content) as { code: string; result: string };
+    expect(outcome.code).toBe('catalog');
+    expect(outcome.result).toContain('Map');
   });
 
   it('T7-AC-06 messageWidget renders its markdown text inside the chat', async () => {

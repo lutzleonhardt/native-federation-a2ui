@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { ASSISTANT_CATALOG_ID, createAssistantCatalog } from '../../a2ui/assistant-catalog';
-import { provideA2uiCatalog } from '../../a2ui/provide-a2ui-catalog';
-import { chartsFragment } from '../../capabilities/charts';
-import { mapsFragment } from '../../capabilities/maps';
+import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
+import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
+import { chartsCapability } from '../../capabilities/charts';
+import { mapsCapability } from '../../capabilities/maps';
 import type { ConferenceResult, FindConferencesResult } from '../../domain/find-conferences';
 import { LocationStore } from '../../domain/location.store';
 import { z } from 'zod';
@@ -76,7 +76,7 @@ describe('renderSurfaceTool', () => {
     onFailure = vi.fn();
     TestBed.configureTestingModule({
       providers: [
-        provideA2uiCatalog(createAssistantCatalog([chartsFragment, mapsFragment])),
+        provideAgentCapabilities([chartsCapability, mapsCapability]),
         { provide: RENDER_FAILURE_HANDLER, useValue: onFailure },
       ],
     });
