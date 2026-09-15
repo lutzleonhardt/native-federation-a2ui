@@ -45,3 +45,6 @@ Thumbs.db
 
 # Vitest Browser Mode failure artifacts
 .vitest-attachments/
+
+# Agent tooling: local machine state, never the shared config
+.claude/settings.local.json
