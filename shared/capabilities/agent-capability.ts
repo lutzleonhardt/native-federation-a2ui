@@ -20,7 +20,8 @@ export type ComponentImplementations<Names extends string> = Record<Names, Type<
 
 /**
  * What one team contributes: the model-facing vocabulary and the Angular
- * components that implement it.
+ * components that implement it. A remote exposes it as `./capability`
+ * (`export const capability: AgentCapability`); the shell loads that module.
  */
 export interface AgentCapability {
   readonly name: string; // 'charts'

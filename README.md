@@ -53,6 +53,7 @@ in a JetBrains IDE with a running `npm run start:agent`.
 | `npm run start:shell` | Serve the shell on http://localhost:4200 |
 | `npm run start:agent` | Agent dev loop on http://localhost:3001 (watch mode) |
 | `npm run build` | Production build of the shell |
+| `npm run clean` | Remove `dist`, the Angular cache and the NF artifact cache; run it when switching between `ng build` and `ng serve` |
 | `npm test` | Run all three test suites |
 | `npm run test:shell` | Vitest Browser Mode (headless Chromium) |
 | `npm run test:agent` | Vitest (Node) for the agent server |

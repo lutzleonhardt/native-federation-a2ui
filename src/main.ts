@@ -1,10 +1,37 @@
-import { bootstrapApplication } from '@angular/platform-browser';
-import { App } from './app/app';
-import { createAppConfig } from './app/app.config';
-import { chartsCapability } from './app/capabilities/charts';
-import { mapsCapability } from './app/capabilities/maps';
+// Guard against a poisoned NF artifact cache after switching between `ng build` and
+// `ng serve`: a prod-variant shared chunk in a dev session would otherwise crash with
+// `ngDevMode is not defined`. `npm run clean` clears the cache for good.
+(globalThis as { ngDevMode?: unknown }).ngDevMode ??= false;
 
-// Local capabilities until the federation host loads them from the manifest.
-bootstrapApplication(App, createAppConfig([chartsCapability, mapsCapability])).catch((err) =>
-  console.error(err),
-);
+import { initFederation, type FederationManifest } from '@angular-architects/native-federation-v4';
+import { loadCapabilities } from './app/federation/load-capabilities';
+import { selectCapabilities } from './app/federation/select-capabilities';
+
+const MANIFEST_URL = 'federation.manifest.json';
+
+async function fetchManifest(): Promise<FederationManifest> {
+  const response = await fetch(MANIFEST_URL);
+  if (!response.ok) {
+    throw new Error(`${MANIFEST_URL} answered ${response.status}`);
+  }
+  return response.json();
+}
+
+/**
+ * Phase one of the bootstrap. Nothing here may import `@angular/*` statically: Angular
+ * is a shared external that the browser can only resolve once `initFederation` has
+ * installed the import map, so Angular enters through the dynamic import at the end.
+ */
+async function main(): Promise<void> {
+  const manifest = await fetchManifest().catch((err: unknown) => {
+    console.error('[shell] manifest unreachable, starting with the local capabilities', err);
+    return {};
+  });
+  const selected = selectCapabilities(manifest, location.search);
+  const nf = await initFederation(selected);
+  const remotes = await loadCapabilities(nf.loadRemoteModule, Object.keys(selected));
+  const { bootstrap } = await import('./bootstrap');
+  await bootstrap(remotes);
+}
+
+main().catch((err: unknown) => console.error('[shell] bootstrap failed', err));
