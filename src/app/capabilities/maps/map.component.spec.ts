@@ -7,7 +7,7 @@ import { A2uiActionBus } from '../../a2ui/action-bus';
 import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
 import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
 import { boundProperty } from '../../testing/bound-property';
-import { chartsCapability } from '../charts';
+import { capability as chartsCapability } from '../../../../projects/mfe-charts/src/capability';
 import { mapsCapability } from './index';
 import { MapCenter, MapComponent, MapPoint, MapProps } from './map.component';
 

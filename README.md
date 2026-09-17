@@ -49,17 +49,19 @@ in a JetBrains IDE with a running `npm run start:agent`.
 
 | Script | Purpose |
 | --- | --- |
-| `npm start` | Serve shell (4200) and agent (3001) together; a failing start takes both down |
+| `npm start` | Serve shell (4200), charts remote (4201) and agent (3001) together; a failing start takes all down |
 | `npm run start:shell` | Serve the shell on http://localhost:4200 |
+| `npm run start:charts` | Serve the charts remote on http://localhost:4201 — its `remoteEntry.json` for the shell, and a standalone page |
 | `npm run start:agent` | Agent dev loop on http://localhost:3001 (watch mode) |
 | `npm run build` | Production build of the shell |
 | `npm run clean` | Remove `dist`, the Angular cache and the NF artifact cache; run it when switching between `ng build` and `ng serve` |
-| `npm test` | Run all three test suites |
+| `npm test` | Run all four test suites |
 | `npm run test:shell` | Vitest Browser Mode (headless Chromium) |
+| `npm run test:charts` | Vitest Browser Mode for the charts remote |
 | `npm run test:agent` | Vitest (Node) for the agent server |
 | `npm run test:eval` | Type-check and unit-test the eval harness (no model calls) |
 | `npm run eval` | Model-behavior gate — **real API calls**, see below |
-| `npm run lint` | ESLint across the shell's TypeScript and templates |
+| `npm run lint` | ESLint across every project's TypeScript and templates |
 
 ## The model-behavior gate
 

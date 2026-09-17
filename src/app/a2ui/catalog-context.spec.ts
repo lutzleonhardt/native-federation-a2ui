@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { toFragment, type AgentCapability } from '../../../shared/capabilities/agent-capability';
-import { chartsCapability } from '../capabilities/charts';
-import { daysUntilFn } from '../capabilities/charts/days-until.fn';
-import { GaugeComponent } from '../capabilities/charts/gauge.component';
-import { GAUGE_META } from '../capabilities/charts/gauge.schema';
+import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
+import { daysUntilFn } from '../../../projects/mfe-charts/src/charts/days-until.fn';
+import { GaugeComponent } from '../../../projects/mfe-charts/src/charts/gauge.component';
+import { GAUGE_META } from '../../../projects/mfe-charts/src/charts/gauge.schema';
 import { mapsCapability } from '../capabilities/maps';
 import { mergeFragments } from './assistant-catalog';
 import { ASSISTANT_CATALOG_ID } from './assistant-catalog-id';

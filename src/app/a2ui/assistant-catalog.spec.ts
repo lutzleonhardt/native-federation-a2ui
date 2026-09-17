@@ -1,8 +1,8 @@
 import { BASIC_COMPONENTS } from '@a2ui/angular/v0_9';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { chartsCapability } from '../capabilities/charts';
-import { GaugeComponent } from '../capabilities/charts/gauge.component';
-import { GAUGE_META } from '../capabilities/charts/gauge.schema';
+import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
+import { GaugeComponent } from '../../../projects/mfe-charts/src/charts/gauge.component';
+import { GAUGE_META } from '../../../projects/mfe-charts/src/charts/gauge.schema';
 import { mapsCapability } from '../capabilities/maps';
 import { ASSISTANT_CATALOG_ID, createAssistantCatalog } from './assistant-catalog';
 import { toFragment, type CatalogFragment } from '../../../shared/capabilities/agent-capability';

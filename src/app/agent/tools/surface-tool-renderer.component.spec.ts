@@ -4,7 +4,7 @@ import type { AngularToolCall } from '@copilotkit/angular';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
 import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
-import { chartsCapability } from '../../capabilities/charts';
+import { capability as chartsCapability } from '../../../../projects/mfe-charts/src/capability';
 import { mapsCapability } from '../../capabilities/maps';
 import type { RenderSurfaceArgs } from './render-surface.definition';
 import { SurfaceToolRendererComponent } from './surface-tool-renderer.component';

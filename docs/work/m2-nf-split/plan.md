@@ -169,10 +169,11 @@ bootstrapApplication(App, appConfig([...capabilities, chartsCapability, mapsCapa
 The manifest starts empty (`{}`) and the two local capabilities keep being passed in, so the app
 behaves exactly as before; Tasks 4 and 5 move them from the second list into the first.
 
-Add a `clean` script (`rm -rf dist .angular/cache node_modules/.cache/native-federation`) and keep
-the `ngDevMode ??= false` guard at the very top of `main.ts` — without it, switching between
-`ng build` and `ng serve` can boot from a poisoned NF artifact cache and crash with
-`ngDevMode is not defined`.
+Add a `clean` script (`rm -rf dist .angular/cache node_modules/.cache/native-federation`); it is
+the remedy when switching between `ng build` and `ng serve` boots from a poisoned NF artifact
+cache and crashes with `ngDevMode is not defined`. Do not pre-set `ngDevMode` in `main.ts` as the
+reference project does: the shared dev chunk of `@angular/core` reads that global, so a
+`??= false` guard switches Angular's dev mode off in every dev session (decided in Task 4).
 
 **Measure the build hang before working around it.** Run `ng build` once, unwrapped, and watch
 whether the process exits after the artifacts are written. Only if it hangs, add the watchdog from

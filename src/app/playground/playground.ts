@@ -60,9 +60,22 @@ function playgroundMessages(): A2uiMessage[] {
             max: { path: '/selectedConf/capacity' },
             label: 'Restkarten',
           },
-          { id: 'summary', component: 'Column', children: ['conf-name', 'conf-date', 'conf-city'] },
+          {
+            id: 'summary',
+            component: 'Column',
+            children: ['conf-name', 'conf-date', 'conf-days', 'conf-city'],
+          },
           { id: 'conf-name', component: 'Text', text: { path: '/selectedConf/name' } },
           { id: 'conf-date', component: 'Text', text: { path: '/selectedConf/date' } },
+          {
+            id: 'conf-days',
+            component: 'Text',
+            text: {
+              call: 'daysUntil',
+              args: { date: { path: '/selectedConf/date' } },
+              returnType: 'number',
+            },
+          },
           { id: 'conf-city', component: 'Text', text: { path: '/selectedConf/city' } },
         ],
       },

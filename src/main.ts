@@ -1,8 +1,3 @@
-// Guard against a poisoned NF artifact cache after switching between `ng build` and
-// `ng serve`: a prod-variant shared chunk in a dev session would otherwise crash with
-// `ngDevMode is not defined`. `npm run clean` clears the cache for good.
-(globalThis as { ngDevMode?: unknown }).ngDevMode ??= false;
-
 import { initFederation, type FederationManifest } from '@angular-architects/native-federation-v4';
 import { loadCapabilities } from './app/federation/load-capabilities';
 import { selectCapabilities } from './app/federation/select-capabilities';

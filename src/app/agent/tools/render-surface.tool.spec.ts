@@ -4,7 +4,7 @@ import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
 import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
-import { chartsCapability } from '../../capabilities/charts';
+import { capability as chartsCapability } from '../../../../projects/mfe-charts/src/capability';
 import { mapsCapability } from '../../capabilities/maps';
 import type { ConferenceResult, FindConferencesResult } from '../../domain/find-conferences';
 import { LocationStore } from '../../domain/location.store';

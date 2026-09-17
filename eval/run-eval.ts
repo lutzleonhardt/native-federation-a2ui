@@ -12,7 +12,7 @@ import { meToContextEntry } from '../src/app/agent/me-context-entry';
 import { findConferencesDefinition } from '../src/app/agent/tools/find-conferences.definition';
 import { messageWidgetDefinition } from '../src/app/agent/tools/message-widget.definition';
 import { renderSurfaceDefinition } from '../src/app/agent/tools/render-surface.definition';
-import { chartsVocabulary } from '../src/app/capabilities/charts/vocabulary';
+import { chartsVocabulary } from '../projects/mfe-charts/src/charts/vocabulary';
 import { mapsVocabulary } from '../src/app/capabilities/maps/vocabulary';
 import { loadConferences } from '../src/app/domain/conference';
 import { findConferences, type ConferenceResult } from '../src/app/domain/find-conferences';

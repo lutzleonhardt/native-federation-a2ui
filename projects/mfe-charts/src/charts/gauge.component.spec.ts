@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
-import { boundProperty } from '../../testing/bound-property';
+import { boundProperty } from '../testing/bound-property';
 import { GaugeComponent, GaugeProps } from './gauge.component';
 
 async function renderGauge(props: GaugeProps) {

@@ -1,14 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
+import { A2uiRendererService, SurfaceComponent, provideA2Ui } from '@a2ui/angular/v0_9';
 import type { A2uiClientAction, A2uiMessage } from '@a2ui/web_core/v0_9';
 import { describe, expect, it, vi } from 'vitest';
-import { A2uiActionBus } from '../../a2ui/action-bus';
-import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
-import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
-import { boundProperty } from '../../testing/bound-property';
-import { mapsCapability } from '../maps';
-import { chartsCapability } from './index';
+import { CHARTS_CATALOG_ID, createChartsCatalog } from '../app/charts-catalog';
+import { boundProperty } from '../testing/bound-property';
 import { TimelineComponent, TimelineItem, TimelineProps } from './timeline.component';
 
 const ITEMS: TimelineItem[] = [
@@ -128,11 +124,18 @@ const SURFACE_ID = 'timeline-action-surface';
 })
 class SurfaceHost {}
 
+/** The remote's own host with a recording action handler — no shell code involved. */
+function configureChartsHost(onAction: (action: A2uiClientAction) => void = () => undefined): void {
+  TestBed.configureTestingModule({
+    providers: [provideA2Ui({ catalogs: [createChartsCatalog()], actionHandler: onAction })],
+  });
+}
+
 function timelineSurfaceMessages(): A2uiMessage[] {
   return [
     {
       version: 'v0.9',
-      createSurface: { surfaceId: SURFACE_ID, catalogId: ASSISTANT_CATALOG_ID },
+      createSurface: { surfaceId: SURFACE_ID, catalogId: CHARTS_CATALOG_ID },
     },
     {
       version: 'v0.9',
@@ -155,11 +158,8 @@ function timelineSurfaceMessages(): A2uiMessage[] {
 
 describe('Timeline through the real renderer', () => {
   it('T5-AC-04 dispatches the pick action with the resolved context to the action bus', async () => {
-    TestBed.configureTestingModule({
-      providers: [provideAgentCapabilities([chartsCapability, mapsCapability])],
-    });
     const seen: A2uiClientAction[] = [];
-    TestBed.inject(A2uiActionBus).subscribe((action) => seen.push(action));
+    configureChartsHost((action) => seen.push(action));
     TestBed.inject(A2uiRendererService).processMessages(timelineSurfaceMessages());
 
     const fixture = TestBed.createComponent(SurfaceHost);
@@ -175,14 +175,12 @@ describe('Timeline through the real renderer', () => {
   });
 
   it('T5-AC-02 a literal selected renders a no-op onUpdate: clicking neither throws nor writes', async () => {
-    TestBed.configureTestingModule({
-      providers: [provideAgentCapabilities([chartsCapability, mapsCapability])],
-    });
+    configureChartsHost();
     const renderer = TestBed.inject(A2uiRendererService);
     renderer.processMessages([
       {
         version: 'v0.9',
-        createSurface: { surfaceId: SURFACE_ID, catalogId: ASSISTANT_CATALOG_ID },
+        createSurface: { surfaceId: SURFACE_ID, catalogId: CHARTS_CATALOG_ID },
       },
       {
         version: 'v0.9',

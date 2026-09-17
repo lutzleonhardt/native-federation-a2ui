@@ -23,6 +23,11 @@ export default withNativeFederation({
   },
 
   skip: [
+    // The a2ui, ag-ui and CopilotKit packages carry nested zod 3 copies. Sharing the root
+    // zod 4 rewrites their `zod` imports to the v4 classic API and breaks every catalog schema
+    // that nests web_core's ActionSchema (`k._parse is not a function`). Only the v3 line
+    // (`zod/v3`, still shared) crosses the federation boundary.
+    'zod',
     'rxjs/ajax',
     'rxjs/testing',
     'rxjs/webSocket',

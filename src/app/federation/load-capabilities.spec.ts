@@ -1,7 +1,7 @@
 import type { LoadRemoteModule } from '@softarc/native-federation-orchestrator';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { toFragment, type AgentCapability } from '../../../shared/capabilities/agent-capability';
-import { chartsCapability } from '../capabilities/charts';
+import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
 import { CAPABILITY_MODULE, loadCapabilities } from './load-capabilities';
 
 const charts: AgentCapability = {

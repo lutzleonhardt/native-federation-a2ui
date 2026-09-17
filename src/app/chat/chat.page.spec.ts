@@ -10,7 +10,7 @@ import { ASSISTANT_CATALOG_ID } from '../a2ui/assistant-catalog';
 import { ASSISTANT_AGENT, provideAssistantAgent } from '../agent/assistant-agent.token';
 import { MAX_CORRECTIONS_PER_TURN } from '../agent/render-failure-correction';
 import { SurfaceDataStore } from '../agent/surface-data.store';
-import { chartsCapability } from '../capabilities/charts';
+import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
 import { mapsCapability } from '../capabilities/maps';
 import { LocationStore } from '../domain/location.store';
 import { emptyRun, MockAgent, toolCallRun, toolCallsRun } from '../testing/mock-agent';
