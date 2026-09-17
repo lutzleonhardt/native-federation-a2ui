@@ -12,15 +12,15 @@ interface CapabilityModule {
 }
 
 /**
- * Loads the selected remotes' capabilities in manifest order. A remote that stalls, cannot be
- * loaded or exposes no usable capability is logged and skipped, so the shell still starts with
- * the remaining vocabulary.
+ * Loads the selected remotes' capabilities, keyed by remote name in the given (manifest)
+ * order. A remote that stalls, cannot be loaded or exposes no usable capability is logged
+ * and left out, so the shell still starts with the remaining vocabulary.
  */
 export async function loadCapabilities(
   load: LoadRemoteModule,
   names: readonly string[],
   timeoutMs = CAPABILITY_LOAD_TIMEOUT_MS,
-): Promise<AgentCapability[]> {
+): Promise<ReadonlyMap<string, AgentCapability>> {
   const results = await Promise.allSettled(
     names.map((name) =>
       withTimeout(
@@ -30,7 +30,7 @@ export async function loadCapabilities(
       ),
     ),
   );
-  const capabilities: AgentCapability[] = [];
+  const capabilities = new Map<string, AgentCapability>();
   for (const [index, result] of results.entries()) {
     const name = names[index];
     if (result.status === 'rejected') {
@@ -44,7 +44,7 @@ export async function loadCapabilities(
       );
       continue;
     }
-    capabilities.push(capability);
+    capabilities.set(name, capability);
   }
   return capabilities;
 }

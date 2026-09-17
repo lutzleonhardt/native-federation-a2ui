@@ -45,7 +45,9 @@ describe('loadCapabilities', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { load } = loaderFor({ charts: { capability: charts } });
 
-    await expect(loadCapabilities(load, ['ghost', 'charts'])).resolves.toEqual([charts]);
+    await expect(loadCapabilities(load, ['ghost', 'charts'])).resolves.toEqual(
+      new Map([['charts', charts]]),
+    );
 
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0][0]).toContain("'ghost'");
@@ -59,7 +61,7 @@ describe('loadCapabilities', () => {
     const pending = loadCapabilities(load, ['stuck', 'charts'], 1_000);
     await vi.advanceTimersByTimeAsync(1_000);
 
-    await expect(pending).resolves.toEqual([charts]);
+    await expect(pending).resolves.toEqual(new Map([['charts', charts]]));
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0][0]).toContain("'stuck'");
     expect(String(warn.mock.calls[0][1])).toContain('1000 ms');
@@ -69,7 +71,9 @@ describe('loadCapabilities', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { load } = loaderFor({ charts: {}, maps: { capability: maps } });
 
-    await expect(loadCapabilities(load, ['charts', 'maps'])).resolves.toEqual([maps]);
+    await expect(loadCapabilities(load, ['charts', 'maps'])).resolves.toEqual(
+      new Map([['maps', maps]]),
+    );
 
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0][0]).toContain("'charts'");
@@ -80,7 +84,7 @@ describe('loadCapabilities', () => {
     const broken = { name: 'broken', vocabulary: {}, components: {} };
     const { load } = loaderFor({ broken: { capability: broken } });
 
-    await expect(loadCapabilities(load, ['broken'])).resolves.toEqual([]);
+    await expect(loadCapabilities(load, ['broken'])).resolves.toEqual(new Map());
 
     expect(warn.mock.calls[0][0]).toContain("'broken'");
   });
@@ -90,7 +94,7 @@ describe('loadCapabilities', () => {
     const half = { ...chartsCapability, components: {} };
     const { load } = loaderFor({ half: { capability: half } });
 
-    await expect(loadCapabilities(load, ['half'])).resolves.toEqual([]);
+    await expect(loadCapabilities(load, ['half'])).resolves.toEqual(new Map());
 
     expect(warn.mock.calls[0][0]).toContain("'half'");
   });
@@ -98,10 +102,20 @@ describe('loadCapabilities', () => {
   it('accepts a complete capability, and what it accepts survives toFragment', async () => {
     const { load } = loaderFor({ charts: { capability: chartsCapability } });
 
-    const [loaded] = await loadCapabilities(load, ['charts']);
+    const loaded = await loadCapabilities(load, ['charts']);
 
-    expect(loaded).toBe(chartsCapability);
-    expect(() => toFragment(loaded)).not.toThrow();
+    expect(loaded.get('charts')).toBe(chartsCapability);
+    expect(() => toFragment(chartsCapability)).not.toThrow();
+  });
+
+  it("keys the result by remote name, not by the capability's own name", async () => {
+    const renamed = { ...charts, name: 'chart-widgets' };
+    const { load } = loaderFor({ charts: { capability: renamed } });
+
+    const loaded = await loadCapabilities(load, ['charts']);
+
+    expect([...loaded.keys()]).toEqual(['charts']);
+    expect(loaded.get('charts')).toBe(renamed);
   });
 
   it('asks every remote for the same exposed module and keeps the given order', async () => {
@@ -110,7 +124,9 @@ describe('loadCapabilities', () => {
       maps: { capability: maps },
     });
 
-    await expect(loadCapabilities(load, ['maps', 'charts'])).resolves.toEqual([maps, charts]);
+    const loaded = await loadCapabilities(load, ['maps', 'charts']);
+
+    expect([...loaded.keys()]).toEqual(['maps', 'charts']);
 
     expect(calls).toEqual([
       ['maps', CAPABILITY_MODULE],

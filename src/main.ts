@@ -1,4 +1,5 @@
 import { initFederation, type FederationManifest } from '@angular-architects/native-federation-v4';
+import { describeCapabilities } from './app/federation/capability-status';
 import { loadCapabilities } from './app/federation/load-capabilities';
 import { selectCapabilities } from './app/federation/select-capabilities';
 
@@ -24,7 +25,14 @@ async function main(): Promise<void> {
   });
   const selected = selectCapabilities(manifest, location.search);
   const nf = await initFederation(selected);
-  const remotes = await loadCapabilities(nf.loadRemoteModule, Object.keys(selected));
+  const loaded = await loadCapabilities(nf.loadRemoteModule, Object.keys(selected));
+  // The orchestrator knows where a remote actually came from; the panel shows that origin.
+  const remotes = describeCapabilities(
+    manifest,
+    selected,
+    loaded,
+    (name) => nf.adapters.remoteInfoRepo.tryGet(name).get()?.scopeUrl,
+  );
   const { bootstrap } = await import('./bootstrap');
   await bootstrap(remotes);
 }

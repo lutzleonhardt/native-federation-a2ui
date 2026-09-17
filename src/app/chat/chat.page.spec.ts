@@ -13,6 +13,8 @@ import { SurfaceDataStore } from '../agent/surface-data.store';
 import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
 import { mapsCapability } from '../capabilities/maps';
 import { LocationStore } from '../domain/location.store';
+import type { CapabilityStatus } from '../federation/capability-status';
+import { provideCapabilityStatus } from '../federation/capability-status.token';
 import { emptyRun, MockAgent, toolCallRun, toolCallsRun } from '../testing/mock-agent';
 import { ChatPage } from './chat.page';
 
@@ -25,6 +27,15 @@ const PROMPTS = [
 ];
 
 const LOCAL: readonly AgentCapability[] = [chartsCapability, mapsCapability];
+/** What the federation bootstrap would report with the charts remote up; maps is still local. */
+const REMOTES: readonly CapabilityStatus[] = [
+  {
+    name: 'charts',
+    state: 'loaded',
+    origin: 'http://localhost:4201/',
+    capability: chartsCapability,
+  },
+];
 
 async function renderChat(
   agent: AbstractAgent,
@@ -33,6 +44,7 @@ async function renderChat(
   TestBed.configureTestingModule({
     providers: [
       provideAgentCapabilities(capabilities),
+      provideCapabilityStatus(REMOTES),
       provideAssistantAgent(),
       { provide: ASSISTANT_AGENT, useValue: agent },
     ],
@@ -371,6 +383,16 @@ describe('ChatPage with the scripted agent', () => {
     const outcome = JSON.parse(last.content) as { code: string; result: string };
     expect(outcome.code).toBe('catalog');
     expect(outcome.result).toContain('Map');
+  });
+
+  it('T5-AC-01 the header carries the capability panel with the loaded charts remote', async () => {
+    const agent = new MockAgent((input) => emptyRun(input));
+    const fixture = await renderChat(agent);
+
+    const panel = host(fixture).querySelector('header app-capability-panel');
+    expect(panel?.textContent).toContain('charts');
+    expect(panel?.textContent).toContain('loaded from http://localhost:4201/');
+    expect(panel?.querySelector('a')?.getAttribute('href')).toBe('?capabilities=');
   });
 
   it('T7-AC-06 messageWidget renders its markdown text inside the chat', async () => {

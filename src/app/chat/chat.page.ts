@@ -10,12 +10,13 @@ import { findConferencesTool } from '../agent/tools/find-conferences.tool';
 import { messageWidgetTool } from '../agent/tools/message-widget.tool';
 import { renderSurfaceTool } from '../agent/tools/render-surface.tool';
 import { LocationStore } from '../domain/location.store';
+import { CapabilityPanelComponent } from './capability-panel.component';
 import { EXAMPLE_PROMPTS } from './example-prompts';
 import { LocationPickerComponent } from './location-picker.component';
 
 @Component({
   selector: 'app-chat-page',
-  imports: [CopilotChat, LocationPickerComponent],
+  imports: [CapabilityPanelComponent, CopilotChat, LocationPickerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './chat.page.html',
   styles: `

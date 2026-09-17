@@ -18,3 +18,8 @@ export function selectCapabilities(
   const names = new Set(requested.split(',').map((name) => name.trim()));
   return Object.fromEntries(Object.entries(manifest).filter(([name]) => names.has(name)));
 }
+
+/** The search string that selects exactly `names` — the inverse of `selectCapabilities`. */
+export function toCapabilitiesQuery(names: readonly string[]): string {
+  return `?${QUERY_PARAM}=${names.join(',')}`;
+}

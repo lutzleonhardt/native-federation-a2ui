@@ -1,6 +1,6 @@
 import type { FederationManifest } from '@angular-architects/native-federation-v4';
 import { describe, expect, it } from 'vitest';
-import { selectCapabilities } from './select-capabilities';
+import { selectCapabilities, toCapabilitiesQuery } from './select-capabilities';
 
 const MANIFEST: FederationManifest = {
   charts: 'http://localhost:4201/remoteEntry.json',
@@ -27,5 +27,20 @@ describe('selectCapabilities (T3-AC-03)', () => {
     const selected = selectCapabilities(MANIFEST, '?capabilities=maps, charts');
 
     expect(Object.keys(selected)).toEqual(['charts', 'maps']);
+  });
+});
+
+describe('toCapabilitiesQuery (T5-AC-02)', () => {
+  it('writes what selectCapabilities reads back', () => {
+    expect(toCapabilitiesQuery(['maps'])).toBe('?capabilities=maps');
+    expect(selectCapabilities(MANIFEST, toCapabilitiesQuery(['maps']))).toEqual({
+      maps: MANIFEST['maps'],
+    });
+    expect(selectCapabilities(MANIFEST, toCapabilitiesQuery(['charts', 'maps']))).toEqual(MANIFEST);
+  });
+
+  it('an empty selection reads back as none, not as all', () => {
+    expect(toCapabilitiesQuery([])).toBe('?capabilities=');
+    expect(selectCapabilities(MANIFEST, toCapabilitiesQuery([]))).toEqual({});
   });
 });

@@ -1,0 +1,28 @@
+<h2>Capabilities</h2>
+<ul>
+  @for (entry of entries; track entry.name) {
+    <li [attr.data-state]="entry.state">
+      <strong>{{ entry.name }}</strong>
+      @switch (entry.state) {
+        @case ('loaded') {
+          @if (entry.origin) {
+            <span>loaded from {{ entry.origin }}</span>
+          } @else {
+            <span>loaded</span>
+          }
+          <span>components: {{ entry.components }}</span>
+          <span>functions: {{ entry.functions }}</span>
+        }
+        @case ('unreachable') {
+          <span>selected, but unreachable</span>
+        }
+        @case ('unselected') {
+          <span>not selected</span>
+        }
+      }
+      <a [href]="entry.toggleHref">{{ entry.toggleLabel }}</a>
+    </li>
+  } @empty {
+    <li>No remotes in the manifest.</li>
+  }
+</ul>

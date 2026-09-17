@@ -406,10 +406,16 @@ and must name the missing capability. Two harness changes make that measurable:
 
 Same gate as the other requests: ≥ 4 of 5.
 
-If the model builds a `Map` anyway, suspect the prompt before the model: `agent/src/prompt.ts` ships
-a hard-coded request-3 example that uses `Map`, `Gauge`, `daysUntil` and `distance`. Thin the example
-or make it name its own precondition. Changing the prompt text is allowed — acceptance 4 requires
-that switching a remote needs no change in `agent/` *at runtime*, not that the prompt is frozen.
+The prompt is a known cause, not a suspicion (observed in Task 5, 2026-09-18): with charts switched
+off the shell announced only `Map` and `distance`, yet the model answered request 2 with a `Timeline`
+— it followed the hard-coded request-2 example in `FORMAT_RULES` (`agent/src/prompt.ts`), which
+shows `Timeline`; the request-3 example ships `Map`, `Gauge`, `daysUntil` and `distance` the same
+way, and both stand ~70 lines above the "use only components listed below" rule. Rewrite both
+examples with basic-catalog components only (`Text`, `Column`, `Row`, `Button`) and let the catalog
+descriptions carry the custom components; generate examples from the announced vocabulary only if
+the default-set verdicts drop. Changing the prompt text is allowed — acceptance 4 requires that
+switching a remote needs no change in `agent/` *at runtime*, not that the prompt is frozen. The
+mirror case (maps only, request 2 without a `Timeline`) is not scored; it is the same defect.
 
 ### Acceptance
 
@@ -423,7 +429,7 @@ that switching a remote needs no change in `agent/` *at runtime*, not that the p
 
 - `eval/run-eval.ts:38-45` (requests), `:61-65` (tool specs), `:105` (context), `:246-255` (recorder).
 - `eval/score.ts:22` (`Requirement`), `:66-78` (dispatch), `:86-98` (`mapFailures`) — plus `eval/score.spec.ts`.
-- `agent/src/prompt.ts` (`FORMAT_RULES`, the vocabulary rule in `WIRING_RULES`) — only if measured as needed.
+- `agent/src/prompt.ts` (`FORMAT_RULES`, both examples; the vocabulary rule in `WIRING_RULES`).
 - `projects/mfe-charts/src/vocabulary.ts`, `projects/mfe-maps/src/vocabulary.ts` — read under Node.
 
 ### Key Discoveries
