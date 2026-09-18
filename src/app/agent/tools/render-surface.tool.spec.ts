@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
 import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
 import { capability as chartsCapability } from '../../../../projects/mfe-charts/src/capability';
-import { mapsCapability } from '../../capabilities/maps';
+import { capability as mapsCapability } from '../../../../projects/mfe-maps/src/capability';
 import type { ConferenceResult, FindConferencesResult } from '../../domain/find-conferences';
 import { LocationStore } from '../../domain/location.store';
 import { z } from 'zod';
@@ -59,6 +59,15 @@ function timelineMsg(): unknown {
 
 function dataMsg(path: string, value: unknown): unknown {
   return { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path, value } };
+}
+
+/** The maps function as the model calls it: `/me` to `/selectedConf`, both client-mounted. */
+function distanceCall(): unknown {
+  return {
+    call: 'distance',
+    args: { a: { path: '/me' }, b: { path: '/selectedConf' } },
+    returnType: 'number',
+  };
 }
 
 @Component({
@@ -163,6 +172,65 @@ describe('renderSurfaceTool', () => {
     expect(outcome).toMatchObject({ ok: false, code: 'catalog' });
     expect(String(outcome.result)).toContain('Card');
     expect(surfaceOf(SURFACE_ID)).toBeUndefined();
+  });
+
+  it('rejects a call to a function the catalog does not announce (maps switched off)', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideAgentCapabilities([chartsCapability]),
+        { provide: RENDER_FAILURE_HANDLER, useValue: onFailure },
+      ],
+    });
+    seedStore();
+
+    const outcome = await runTool([
+      createMsg(),
+      componentsMsg([{ id: 'root', component: 'Text', text: distanceCall() }]),
+    ]);
+
+    expect(outcome).toMatchObject({ ok: false, code: 'catalog' });
+    expect(String(outcome.result)).toContain('distance');
+    expect(surfaceOf(SURFACE_ID)).toBeUndefined();
+    expect(onFailure).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an unknown call nested in a known one or parked in a data value, naming only the unknown', async () => {
+    seedStore();
+    const unknownCall = { call: 'nextFullMoon', args: {} };
+
+    const nested = await runTool([
+      createMsg(),
+      componentsMsg([
+        {
+          id: 'root',
+          component: 'Text',
+          text: { call: 'daysUntil', args: { date: unknownCall }, returnType: 'number' },
+        },
+      ]),
+    ]);
+    expect(nested).toMatchObject({ ok: false, code: 'catalog' });
+    expect(String(nested.result)).toContain('nextFullMoon');
+    expect(String(nested.result)).not.toContain('daysUntil');
+
+    const parked = await runTool([
+      createMsg(),
+      componentsMsg([{ id: 'root', component: 'Text', text: { path: '/note' } }]),
+      dataMsg('/note', unknownCall),
+    ]);
+    expect(parked).toMatchObject({ ok: false, code: 'catalog' });
+    expect(surfaceOf(SURFACE_ID)).toBeUndefined();
+  });
+
+  it('accepts a call to an announced function', async () => {
+    seedStore();
+
+    const outcome = await runTool([
+      createMsg(),
+      componentsMsg([{ id: 'root', component: 'Text', text: distanceCall() }]),
+    ]);
+
+    expect(outcome).toMatchObject({ ok: true, surfaceId: SURFACE_ID });
   });
 
   it('T6-AC-04 fails schema validation with zod issues when a message misses version', async () => {

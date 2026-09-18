@@ -13,7 +13,7 @@ import { findConferencesDefinition } from '../src/app/agent/tools/find-conferenc
 import { messageWidgetDefinition } from '../src/app/agent/tools/message-widget.definition';
 import { renderSurfaceDefinition } from '../src/app/agent/tools/render-surface.definition';
 import { chartsVocabulary } from '../projects/mfe-charts/src/charts/vocabulary';
-import { mapsVocabulary } from '../src/app/capabilities/maps/vocabulary';
+import { mapsVocabulary } from '../projects/mfe-maps/src/maps/vocabulary';
 import { loadConferences } from '../src/app/domain/conference';
 import { findConferences, type ConferenceResult } from '../src/app/domain/find-conferences';
 import type { Me } from '../src/app/domain/location.store';

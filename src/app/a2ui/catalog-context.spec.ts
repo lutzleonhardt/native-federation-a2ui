@@ -4,7 +4,7 @@ import { capability as chartsCapability } from '../../../projects/mfe-charts/src
 import { daysUntilFn } from '../../../projects/mfe-charts/src/charts/days-until.fn';
 import { GaugeComponent } from '../../../projects/mfe-charts/src/charts/gauge.component';
 import { GAUGE_META } from '../../../projects/mfe-charts/src/charts/gauge.schema';
-import { mapsCapability } from '../capabilities/maps';
+import { capability as mapsCapability } from '../../../projects/mfe-maps/src/capability';
 import { mergeFragments } from './assistant-catalog';
 import { ASSISTANT_CATALOG_ID } from './assistant-catalog-id';
 import { catalogToContextEntry } from './catalog-context';

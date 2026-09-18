@@ -3,7 +3,7 @@ import { CATALOG_CONTEXT_DESCRIPTION } from '../shared/agent-contract';
 import type { CapabilityVocabulary } from '../shared/capabilities/agent-capability';
 import { catalogToContextEntry } from '../src/app/a2ui/catalog-context';
 import { chartsVocabulary } from '../projects/mfe-charts/src/charts/vocabulary';
-import { mapsVocabulary } from '../src/app/capabilities/maps/vocabulary';
+import { mapsVocabulary } from '../projects/mfe-maps/src/maps/vocabulary';
 
 interface SerializedCatalog {
   readonly components: Record<string, unknown>;

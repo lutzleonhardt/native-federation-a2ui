@@ -77,6 +77,22 @@ export function findForbiddenModelWrites(messages: readonly unknown[]): string[]
   return paths;
 }
 
+/**
+ * Every function name the messages call, in order of first appearance. A call is a model
+ * error wherever it names a function the catalog lacks — in a prop, nested in another
+ * call's `args`, in an action context, or in a data value the renderer would never evaluate
+ * — so the whole list is searched. The `JSON.parse` reviver is the walker: it visits every
+ * key/value pair at every depth, and a function call is the pair `call: <string>`.
+ */
+export function findFunctionCalls(messages: readonly unknown[]): string[] {
+  const names = new Set<string>();
+  JSON.parse(JSON.stringify(messages), (key: string, value: unknown) => {
+    if (key === 'call' && typeof value === 'string') names.add(value);
+    return value;
+  });
+  return [...names];
+}
+
 /** Same splitting as the data model's `parsePath`: '/'-separated, empty segments dropped. */
 export function segmentsOf(path: string | undefined): string[] {
   return (path ?? '').split('/').filter((segment) => segment.length > 0);

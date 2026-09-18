@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
 import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
 import { capability as chartsCapability } from '../../../../projects/mfe-charts/src/capability';
-import { mapsCapability } from '../../capabilities/maps';
+import { capability as mapsCapability } from '../../../../projects/mfe-maps/src/capability';
 import type { RenderSurfaceArgs } from './render-surface.definition';
 import { SurfaceToolRendererComponent } from './surface-tool-renderer.component';
 

@@ -35,4 +35,24 @@ module.exports = defineConfig([
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {},
   },
+  {
+    // A remote is an A2UI capability, not an agent client: the packages that talk to the agent
+    // are host business. Production code only, like the folder boundaries in sheriff.config.ts.
+    files: ['projects/mfe-*/**/*.ts'],
+    ignores: ['**/*.spec.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@copilotkit/*', '@ag-ui/*'],
+              message:
+                'a remote imports only shared/capabilities and framework packages; the agent client is host business',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);

@@ -4,7 +4,7 @@ import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
 import type { A2uiMessage } from '@a2ui/web_core/v0_9';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
-import { mapsCapability } from '../capabilities/maps';
+import { capability as mapsCapability } from '../../../projects/mfe-maps/src/capability';
 import { provideAgentCapabilities } from './agent-capabilities.token';
 import { ASSISTANT_CATALOG_ID } from './assistant-catalog';
 

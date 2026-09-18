@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
 import { GaugeComponent } from '../../../projects/mfe-charts/src/charts/gauge.component';
 import { GAUGE_META } from '../../../projects/mfe-charts/src/charts/gauge.schema';
-import { mapsCapability } from '../capabilities/maps';
+import { capability as mapsCapability } from '../../../projects/mfe-maps/src/capability';
 import { ASSISTANT_CATALOG_ID, createAssistantCatalog } from './assistant-catalog';
 import { toFragment, type CatalogFragment } from '../../../shared/capabilities/agent-capability';
 import { createCustomComponent } from '../../../shared/capabilities/custom-component';

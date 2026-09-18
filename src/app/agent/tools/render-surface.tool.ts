@@ -4,6 +4,7 @@ import { A2uiMessageListWrapperSchema, type A2uiMessage } from '@a2ui/web_core/v
 import {
   createdSurface,
   findForbiddenModelWrites,
+  findFunctionCalls,
   findStructuralViolations,
   segmentsOf,
 } from '../../a2ui/surface-host-rules';
@@ -39,7 +40,11 @@ export const renderSurfaceTool: FrontendToolSpec<RenderSurfaceArgs> = {
     try {
       renderer.processMessages(messages);
       renderer.processMessages(
-        createClientDataMessages(surface.surfaceId, store, writesFirstSegment(messages, 'selectedConf')),
+        createClientDataMessages(
+          surface.surfaceId,
+          store,
+          writesFirstSegment(messages, 'selectedConf'),
+        ),
       );
     } catch (error) {
       // Messages apply one by one, so a failure can leave the surface of an
@@ -55,7 +60,11 @@ export const renderSurfaceTool: FrontendToolSpec<RenderSurfaceArgs> = {
   onValidationFailure: (context, issues) => {
     // followUp is static, so even a boundary rejection must reach the
     // correction channel — otherwise the turn ends without any signal.
-    inject(RENDER_FAILURE_HANDLER)({ toolCallId: context.toolCall.id, code: 'invalid_args', issues });
+    inject(RENDER_FAILURE_HANDLER)({
+      toolCallId: context.toolCall.id,
+      code: 'invalid_args',
+      issues,
+    });
   },
 };
 
@@ -71,7 +80,7 @@ type RenderRequest =
 /**
  * Everything that must hold before a single message is applied: envelope schema,
  * the cross-message rules, a `createSurface` with a fresh id, no writes to
- * client-owned paths, no unknown component name. The first violation wins.
+ * client-owned paths, no unknown component or function name. The first violation wins.
  */
 function validateRenderRequest(
   args: unknown,
@@ -121,9 +130,27 @@ function validateRenderRequest(
     };
   }
 
-  const unknown = findUnknownComponents(messages, catalogs, surface.catalogId);
-  if (unknown.length > 0) {
-    return { ok: false, code: 'catalog', result: `Unknown component(s): ${unknown.join(', ')}.` };
+  // An unknown catalog id stays with the processor, which throws for it.
+  const catalog = catalogs.find((candidate) => candidate.id === surface.catalogId);
+  if (catalog !== undefined) {
+    const unknownComponents = findUnknownComponents(messages, catalog);
+    if (unknownComponents.length > 0) {
+      return {
+        ok: false,
+        code: 'catalog',
+        result: `Unknown component(s): ${unknownComponents.join(', ')}.`,
+      };
+    }
+    const unknownFunctions = findFunctionCalls(messages).filter(
+      (name) => !catalog.functions.has(name),
+    );
+    if (unknownFunctions.length > 0) {
+      return {
+        ok: false,
+        code: 'catalog',
+        result: `Unknown function(s): ${unknownFunctions.join(', ')}.`,
+      };
+    }
   }
 
   return { ok: true, messages, surface };
@@ -132,17 +159,13 @@ function validateRenderRequest(
 /**
  * The processor validates props only for names the catalog knows and skips the
  * rest silently — an unknown name would reach the screen as a blank spot, so
- * it is rejected here instead. An unknown catalog id stays with the processor,
- * which throws for it.
+ * it is rejected here instead. Unknown function calls are rejected for the same
+ * reason: the invoker resolves them to `undefined`, an empty value on screen.
  */
 function findUnknownComponents(
   messages: readonly A2uiMessage[],
-  catalogs: readonly AngularCatalog[],
-  catalogId: string,
+  catalog: AngularCatalog,
 ): string[] {
-  const catalog = catalogs.find((candidate) => candidate.id === catalogId);
-  if (catalog === undefined) return [];
-
   const unknown = new Set<string>();
   for (const message of messages) {
     if (!('updateComponents' in message)) continue;

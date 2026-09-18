@@ -49,19 +49,37 @@ in a JetBrains IDE with a running `npm run start:agent`.
 
 | Script | Purpose |
 | --- | --- |
-| `npm start` | Serve shell (4200), charts remote (4201) and agent (3001) together; a failing start takes all down |
+| `npm start` | Serve shell (4200), charts remote (4201), maps remote (4202) and agent (3001) together; a failing start takes all down |
 | `npm run start:shell` | Serve the shell on http://localhost:4200 |
 | `npm run start:charts` | Serve the charts remote on http://localhost:4201 — its `remoteEntry.json` for the shell, and a standalone page |
+| `npm run start:maps` | Serve the maps remote on http://localhost:4202 — likewise |
 | `npm run start:agent` | Agent dev loop on http://localhost:3001 (watch mode) |
 | `npm run build` | Production build of the shell |
 | `npm run clean` | Remove `dist`, the Angular cache and the NF artifact cache; run it when switching between `ng build` and `ng serve` |
-| `npm test` | Run all four test suites |
+| `npm test` | Run all five test suites |
 | `npm run test:shell` | Vitest Browser Mode (headless Chromium) |
 | `npm run test:charts` | Vitest Browser Mode for the charts remote |
+| `npm run test:maps` | Vitest Browser Mode for the maps remote |
 | `npm run test:agent` | Vitest (Node) for the agent server |
 | `npm run test:eval` | Type-check and unit-test the eval harness (no model calls) |
 | `npm run eval` | Model-behavior gate — **real API calls**, see below |
-| `npm run lint` | ESLint across every project's TypeScript and templates |
+| `npm run lint` | ESLint across every project's TypeScript and templates, then the module boundaries |
+| `npm run lint:boundaries` | Sheriff: shell, remotes and the capability contract import only what `sheriff.config.ts` allows |
+
+## Adding a remote
+
+A remote is an Angular project under `projects/` that exposes `./capability`; `mfe-maps` is the template.
+
+1. `ng generate application mfe-<name> --routing=false --skip-tests --style=css --prefix=app --skip-install`,
+   then copy `federation.config.mjs`, `tsconfig.federation.json`, `src/main.ts` and `src/bootstrap.ts`
+   from `projects/mfe-maps` and set `name` and `exposes`.
+2. `angular.json`: replace the project's `build`/`serve` targets with the NF pair and add `esbuild`,
+   `serve-original` (own port), `test` and `lint` as in `mfe-maps`; add both tsconfigs to `tsconfig.json`.
+3. `public/federation.manifest.json`: one entry, key = NF `name` = the capability's `name`.
+4. `package.json`: `start:<name>` and `test:<name>`, folded into `start` and `test`.
+5. `sheriff.config.ts`: the remote's two entry points (page and capability). Without them its imports
+   are not checked.
+6. Shell specs may import the remote's `src/capability` as a fixture; production code may not.
 
 ## The model-behavior gate
 

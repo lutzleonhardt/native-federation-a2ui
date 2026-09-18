@@ -11,7 +11,7 @@ import { ASSISTANT_AGENT, provideAssistantAgent } from '../agent/assistant-agent
 import { MAX_CORRECTIONS_PER_TURN } from '../agent/render-failure-correction';
 import { SurfaceDataStore } from '../agent/surface-data.store';
 import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
-import { mapsCapability } from '../capabilities/maps';
+import { capability as mapsCapability } from '../../../projects/mfe-maps/src/capability';
 import { LocationStore } from '../domain/location.store';
 import type { CapabilityStatus } from '../federation/capability-status';
 import { provideCapabilityStatus } from '../federation/capability-status.token';
@@ -27,13 +27,19 @@ const PROMPTS = [
 ];
 
 const LOCAL: readonly AgentCapability[] = [chartsCapability, mapsCapability];
-/** What the federation bootstrap would report with the charts remote up; maps is still local. */
+/** What the federation bootstrap reports with both remotes up. */
 const REMOTES: readonly CapabilityStatus[] = [
   {
     name: 'charts',
     state: 'loaded',
     origin: 'http://localhost:4201/',
     capability: chartsCapability,
+  },
+  {
+    name: 'maps',
+    state: 'loaded',
+    origin: 'http://localhost:4202/',
+    capability: mapsCapability,
   },
 ];
 
@@ -392,7 +398,9 @@ describe('ChatPage with the scripted agent', () => {
     const panel = host(fixture).querySelector('header app-capability-panel');
     expect(panel?.textContent).toContain('charts');
     expect(panel?.textContent).toContain('loaded from http://localhost:4201/');
-    expect(panel?.querySelector('a')?.getAttribute('href')).toBe('?capabilities=');
+    expect(panel?.textContent).toContain('loaded from http://localhost:4202/');
+    // The first link switches charts off and leaves maps selected.
+    expect(panel?.querySelector('a')?.getAttribute('href')).toBe('?capabilities=maps');
   });
 
   it('T7-AC-06 messageWidget renders its markdown text inside the chat', async () => {

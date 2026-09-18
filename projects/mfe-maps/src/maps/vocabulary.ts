@@ -2,7 +2,7 @@ import type { CapabilityVocabulary } from '../../../../shared/capabilities/agent
 import { distanceFn } from './distance.fn';
 import { MAP_META } from './map.schema';
 
-/** The components maps announces; `index.ts` implements exactly this set. */
+/** The components maps announces; `capability.ts` implements exactly this set. */
 export type MapsComponentName = 'Map';
 
 /**

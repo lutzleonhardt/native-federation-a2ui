@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { A2uiRendererService, SurfaceComponent } from '@a2ui/angular/v0_9';
+import {
+  A2uiRendererService,
+  SurfaceComponent,
+  provideA2Ui,
+  provideMarkdownRenderer,
+} from '@a2ui/angular/v0_9';
+import { renderMarkdown } from '@a2ui/markdown-it';
 import type { A2uiClientAction, A2uiMessage } from '@a2ui/web_core/v0_9';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { A2uiActionBus } from '../../a2ui/action-bus';
-import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
-import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
-import { boundProperty } from '../../testing/bound-property';
-import { capability as chartsCapability } from '../../../../projects/mfe-charts/src/capability';
-import { mapsCapability } from './index';
+import { MAPS_CATALOG_ID, createMapsCatalog } from '../app/maps-catalog';
+import { boundProperty } from '../testing/bound-property';
 import { MapCenter, MapComponent, MapPoint, MapProps } from './map.component';
 
 const POINTS: MapPoint[] = [
@@ -115,9 +117,16 @@ const SURFACE_ID = 'map-selection-surface';
 })
 class SurfaceHost {}
 
-function configureRenderer(): A2uiRendererService {
+/** The remote's own host with a recording action handler — no shell code involved. */
+function configureMapsHost(
+  onAction: (action: A2uiClientAction) => void = () => undefined,
+): A2uiRendererService {
   TestBed.configureTestingModule({
-    providers: [provideAgentCapabilities([chartsCapability, mapsCapability])],
+    providers: [
+      provideA2Ui({ catalogs: [createMapsCatalog()], actionHandler: onAction }),
+      // Mirrors app.config.ts: the basic `Text` injects the markdown renderer unconditionally.
+      provideMarkdownRenderer((markdown) => renderMarkdown(String(markdown))),
+    ],
   });
   return TestBed.inject(A2uiRendererService);
 }
@@ -125,7 +134,7 @@ function configureRenderer(): A2uiRendererService {
 function createSurfaceMessage(): A2uiMessage {
   return {
     version: 'v0.9',
-    createSurface: { surfaceId: SURFACE_ID, catalogId: ASSISTANT_CATALOG_ID },
+    createSurface: { surfaceId: SURFACE_ID, catalogId: MAPS_CATALOG_ID },
   };
 }
 
@@ -133,9 +142,8 @@ describe('Map through the real renderer', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('T5-AC-04 dispatches the pick action with the resolved context to the action bus', async () => {
-    const renderer = configureRenderer();
     const seen: A2uiClientAction[] = [];
-    TestBed.inject(A2uiActionBus).subscribe((action) => seen.push(action));
+    const renderer = configureMapsHost((action) => seen.push(action));
     renderer.processMessages([
       createSurfaceMessage(),
       {
@@ -170,7 +178,7 @@ describe('Map through the real renderer', () => {
 
   it('T5-AC-05 clicking a marker writes the point to /selectedConf and re-renders a Text bound to /selectedConf/name without any fetch', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    const renderer = configureRenderer();
+    const renderer = configureMapsHost();
     renderer.processMessages([
       createSurfaceMessage(),
       {

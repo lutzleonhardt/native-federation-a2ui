@@ -34,6 +34,12 @@
     },
     {
       "path": "./projects/mfe-charts/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/mfe-maps/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/mfe-maps/tsconfig.spec.json"
     }
   ]
 }
