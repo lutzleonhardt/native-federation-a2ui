@@ -10,14 +10,16 @@ import { catalogToContextEntry } from '../src/app/a2ui/catalog-context';
 import { createdSurface } from '../src/app/a2ui/surface-host-rules';
 import { meToContextEntry } from '../src/app/agent/me-context-entry';
 import { findConferencesDefinition } from '../src/app/agent/tools/find-conferences.definition';
-import { messageWidgetDefinition } from '../src/app/agent/tools/message-widget.definition';
+import {
+  messageWidgetDefinition,
+  type MessageWidgetArgs,
+} from '../src/app/agent/tools/message-widget.definition';
 import { renderSurfaceDefinition } from '../src/app/agent/tools/render-surface.definition';
-import { chartsVocabulary } from '../projects/mfe-charts/src/charts/vocabulary';
-import { mapsVocabulary } from '../projects/mfe-maps/src/maps/vocabulary';
 import { loadConferences } from '../src/app/domain/conference';
 import { findConferences, type ConferenceResult } from '../src/app/domain/find-conferences';
 import type { Me } from '../src/app/domain/location.store';
-import { score, type RecordedCall, type Requirement } from './score';
+import { announcedNames, SCENARIOS, type Scenario } from './scenarios';
+import { score, type RecordedCall } from './score';
 
 /**
  * Drives the real agent the way the shell does, but headless: same tool
@@ -35,16 +37,6 @@ const PASS_RATIO = 4 / 5;
 
 /** Fixed so a run is comparable across models; the shell would take this from the picker. */
 const ME: Me = { city: 'Berlin', lat: 52.52, lon: 13.405 };
-
-/** Requests 2 and 3 continue the conversation started by request 1. */
-const REQUESTS: readonly { readonly requirement: Requirement; readonly prompt: string }[] = [
-  { requirement: 'A1', prompt: 'Welche Angular-Konferenzen gibt es in den nächsten Monaten?' },
-  { requirement: 'A2', prompt: 'Zeig sie auf einer Karte' },
-  {
-    requirement: 'A3',
-    prompt: 'Wann ist die nächste in meiner Nähe? Wenn ich eine anklicke, will ich Details.',
-  },
-];
 
 /** Initial run plus the follow-up after findConferences plus one correction. */
 const MAX_RUNS_PER_REQUEST = 4;
@@ -102,35 +94,56 @@ function main(): Promise<void> {
 
 async function runEval(): Promise<boolean> {
   await assertAgentReachable();
-
   const tools = TOOL_SPECS.map(toAgUiTool);
-  // The `vocabulary.ts` files, not the capabilities: their Angular half does not load under Node.
-  const context: Context[] = [
-    catalogToContextEntry([chartsVocabulary, mapsVocabulary]),
-    meToContextEntry(ME),
-  ];
-  const records: RunRecord[][] = REQUESTS.map(() => []);
+
+  let failed = false;
+  for (const scenario of SCENARIOS) {
+    const records = await runScenario(scenario, tools);
+    failed = report(scenario, records) || failed;
+  }
+  console.log(failed ? '\nGate NOT reached.' : '\nGate reached.');
+  return failed;
+}
+
+/** The set announced to the model decides what its answers are scored against. */
+async function runScenario(scenario: Scenario, tools: readonly Tool[]): Promise<RunRecord[][]> {
+  console.log(`\nCapabilities: ${scenario.capabilities}\n`);
+  const announced = announcedNames(scenario.vocabularies);
+  const context: Context[] = [catalogToContextEntry(scenario.vocabularies), meToContextEntry(ME)];
+  const records: RunRecord[][] = scenario.requests.map(() => []);
 
   for (let run = 0; run < RUNS_PER_REQUEST; run += 1) {
     const agent = new HttpAgent({ url: AGENT_URL, agentId: ASSISTANT_AGENT_ID });
     const session = newSession();
-    for (const [index, request] of REQUESTS.entries()) {
+    for (const [index, request] of scenario.requests.entries()) {
       process.stdout.write(`run ${run + 1}/${RUNS_PER_REQUEST} · ${request.requirement} … `);
       const record = await driveRequest(agent, tools, context, request.prompt, session);
       records[index].push(record);
-      const verdict = score(request.requirement, record.calls);
+      const verdict = score(request.requirement, record.calls, announced);
       console.log(verdict.passed ? `ok (${record.durationMs} ms)` : `fail: ${verdict.reasons.join('; ')}`);
+      printWidgetTexts(record.calls);
     }
   }
-
-  return report(records);
+  return records;
 }
 
-function report(records: readonly RunRecord[][]): boolean {
-  console.log('\n— Summary —');
+/** The scorer only looks for a keyword in these; whether a text is an honest answer is read here. */
+function printWidgetTexts(calls: readonly RecordedCall[]): void {
+  for (const call of calls) {
+    if (call.tool === 'messageWidget') {
+      console.log(`    messageWidget: ${JSON.stringify(call.text)}`);
+    }
+  }
+}
+
+function report(scenario: Scenario, records: readonly RunRecord[][]): boolean {
+  const announced = announcedNames(scenario.vocabularies);
+  console.log(`\n— Summary (${scenario.capabilities}) —`);
   let failed = false;
-  for (const [index, request] of REQUESTS.entries()) {
-    const verdicts = records[index].map((record) => score(request.requirement, record.calls));
+  for (const [index, request] of scenario.requests.entries()) {
+    const verdicts = records[index].map((record) =>
+      score(request.requirement, record.calls, announced),
+    );
     const passes = verdicts.filter((verdict) => verdict.passed).length;
     // An empty result proves nothing; only a non-empty run can clear the gate.
     const gate = verdicts.length > 0 && passes >= Math.ceil(verdicts.length * PASS_RATIO);
@@ -142,7 +155,6 @@ function report(records: readonly RunRecord[][]): boolean {
       if (!verdict.passed) console.log(`    run ${run + 1}: ${verdict.reasons.join('; ')}`);
     }
   }
-  console.log(failed ? '\nGate NOT reached.' : '\nGate reached.');
   return failed;
 }
 
@@ -212,6 +224,7 @@ function execute(call: ToolCall, calls: RecordedCall[], session: Session): ToolO
 
   const parsed = spec.definition.parameters.safeParse(args);
   if (!parsed.success) {
+    if (spec.definition.name === renderSurfaceDefinition.name) recordRejectedSurface(args, calls);
     return { result: { ok: false, code: 'invalid_args', result: parsed.error.issues }, followUp: true };
   }
 
@@ -221,6 +234,8 @@ function execute(call: ToolCall, calls: RecordedCall[], session: Session): ToolO
     case renderSurfaceDefinition.name:
       return recordSurface(parsed.data, calls);
     default:
+      // messageWidget: a refusal is an answer too, so the scorer has to see it.
+      calls.push({ tool: 'messageWidget', text: (parsed.data as MessageWidgetArgs).text });
       return { result: { ok: true }, followUp: false };
   }
 }
@@ -252,12 +267,25 @@ function compact({ id, name, city, date, distanceKm }: ConferenceResult): Record
 function recordSurface(args: unknown, calls: RecordedCall[]): ToolOutcome {
   const parsed = A2uiMessageListWrapperSchema.safeParse(args);
   if (!parsed.success) {
+    recordRejectedSurface(args, calls);
     return { result: { ok: false, code: 'invalid_messages', result: parsed.error.issues }, followUp: true };
   }
-  calls.push(args as RecordedCall);
+  // The raw arguments, not `parsed.data`: the scorer judges what the model emitted.
+  const messages = rawMessages(args);
+  calls.push({ tool: 'renderSurface', messages });
   // Mirrors RenderSurfaceToolResult: { ok, surfaceId }.
-  const surface = createdSurface((args as RecordedCall).messages ?? []);
+  const surface = createdSurface(messages);
   return { result: { ok: true, surfaceId: surface?.surfaceId }, followUp: false };
+}
+
+/** A refused attempt never counts as a surface, but it shows which names the model reached for. */
+function recordRejectedSurface(args: unknown, calls: RecordedCall[]): void {
+  calls.push({ tool: 'renderSurface', messages: rawMessages(args), rejected: true });
+}
+
+function rawMessages(args: unknown): readonly unknown[] {
+  const messages = (args as { messages?: unknown } | null)?.messages;
+  return Array.isArray(messages) ? messages : [];
 }
 
 function pendingToolCalls(messages: readonly Message[]): ToolCall[] {

@@ -403,6 +403,31 @@ describe('ChatPage with the scripted agent', () => {
     expect(panel?.querySelector('a')?.getAttribute('href')).toBe('?capabilities=maps');
   });
 
+  // The agent prompt asks for this shape when a requested view is missing: both
+  // tools end the turn, so text and substitute surface arrive in one message.
+  it('shows a messageWidget text and a surface emitted in one assistant message, without a follow-up run', async () => {
+    const agent = new MockAgent((input, run) =>
+      run === 0
+        ? toolCallsRun(input, [
+            { name: 'messageWidget', args: { text: 'Eine **Zeitleiste** gibt es hier nicht.' } },
+            { name: 'renderSurface', args: { messages: mapSurface('text-and-surface') } },
+          ])
+        : emptyRun(input),
+    );
+    const fixture = await renderChat(agent);
+
+    clickPrompt(fixture, 1);
+
+    await vi.waitFor(() => {
+      expect(
+        host(fixture).querySelector('copilot-chat app-message-widget strong')?.textContent,
+      ).toBe('Zeitleiste');
+      expect(host(fixture).querySelector('copilot-chat app-map')).not.toBeNull();
+    });
+    await settle();
+    expect(agent.inputs).toHaveLength(1);
+  });
+
   it('T7-AC-06 messageWidget renders its markdown text inside the chat', async () => {
     const agent = new MockAgent((input, run) =>
       run === 0

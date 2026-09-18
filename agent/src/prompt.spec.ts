@@ -54,6 +54,18 @@ describe('buildInstructions', () => {
     expect(section).not.toContain('Gauge');
   });
 
+  // A name in the static text outweighs the "use only what is listed" rule: with
+  // charts switched off the model still built the `Timeline` an example showed.
+  it.each(['Gauge', 'Timeline', 'Map', 'daysUntil', 'distance'])(
+    'T7-AC-02 names the custom %s only when the catalog entry announces it',
+    (name) => {
+      const prompt = buildInstructions([locationEntry]);
+
+      expect(prompt).not.toContain(`"${name}"`);
+      expect(prompt).not.toContain(`\`${name}\``);
+    },
+  );
+
   it('carries the location into the prompt and says so when it is absent', () => {
     expect(buildInstructions([catalogEntry, locationEntry])).toContain('Berlin');
     expect(sectionOf(buildInstructions([catalogEntry]), '# User location')).toContain('Unknown');

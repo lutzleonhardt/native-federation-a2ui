@@ -1,5 +1,7 @@
+import { BASIC_COMPONENTS, BASIC_FUNCTIONS } from '@a2ui/web_core/v0_9/basic_catalog';
 import {
   findForbiddenModelWrites,
+  findFunctionCalls,
   findStructuralViolations,
   isRecord,
   record,
@@ -18,10 +20,29 @@ import {
  * Pure on purpose — `run-eval.ts` does the I/O, this file is unit-tested.
  */
 
-/** One recorded `renderSurface` tool call: the raw arguments the model produced. */
-export type RecordedCall = { readonly messages?: readonly unknown[] };
+export interface RecordedSurface {
+  readonly tool: 'renderSurface';
+  readonly messages?: readonly unknown[];
+  /** Refused by the harness, so the model got a correction run; only the vocabulary check reads it. */
+  readonly rejected?: true;
+}
 
-export type Requirement = 'A1' | 'A2' | 'A3';
+export interface RecordedText {
+  readonly tool: 'messageWidget';
+  readonly text: string;
+}
+
+/** One recorded client-tool call: the raw arguments the model produced. */
+export type RecordedCall = RecordedSurface | RecordedText;
+
+/** `A2-without-maps` is the map request asked while no capability announces a `Map`. */
+export type Requirement = 'A1' | 'A2' | 'A3' | 'A2-without-maps';
+
+/** The custom names the model was told about; the basic catalog is allowed on top of them. */
+export interface AnnouncedNames {
+  readonly components: readonly string[];
+  readonly functions: readonly string[];
+}
 
 export interface Verdict {
   readonly passed: boolean;
@@ -31,22 +52,103 @@ export interface Verdict {
 /** A date written into the data model freezes at recording time — the replay-freshness risk. */
 const DATE_LITERAL = /\d{4}-\d{2}-\d{2}/;
 
+/** A keyword, not a judgement: the harness prints the text so a human can read it. */
+const MAP_WORD = /karte|map/i;
+
+const NOTHING_ANNOUNCED: AnnouncedNames = { components: [], functions: [] };
+
 /**
- * One answer is one surface. Everything below therefore judges a single message
- * list — without this guard the checks would flatten across surfaces and a run
- * could satisfy A3 by taking the Map from one and the Gauge from another.
+ * One answer is one surface. A1–A3 therefore judge a single message list —
+ * without this guard the checks would flatten across surfaces and a run could
+ * satisfy A3 by taking the Map from one and the Gauge from another. They look at
+ * `renderSurface` calls only; `announced` matters to `A2-without-maps` alone.
  */
-export function score(requirement: Requirement, calls: readonly RecordedCall[]): Verdict {
-  if (calls.length !== 1) {
-    return {
-      passed: false,
-      reasons: [`expected exactly one renderSurface call, got ${calls.length}`],
-    };
+export function score(
+  requirement: Requirement,
+  calls: readonly RecordedCall[],
+  announced: AnnouncedNames = NOTHING_ANNOUNCED,
+): Verdict {
+  const surfaces = surfacesOf(calls, false);
+  if (requirement === 'A2-without-maps') {
+    // A refused attempt still shows what the model believed it could use.
+    const rejected = surfacesOf(calls, true).flatMap((messages) =>
+      vocabularyFailures(messages, announced),
+    );
+    return verdictOf([...withoutMapFailures(surfaces, widgetTexts(calls), announced), ...rejected]);
   }
 
-  const messages = calls[0].messages ?? [];
-  const reasons = [...hostRuleFailures(messages), ...requirementFailures(requirement, messages)];
+  if (surfaces.length !== 1) {
+    return verdictOf([`expected exactly one renderSurface call, got ${surfaces.length}`]);
+  }
+  const messages = surfaces[0];
+  return verdictOf([...hostRuleFailures(messages), ...requirementFailures(requirement, messages)]);
+}
+
+function surfacesOf(calls: readonly RecordedCall[], rejected: boolean): (readonly unknown[])[] {
+  return calls.flatMap((call) =>
+    call.tool === 'renderSurface' && (call.rejected ?? false) === rejected
+      ? [call.messages ?? []]
+      : [],
+  );
+}
+
+function verdictOf(reasons: readonly string[]): Verdict {
   return { passed: reasons.length === 0, reasons };
+}
+
+function widgetTexts(calls: readonly RecordedCall[]): string[] {
+  return calls.flatMap((call) => (call.tool === 'messageWidget' ? [call.text] : []));
+}
+
+/**
+ * The honest answer to a request the vocabulary cannot express: a `messageWidget`
+ * text that names the map and — optionally, emitted in the same assistant message,
+ * since both tools end the turn — one surface built from announced names only.
+ */
+function withoutMapFailures(
+  surfaces: readonly (readonly unknown[])[],
+  texts: readonly string[],
+  announced: AnnouncedNames,
+): string[] {
+  const reasons: string[] = [];
+  if (surfaces.length > 1) {
+    reasons.push(`expected at most one renderSurface call, got ${surfaces.length}`);
+  }
+  for (const messages of surfaces) {
+    reasons.push(...hostRuleFailures(messages), ...vocabularyFailures(messages, announced));
+  }
+  if (!texts.some((text) => MAP_WORD.test(text))) {
+    reasons.push('no messageWidget text names the missing map');
+  }
+  return reasons;
+}
+
+function componentNames(messages: readonly unknown[]): string[] {
+  const names = components(messages).flatMap((part) =>
+    typeof part['component'] === 'string' ? [part['component']] : [],
+  );
+  return [...new Set(names)];
+}
+
+/** What the shell's catalog check rejects: a name neither the basic catalog nor a capability carries. */
+function vocabularyFailures(messages: readonly unknown[], announced: AnnouncedNames): string[] {
+  const knownComponents = new Set([
+    ...BASIC_COMPONENTS.map((component) => component.name),
+    ...announced.components,
+  ]);
+  const knownFunctions = new Set([...BASIC_FUNCTIONS.map((fn) => fn.name), ...announced.functions]);
+
+  const unknownComponents = componentNames(messages).filter((name) => !knownComponents.has(name));
+  const unknownFunctions = findFunctionCalls(messages).filter((name) => !knownFunctions.has(name));
+
+  const reasons: string[] = [];
+  if (unknownComponents.length > 0) {
+    reasons.push(`component(s) outside the announced vocabulary: ${unknownComponents.join(', ')}`);
+  }
+  if (unknownFunctions.length > 0) {
+    reasons.push(`function(s) outside the announced vocabulary: ${unknownFunctions.join(', ')}`);
+  }
+  return reasons;
 }
 
 /** Exactly what the shell's `renderSurface` boundary rejects. */
@@ -63,7 +165,10 @@ function hostRuleFailures(messages: readonly unknown[]): string[] {
   return reasons;
 }
 
-function requirementFailures(requirement: Requirement, messages: readonly unknown[]): string[] {
+function requirementFailures(
+  requirement: 'A1' | 'A2' | 'A3',
+  messages: readonly unknown[],
+): string[] {
   const parts = components(messages);
   switch (requirement) {
     case 'A1':

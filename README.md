@@ -95,11 +95,16 @@ request clears 4 out of 5 runs.
 
 ```bash
 npm run start:agent          # must be running, with a working API key
-npm run eval                 # 3 requests x 5 runs against the real model
+npm run eval                 # 5 requests x 5 runs against the real model
 EVAL_RUNS=1 npm run eval      # cheap smoke run
 ```
 
-**This spends real API credit** — roughly 40 model calls per full run. That is why
+It plays two conversations: requests 1–3 with both capabilities announced, then requests
+1–2 with charts only. There request 2 still asks for a map; it passes when the answer uses
+nothing outside the announced vocabulary and a `messageWidget` text names the missing map.
+The scorer only looks for the keyword, so the harness prints those texts.
+
+**This spends real API credit** — roughly 60 model calls per full run. That is why
 it is a manual script and deliberately not part of `npm test` or CI. Run it after
 touching the prompt, the tool definitions or the context serializer; the numbers
 belong in the task log. `AGENT_PROVIDER` and `AGENT_MODEL` point a run at another

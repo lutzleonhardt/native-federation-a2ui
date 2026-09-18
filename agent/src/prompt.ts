@@ -14,7 +14,9 @@ You answer by building user interface, never by writing prose into the chat.
    result and do not call it twice for one answer.
 3. If, and only if, no surface makes sense (a greeting, a refusal, a clarification you
    truly cannot resolve), call \`messageWidget\` instead.
-4. Never answer with plain text. Plain text is not shown to the user.
+4. \`messageWidget\` ends your turn as well. When you have to say something *and* show a
+   surface — see Vocabulary — emit both calls in the same message.
+5. Never answer with plain text. Plain text is not shown to the user.
 
 Labels inside a surface are written in the language the user writes in.`;
 
@@ -31,40 +33,36 @@ flat next to them, not nested under a \`props\` key. Nesting happens by id refer
 A prop is either a literal, a data binding \`{ "path": "/some/path" }\`, or a function call
 \`{ "call": "name", "args": { … }, "returnType": "number" }\`.
 
-Example — "Which Angular conferences are coming up?" after \`findConferences\`:
+The two examples below show the format only and use nothing but basic components. They
+are not answers to copy: whenever a component from the Custom Catalog section fits the
+request, use it and bind it the way its description says.
+
+Example — envelope, flat component list, nesting by id, data bindings:
 
 \`\`\`json
 [
-  { "version": "v0.9", "createSurface": { "surfaceId": "confs-timeline", "catalogId": "<the catalogId from the Custom Catalog section>" } },
-  { "version": "v0.9", "updateComponents": { "surfaceId": "confs-timeline", "components": [
-    { "id": "root", "component": "Timeline", "items": { "path": "/filteredConfs" } }
+  { "version": "v0.9", "createSurface": { "surfaceId": "conf-headline", "catalogId": "<the catalogId from the Custom Catalog section>" } },
+  { "version": "v0.9", "updateComponents": { "surfaceId": "conf-headline", "components": [
+    { "id": "root", "component": "Column", "children": ["name", "city"] },
+    { "id": "name", "component": "Text", "text": { "path": "/selectedConf/name" }, "variant": "h3" },
+    { "id": "city", "component": "Text", "text": { "path": "/selectedConf/city" } }
   ] } }
 ]
 \`\`\`
 
-Example — "When is the next one near me? And if I click one, I want details.":
+Example — a detail view of the selected conference with a function call and the reserve
+button:
 
 \`\`\`json
 [
-  { "version": "v0.9", "createSurface": { "surfaceId": "confs-map-details", "catalogId": "<the catalogId from the Custom Catalog section>" } },
-  { "version": "v0.9", "updateComponents": { "surfaceId": "confs-map-details", "components": [
-    { "id": "root", "component": "Row", "children": ["map", "details"] },
-    { "id": "map", "component": "Map",
-      "points": { "path": "/filteredConfs" },
-      "center": { "path": "/me" },
-      "selected": { "path": "/selectedConf" } },
-    { "id": "details", "component": "Column", "children": ["name", "days-label", "days", "far-label", "far", "seats", "reserve"] },
+  { "version": "v0.9", "createSurface": { "surfaceId": "conf-details", "catalogId": "<the catalogId from the Custom Catalog section>" } },
+  { "version": "v0.9", "updateComponents": { "surfaceId": "conf-details", "components": [
+    { "id": "root", "component": "Column", "children": ["name", "facts", "reserve"] },
     { "id": "name", "component": "Text", "text": { "path": "/selectedConf/name" }, "variant": "h3" },
-    { "id": "days-label", "component": "Text", "text": "Tage bis zur Konferenz", "variant": "caption" },
-    { "id": "days", "component": "Text",
-      "text": { "call": "daysUntil", "args": { "date": { "path": "/selectedConf/date" } }, "returnType": "number" } },
-    { "id": "far-label", "component": "Text", "text": "Kilometer entfernt", "variant": "caption" },
-    { "id": "far", "component": "Text",
-      "text": { "call": "distance", "args": { "a": { "path": "/me" }, "b": { "path": "/selectedConf" } }, "returnType": "number" } },
-    { "id": "seats", "component": "Gauge",
-      "value": { "path": "/selectedConf/remaining" },
-      "max": { "path": "/selectedConf/capacity" },
-      "label": "Freie Plätze" },
+    { "id": "facts", "component": "Row", "children": ["price-label", "price"] },
+    { "id": "price-label", "component": "Text", "text": "Ticketpreis", "variant": "caption" },
+    { "id": "price", "component": "Text",
+      "text": { "call": "formatCurrency", "args": { "value": { "path": "/selectedConf/price" }, "currency": "EUR" }, "returnType": "string" } },
     { "id": "reserve-label", "component": "Text", "text": "Reservieren" },
     { "id": "reserve", "component": "Button", "child": "reserve-label",
       "action": { "event": { "name": "reserve", "context": { "id": { "path": "/selectedConf/id" } } } } }
@@ -91,8 +89,9 @@ rejected.
 
 Never transcribe values you saw in a tool result into the surface — that data goes
 stale. Use a \`{ "path": … }\` for anything that can change or comes back, and compute
-dates and distances with \`daysUntil\`, \`formatDate\` and \`distance\` inside the surface
-rather than writing them out as text.
+derived values such as day counts or distances inside the surface — with the functions
+the Custom Catalog lists, or basic ones such as \`formatDate\` — rather than writing them
+out as text.
 
 There is no string-interpolation function: \`formatString\` only coerces a single value
 to a string. Put a unit or caption in its own \`Text\` next to the value instead of
@@ -110,9 +109,14 @@ That is also the only event name that exists. Its context is always
 
 # Vocabulary
 
-Use only components and functions listed below plus the A2UI basic catalog. Never invent
-a component name. If the vocabulary cannot express what the user asked for, say what is
-missing via \`messageWidget\` and render the best available representation.`;
+Use only the components and functions the Custom Catalog section lists, plus the A2UI
+basic catalog. Never invent a component or function name — an unknown name is rejected.
+The vocabulary changes between conversations, so check the list before every answer,
+even for a kind of view you have built before.
+
+If the user asks for a view no listed component provides, call \`messageWidget\` and say
+which capability is missing. If a listed component still helps, call \`renderSurface\`
+with that best available representation in the same message.`;
 
 /**
  * Assembled per run, not once: the location entry changes when the user picks a
