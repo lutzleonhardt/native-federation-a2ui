@@ -13,6 +13,7 @@ Decisions taken while planning; do not re-derive:
 - **Remotes stay repo-portable.** A remote may depend on the contract folder and on published packages, on nothing else — it has to remain a thing that could move into its own repository on its own server tomorrow, because that is the claim the whole demo makes. The module boundaries in Task 6 are the executable form of that claim, not bookkeeping.
 - **Boundaries bind production code.** A shell *spec* may import a remote's source as a fixture; shell production code may not.
 - npm stays. The remotes are Angular CLI projects in the one workspace with one `node_modules`.
+- **Amended 2026-09-21.** Task 9 was appended after a README brainstorm; Task 8 is unchanged and the tasks run in number order. The README rewrite and the history cleanup are not part of M2: they live in the scope `publication` (`docs/work/publication/plan.md`), which starts after the `visual-language` scope.
 
 M1 conventions stay in force: zoneless, OnPush, signals-first, `inject()`, standalone, `templateUrl` with its own `.html`, RxJS only at the AG-UI boundary. Nothing reachable from a `vocabulary.ts` may import `@a2ui/angular` or `@angular/core` — the Node eval harness reads those files.
 
@@ -488,11 +489,74 @@ written here and condensed — not repeated — by the M3 README and post.
 - The register already carries the M3 README entry for the monorepo point; this task is where the
   argument is written, so the M3 task links instead of re-deriving it.
 
+## Task 9: Switch the running demo to English
+
+### Instructions
+
+The repository goes public with an English README, so everything the demo shows or sends becomes
+English — without i18n: strings are replaced, no translation layer is added.
+
+- The example prompts and the eval's demo requests. They stay the same sentences in both places.
+- The conference data and the city list: English city names (Munich, Cologne, Zurich, Brussels,
+  Nuremberg), the conference names built from them, and the ids and `url` slugs that carry the German
+  spelling.
+- Vocabulary the model reads: the `Gauge` description quotes a German label ("Restkarten").
+- The scorer's keyword for `A2-without-maps` (`/karte|map/i`): the model answers in the language of
+  the request, so English requests yield English texts.
+- German fixtures and labels in specs, the playground and `agent/requests.http`.
+
+`docs/` is out of scope — the spec and the early task logs stay German.
+
+Then run the model-behavior gate once, on the final strings, and record the figures in the task log.
+It comes last in this task because the requests and one component description change what the model
+reads: the figures of 2026-09-18 no longer describe the repository, and the README quotes the new
+ones. Update the figures wherever the docs cite them.
+
+### Acceptance
+
+- **T9-AC-01** — No German word is left outside `docs/`: no prompt, data value, vocabulary
+  description, label or fixture. Proper names without an English form keep their spelling.
+- **T9-AC-02** — Shell and eval harness send the same demo requests, word for word.
+- **T9-AC-03** — A full eval run on the English strings reaches the gate for both capability sets;
+  the figures and the `messageWidget` texts of the charts-only set are in the task log. Contributes
+  to XC-01.
+
+### Quick functional check
+
+Start everything, deselect maps, send the first two example prompts: the second answer names the
+missing map in English.
+
+### Key Locations
+
+- `src/app/chat/example-prompts.ts`, `src/app/chat/chat.page.spec.ts:23-26`,
+  `eval/scenarios.ts:20-23`, `eval/score.ts:56` (`MAP_WORD`), `eval/score.spec.ts`.
+- `src/app/domain/conferences.json`, `src/app/domain/cities.ts`,
+  `src/app/domain/{geo,location.store}.spec.ts`.
+- `projects/mfe-charts/src/charts/gauge.schema.ts:15` and the specs asserting "Restkarten"
+  (`gauge.component.spec.ts`, `src/app/a2ui/{catalog-context,renderer-integration}.spec.ts`),
+  `src/app/playground/playground.ts:61`.
+- `projects/mfe-maps/src/app/app.ts`, `projects/mfe-maps/src/maps/{geo.ts,map.component.spec.ts,distance.fn.spec.ts}`.
+- `src/app/playground/tool-playground.{ts,html}`,
+  `src/app/agent/tools/{render-surface.tool,message-widget.component}.spec.ts`,
+  `agent/requests.http:18`.
+- `README.md` (eval section), `docs/architecture.md` (gate figures).
+
+### Key Discoveries
+
+- About 20 files, all mechanical string changes — above the usual size, but one goal and one commit.
+- The eval spends real API credit: 25 requests per full run, about five minutes; `EVAL_RUNS=1` is the
+  smoke run. The agent has to run outside the sandbox; check outside the sandbox whether the user
+  already has one listening on 3001.
+- The gate is 4 of 5 per request. A3 sat at 4/5 without slack in both default-set runs of Task 7, so
+  a 3/5 after the switch is as likely noise as a regression — run again before touching the prompt.
+- Optional, settled at task start: an off-topic scenario ("write me a Python function" → a refusal
+  via `messageWidget`). If wanted, it goes in before the paid run so that one run covers it.
+
 ## Cross-Cutting Acceptance
 
 - **XC-01** — The live moment: with maps in the selection request 2 produces a map; without it the
   answer names the gap and builds no dead controls; nothing in `agent/` changes between the two.
-  **Touches:** T3, T5, T6, T7.
+  **Touches:** T3, T5, T6, T7, T9.
 - **XC-02** — The shell's production code imports nothing from a remote project, and a remote imports
   only the capability contract and framework packages. **Touches:** T1, T4, T6.
 - **XC-03** — One zod and one Angular across the remote boundary: a component whose schema was
