@@ -10,9 +10,14 @@ vocabulary rather than from hand-written screens.
 
 ## Status
 
-Milestone M1 — monolith spike. The shell, the agent server and the assistant
-catalog live in this single Angular workspace; the Native Federation split
-follows in M2.
+Milestone M2 — Native Federation split. The shell is a dynamic host; `charts` and
+`maps` are remotes on their own ports that contribute the assistant's vocabulary at
+runtime, selectable per URL (`?capabilities=charts`). Shell, remotes and agent
+server still share this one workspace. M3 adds the `reserve` handler and hosting.
+
+New here? [docs/how-it-works.md](./docs/how-it-works.md) explains the idea — what a
+capability is and why its two halves travel to two different consumers — without
+opening any code.
 
 The system architecture — big picture, the AG-UI run, which package owns which
 layer, and the invariants behind it all — is described in
