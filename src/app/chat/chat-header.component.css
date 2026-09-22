@@ -3,6 +3,7 @@
 }
 /* Three areas in phone order; the desktop lifts the capability area into the band row. */
 header {
+  position: relative; /* the capability panel's overlay hangs from the whole stack */
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas:
@@ -56,14 +57,10 @@ app-location-picker {
   height: 26px;
   background: var(--cf-ink-line);
 }
-/* The panel is still wider than its slot; clip it so the band keeps its layout. */
 app-capability-panel {
   grid-area: caps;
   align-self: center;
-  max-width: 400px;
-  max-height: 76px;
   padding-right: var(--cf-s-6);
-  overflow: hidden;
 }
 .cf-prompts {
   grid-area: prompts;
@@ -124,10 +121,6 @@ app-capability-panel {
     white-space: nowrap;
   }
   app-capability-panel {
-    height: 36px;
-    max-width: none;
-    padding: 0 var(--cf-s-4);
-    background: var(--cf-sub);
-    color: var(--cf-ink);
+    padding-right: 0;
   }
 }

@@ -28,6 +28,18 @@ function rows(host: HTMLElement): HTMLLIElement[] {
   return [...host.querySelectorAll('li')];
 }
 
+function chips(host: HTMLElement): { name: string; state: string }[] {
+  return [...host.querySelectorAll<HTMLElement>('summary .cf-chip')].map((chip) => ({
+    name: chip.querySelector('.cf-name')?.textContent?.trim() ?? '',
+    state: chip.querySelector('.cf-state')?.textContent?.trim() ?? '',
+  }));
+}
+
+/** The `dd` values of a row, in the template's order: origin, components, functions. */
+function facts(row: HTMLLIElement): string[] {
+  return [...row.querySelectorAll('dd')].map((dd) => dd.textContent?.trim() ?? '');
+}
+
 function toggleOf(row: HTMLLIElement): { href: string | null; label: string } {
   const link = row.querySelector('a');
   return { href: link?.getAttribute('href') ?? null, label: link?.textContent?.trim() ?? '' };
@@ -39,14 +51,17 @@ describe('CapabilityPanelComponent', () => {
     const [charts, maps, tables] = rows(host);
 
     expect(rows(host)).toHaveLength(3);
+    expect([...charts.querySelectorAll('dt')].map((dt) => dt.textContent)).toEqual([
+      'origin',
+      'components',
+      'functions',
+    ]);
     expect(charts.dataset['state']).toBe('loaded');
-    expect(charts.textContent).toContain('loaded from http://localhost:4201/');
-    expect(charts.textContent).toContain('components: Gauge, Timeline');
-    expect(charts.textContent).toContain('functions: daysUntil');
+    expect(facts(charts)).toEqual(['http://localhost:4201/', 'Gauge, Timeline', 'daysUntil']);
     expect(maps.dataset['state']).toBe('unreachable');
-    expect(maps.textContent).toContain('selected, but unreachable');
+    expect(facts(maps)).toEqual(['—', '—', '—']);
     expect(tables.dataset['state']).toBe('unselected');
-    expect(tables.textContent).toContain('not selected');
+    expect(facts(tables)).toEqual(['—', '—', '—']);
   });
 
   it('T5-AC-02: every toggle is a link to the selection with that remote flipped, in manifest order', async () => {
@@ -65,9 +80,32 @@ describe('CapabilityPanelComponent', () => {
     expect(toggleOf(rows(host)[0])).toEqual({ href: '?capabilities=', label: 'Switch off' });
   });
 
+  it('starts collapsed with a chip per remote that names its state; the details open on demand', async () => {
+    const host = await render();
+    const details = host.querySelector('details') as HTMLDetailsElement;
+    const panel = host.querySelector('.cf-panel') as HTMLElement;
+    const mark = host.querySelector('summary img') as HTMLImageElement;
+
+    expect(details.open).toBe(false);
+    expect(chips(host)).toEqual([
+      { name: 'charts', state: 'loaded' },
+      { name: 'maps', state: 'unreachable' },
+      { name: 'tables', state: 'off' },
+    ]);
+    expect(mark.checkVisibility()).toBe(true);
+    expect(panel.checkVisibility()).toBe(false);
+
+    details.open = true;
+    expect(panel.checkVisibility()).toBe(true);
+    expect(panel.textContent).toContain('loaded via Native Federation');
+    expect(
+      rows(host).every((row) => (row.querySelector('a') as HTMLElement).checkVisibility()),
+    ).toBe(true);
+  });
+
   it('says so when the manifest is empty', async () => {
     const host = await render([]);
 
-    expect(host.textContent).toContain('No remotes in the manifest.');
+    expect(host.querySelector('summary')?.textContent).toContain('No remotes in the manifest.');
   });
 });

@@ -428,8 +428,8 @@ describe('ChatPage with the scripted agent', () => {
 
     const panel = host(fixture).querySelector('header app-capability-panel');
     expect(panel?.textContent).toContain('charts');
-    expect(panel?.textContent).toContain('loaded from http://localhost:4201/');
-    expect(panel?.textContent).toContain('loaded from http://localhost:4202/');
+    expect(panel?.textContent).toContain('http://localhost:4201/');
+    expect(panel?.textContent).toContain('http://localhost:4202/');
     // The first link switches charts off and leaves maps selected.
     expect(panel?.querySelector('a')?.getAttribute('href')).toBe('?capabilities=maps');
   });

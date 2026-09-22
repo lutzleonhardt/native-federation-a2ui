@@ -7,12 +7,17 @@ import { toCapabilitiesQuery } from '../federation/select-capabilities';
 interface PanelEntry {
   readonly name: string;
   readonly state: CapabilityStatus['state'];
-  readonly origin: string | undefined;
+  /** The state as the chip reads it: `unselected` is "off" to the user. */
+  readonly stateLabel: 'loaded' | 'unreachable' | 'off';
+  readonly origin: string;
   readonly components: string;
   readonly functions: string;
   readonly toggleHref: string;
   readonly toggleLabel: 'Switch on' | 'Switch off';
 }
+
+/** What an entry shows where a remote that did not load has nothing to list. */
+const NONE = '—';
 
 /**
  * Makes the federation visible: every manifest remote in one of three states, and a link
@@ -23,40 +28,7 @@ interface PanelEntry {
   selector: 'app-capability-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './capability-panel.component.html',
-  styles: `
-    :host {
-      display: flex;
-      flex-basis: 100%;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 0.25rem 1rem;
-      font-size: 0.875rem;
-    }
-    h2 {
-      margin: 0;
-      font-size: inherit;
-    }
-    ul {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem 1.5rem;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-    li {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 0.25rem 0.5rem;
-    }
-    li[data-state='unreachable'] {
-      color: #b00020;
-    }
-    li[data-state='unselected'] {
-      color: #666;
-    }
-  `,
+  styleUrl: './capability-panel.component.css',
 })
 export class CapabilityPanelComponent {
   protected readonly entries = toPanelEntries(inject(CAPABILITY_STATUS));
@@ -68,7 +40,8 @@ function toPanelEntries(statuses: readonly CapabilityStatus[]): PanelEntry[] {
     return {
       name: status.name,
       state: status.state,
-      origin: loaded?.origin,
+      stateLabel: status.state === 'unselected' ? 'off' : status.state,
+      origin: loaded?.origin ?? NONE,
       components: names(
         loaded === undefined ? [] : Object.keys(loaded.capability.vocabulary.components),
       ),
@@ -91,5 +64,5 @@ function toggled(statuses: readonly CapabilityStatus[], name: string): string[] 
 }
 
 function names(items: readonly string[]): string {
-  return items.length === 0 ? 'none' : items.join(', ');
+  return items.length === 0 ? NONE : items.join(', ');
 }
