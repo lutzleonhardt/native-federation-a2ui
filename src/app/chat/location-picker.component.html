@@ -1,6 +1,6 @@
 @if (picking()) {
   <label>
-    Your location
+    <span class="label">Your location</span>
     <select (change)="pick($event)">
       <option value="">Choose a city …</option>
       @for (city of cities; track city.id) {
@@ -9,6 +9,7 @@
     </select>
   </label>
 } @else {
-  <span>Your location: <strong>{{ me()?.city }}</strong></span>
+  <span class="label">Your location</span>
+  <span class="cf-city">{{ me()?.city }}</span>
   <button type="button" (click)="change()">Change</button>
 }

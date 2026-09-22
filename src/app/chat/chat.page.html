@@ -1,10 +1,2 @@
-<header>
-  <app-location-picker />
-  <nav class="cf-prompts" aria-label="Example prompts">
-    @for (prompt of prompts; track prompt) {
-      <button type="button" [disabled]="running()" (click)="send(prompt)">{{ prompt }}</button>
-    }
-  </nav>
-  <app-capability-panel />
-</header>
+<app-chat-header [prompts]="prompts" [running]="running()" (send)="send($event)" />
 <copilot-chat [agentId]="agentId" />

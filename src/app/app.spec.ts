@@ -11,7 +11,7 @@ describe('App', () => {
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('ConferenceFinder');
+    expect(compiled.querySelector('router-outlet')).not.toBeNull();
   });
 
   // Guards the Browser-Mode setup: without `browsers` in angular.json the

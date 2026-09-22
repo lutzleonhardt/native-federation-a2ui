@@ -391,6 +391,37 @@ describe('ChatPage with the scripted agent', () => {
     expect(outcome.result).toContain('Map');
   });
 
+  it('the band carries the display name as its heading', async () => {
+    const fixture = await renderChat(new MockAgent((input) => emptyRun(input)));
+    expect(host(fixture).querySelector('header h1')?.textContent).toBe('Conference Finder');
+  });
+
+  it('the location picker offers the select without a city, then the city with Change, then the select again', async () => {
+    const fixture = await renderChat(new MockAgent((input) => emptyRun(input)));
+    const picker = () => host(fixture).querySelector('header app-location-picker') as HTMLElement;
+    const select = () => picker().querySelector('select') as HTMLSelectElement | null;
+    expect(select()?.labels?.[0]?.textContent).toContain('Your location');
+    expect(picker().querySelector('button')).toBeNull();
+
+    TestBed.inject(LocationStore).setCity('berlin');
+    await fixture.whenStable();
+    expect(picker().querySelector('select')).toBeNull();
+    expect(picker().querySelector('.cf-city')?.textContent).toBe('Berlin');
+
+    const changeButton = picker().querySelector('button') as HTMLButtonElement;
+    changeButton.click();
+    await fixture.whenStable();
+    const reopened = select() as HTMLSelectElement;
+    expect(reopened.value).toBe('berlin');
+    expect(reopened.labels?.[0]?.textContent).toContain('Your location');
+
+    reopened.value = 'vienna';
+    reopened.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(picker().querySelector('select')).toBeNull();
+    expect(picker().querySelector('.cf-city')?.textContent).toBe('Vienna');
+  });
+
   it('T5-AC-01 the header carries the capability panel with the loaded charts remote', async () => {
     const agent = new MockAgent((input) => emptyRun(input));
     const fixture = await renderChat(agent);

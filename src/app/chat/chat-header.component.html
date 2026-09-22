@@ -1,0 +1,16 @@
+<header>
+  <div class="cf-band">
+    <div class="cf-brand">
+      <h1>Conference Finder</h1>
+      <span class="cf-eyebrow">FEDERATED AGENTIC UI · DEMO</span>
+    </div>
+    <app-location-picker />
+    <span class="cf-sep"></span>
+  </div>
+  <nav class="cf-prompts" aria-label="Example prompts">
+    @for (prompt of prompts(); track prompt) {
+      <button type="button" [disabled]="running()" (click)="send.emit(prompt)">{{ prompt }}</button>
+    }
+  </nav>
+  <app-capability-panel />
+</header>

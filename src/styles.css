@@ -113,12 +113,6 @@ app-root {
   height: 100%;
 }
 
-app-root > h1 {
-  margin: 0;
-  padding: 0.5rem 1rem;
-  font-size: 1.25rem;
-}
-
 /* A2UI's Text renders <span class="a2ui-text caption"><em>…</em></span> under
    emulated encapsulation, so the class is reachable from here. */
 .a2ui-text.caption {

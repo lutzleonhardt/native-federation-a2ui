@@ -1,0 +1,37 @@
+:host,
+label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cf-s-2);
+  color: var(--cf-surface);
+  white-space: nowrap;
+}
+.label {
+  font-size: var(--cf-t-3);
+  color: var(--cf-on-ink);
+}
+.cf-city {
+  font-family: var(--cf-font-data);
+  font-size: var(--cf-t-5);
+}
+select,
+button {
+  height: 32px;
+  padding: 0 var(--cf-s-3);
+  border: 1px solid var(--cf-ink-line);
+  border-radius: var(--cf-r-md);
+  background: var(--cf-ink);
+  color: inherit;
+  font: 500 var(--cf-t-4) var(--cf-font-ui);
+  cursor: pointer;
+}
+/* The phone hides the label visually only: it stays the select's native name. */
+@media (max-width: 640px) {
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}

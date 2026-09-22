@@ -2,17 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CITIES } from '../domain/cities';
 import { LocationStore } from '../domain/location.store';
 
+/** Lives in the ink band and takes its colours; the select's option list stays native. */
 @Component({
   selector: 'app-location-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './location-picker.component.html',
-  styles: `
-    :host {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-  `,
+  styleUrl: './location-picker.component.css',
 })
 export class LocationPickerComponent {
   private readonly location = inject(LocationStore);

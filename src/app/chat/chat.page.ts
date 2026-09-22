@@ -10,40 +10,15 @@ import { findConferencesTool } from '../agent/tools/find-conferences.tool';
 import { messageWidgetTool } from '../agent/tools/message-widget.tool';
 import { renderSurfaceTool } from '../agent/tools/render-surface.tool';
 import { LocationStore } from '../domain/location.store';
-import { CapabilityPanelComponent } from './capability-panel.component';
+import { ChatHeaderComponent } from './chat-header.component';
 import { EXAMPLE_PROMPTS } from './example-prompts';
-import { LocationPickerComponent } from './location-picker.component';
 
 @Component({
   selector: 'app-chat-page',
-  imports: [CapabilityPanelComponent, CopilotChat, LocationPickerComponent],
+  imports: [ChatHeaderComponent, CopilotChat],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './chat.page.html',
-  styles: `
-    :host {
-      display: flex;
-      flex: 1;
-      flex-direction: column;
-      min-height: 0;
-    }
-    header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.5rem 1.5rem;
-      padding: 0.5rem 1rem;
-      border-bottom: 1px solid #ddd;
-    }
-    .cf-prompts {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    copilot-chat {
-      flex: 1;
-      min-height: 0;
-    }
-  `,
+  styleUrl: './chat.page.css',
 })
 export class ChatPage {
   private readonly location = inject(LocationStore);
