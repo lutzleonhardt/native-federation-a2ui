@@ -1,5 +1,12 @@
+/* Standalone page of the remote: the shell's ground and scheme as literals,
+   the fallback font stack — a remote never imports host CSS. */
+:root {
+  color-scheme: only light;
+}
+
 html,
 body {
   margin: 0;
+  background: #edf1f4; /* --cf-ground */
   font-family: system-ui, sans-serif;
 }
