@@ -47,7 +47,7 @@ function validSurface(surfaceId: string): unknown[] {
     },
     {
       version: 'v0.9',
-      updateDataModel: { surfaceId, path: '/title', value: 'Konferenzen in deiner Nähe' },
+      updateDataModel: { surfaceId, path: '/title', value: 'Conferences near you' },
     },
   ];
 }
@@ -105,10 +105,10 @@ export class ToolPlayground {
   private surfaceSeq = 0;
 
   protected readonly scenarios: readonly Scenario[] = [
-    { key: 'valid', label: 'Valide Surface', build: validSurface },
+    { key: 'valid', label: 'Valid surface', build: validSurface },
     {
       key: 'forbidden',
-      label: "Verbotener Write (Pfad 'me')",
+      label: "Forbidden write (path 'me')",
       build: (surfaceId) => [
         ...validSurface(surfaceId),
         { version: 'v0.9', updateDataModel: { surfaceId, path: 'me', value: { city: 'Atlantis' } } },
@@ -116,7 +116,7 @@ export class ToolPlayground {
     },
     {
       key: 'unknown',
-      label: 'Unbekannte Komponente',
+      label: 'Unknown component',
       build: (surfaceId) => [
         { version: 'v0.9', createSurface: { surfaceId, catalogId: ASSISTANT_CATALOG_ID } },
         {
@@ -127,7 +127,7 @@ export class ToolPlayground {
     },
     {
       key: 'delete',
-      label: 'deleteSurface (Boundary lehnt ab)',
+      label: 'deleteSurface (boundary rejects it)',
       build: (surfaceId) => [
         { version: 'v0.9', createSurface: { surfaceId, catalogId: ASSISTANT_CATALOG_ID } },
         { version: 'v0.9', deleteSurface: { surfaceId } },
@@ -164,7 +164,7 @@ export class ToolPlayground {
   }
 
   protected async runMessageWidget(): Promise<void> {
-    const text = 'Die **nächste Konferenz** startet in Kürze — Details stehen in der Surface. _(Markdown)_';
+    const text = 'The **next conference** starts soon — the details are in the surface. _(Markdown)_';
     const bound = bindFrontendTool(messageWidgetTool);
     const outcome = await runInInjectionContext(this.toolInjector, () =>
       bound.handler({ text }, { toolCall: { id: 'pg-message' } }),

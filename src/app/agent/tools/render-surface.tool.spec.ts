@@ -38,7 +38,7 @@ function conference(id: string, name: string, city: string, date: string): Confe
 
 const CONFS = [
   conference('c1', 'Alpha Conf', 'Berlin', '2026-10-01'),
-  conference('c2', 'Beta Conf', 'München', '2026-11-01'),
+  conference('c2', 'Beta Conf', 'Munich', '2026-11-01'),
   conference('c3', 'Gamma Conf', 'Hamburg', '2026-12-01'),
 ];
 
@@ -280,14 +280,14 @@ describe('renderSurfaceTool', () => {
       ],
     });
 
-    const outcome = await runTool([createMsg(), timelineMsg(), dataMsg('/title', 'Konferenzen')]);
+    const outcome = await runTool([createMsg(), timelineMsg(), dataMsg('/title', 'Conferences')]);
     expect(outcome).toMatchObject({ ok: true });
 
     const dataModel = surfaceOf(SURFACE_ID)?.dataModel;
     expect(dataModel?.get('/me')).toMatchObject({ city: 'Berlin' });
     expect(dataModel?.get('/me')).toEqual(TestBed.inject(LocationStore).me());
     expect(dataModel?.get('/selectedConf')).toMatchObject({ id: 'c1' });
-    expect(dataModel?.get('/title')).toBe('Konferenzen');
+    expect(dataModel?.get('/title')).toBe('Conferences');
     expect(dataModel?.get('/byMonth')).toMatchObject([
       { label: '2026-10', value: 2 },
       { label: '2026-11', value: 1 },
@@ -313,7 +313,7 @@ describe('renderSurfaceTool', () => {
     const outcome = await runTool([
       createMsg(),
       timelineMsg(),
-      dataMsg('/title', 'Konferenzen'),
+      dataMsg('/title', 'Conferences'),
       dataMsg('/filteredConfs', []),
       dataMsg('/me', {}),
     ]);

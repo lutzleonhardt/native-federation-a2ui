@@ -1,7 +1,7 @@
 /**
  * Deliberate copy of src/app/domain/geo.ts: capabilities become NF remotes in
  * M2 and must not import from the domain layer. Both copies are pinned to the
- * same measured Berlin–München distance by their specs.
+ * same measured Berlin–Munich distance by their specs.
  */
 export interface GeoPoint {
   readonly lat: number;

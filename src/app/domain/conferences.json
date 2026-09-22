@@ -1,9 +1,9 @@
 [
   {
-    "id": "ng-atlas-muenchen",
-    "name": "ng-atlas München",
+    "id": "ng-atlas-munich",
+    "name": "ng-atlas Munich",
     "topic": "angular",
-    "city": "München",
+    "city": "Munich",
     "country": "DE",
     "lat": 48.1372,
     "lon": 11.5756,
@@ -11,7 +11,7 @@
     "capacity": 500,
     "remaining": 12,
     "price": 750,
-    "url": "/conf-sites/ng-atlas-muenchen.html"
+    "url": "/conf-sites/ng-atlas-munich.html"
   },
   {
     "id": "web-lantern-amsterdam",
@@ -56,10 +56,10 @@
     "url": "/conf-sites/cloud-orbit-frankfurt.html"
   },
   {
-    "id": "dotnet-kiln-wien",
-    "name": "dotnet-kiln Wien",
+    "id": "dotnet-kiln-vienna",
+    "name": "dotnet-kiln Vienna",
     "topic": "dotnet",
-    "city": "Wien",
+    "city": "Vienna",
     "country": "AT",
     "lat": 48.2082,
     "lon": 16.3738,
@@ -67,13 +67,13 @@
     "capacity": 380,
     "remaining": 112,
     "price": 640,
-    "url": "/conf-sites/dotnet-kiln-wien.html"
+    "url": "/conf-sites/dotnet-kiln-vienna.html"
   },
   {
-    "id": "dotnet-quarry-prag",
-    "name": "dotnet-quarry Prag",
+    "id": "dotnet-quarry-prague",
+    "name": "dotnet-quarry Prague",
     "topic": "dotnet",
-    "city": "Prag",
+    "city": "Prague",
     "country": "CZ",
     "lat": 50.0755,
     "lon": 14.4378,
@@ -81,13 +81,13 @@
     "capacity": 420,
     "remaining": 140,
     "price": 460,
-    "url": "/conf-sites/dotnet-quarry-prag.html"
+    "url": "/conf-sites/dotnet-quarry-prague.html"
   },
   {
-    "id": "ai-atlas-zuerich",
-    "name": "ai-atlas Zürich",
+    "id": "ai-atlas-zurich",
+    "name": "ai-atlas Zurich",
     "topic": "ai",
-    "city": "Zürich",
+    "city": "Zurich",
     "country": "CH",
     "lat": 47.3769,
     "lon": 8.5417,
@@ -95,13 +95,13 @@
     "capacity": 300,
     "remaining": 95,
     "price": 890,
-    "url": "/conf-sites/ai-atlas-zuerich.html"
+    "url": "/conf-sites/ai-atlas-zurich.html"
   },
   {
-    "id": "ai-prism-warschau",
-    "name": "ai-prism Warschau",
+    "id": "ai-prism-warsaw",
+    "name": "ai-prism Warsaw",
     "topic": "ai",
-    "city": "Warschau",
+    "city": "Warsaw",
     "country": "PL",
     "lat": 52.2297,
     "lon": 21.0122,
@@ -109,7 +109,7 @@
     "capacity": 280,
     "remaining": 133,
     "price": 390,
-    "url": "/conf-sites/ai-prism-warschau.html"
+    "url": "/conf-sites/ai-prism-warsaw.html"
   },
   {
     "id": "ng-loft-hamburg",
@@ -126,10 +126,10 @@
     "url": "/conf-sites/ng-loft-hamburg.html"
   },
   {
-    "id": "dotnet-lantern-nuernberg",
-    "name": "dotnet-lantern Nürnberg",
+    "id": "dotnet-lantern-nuremberg",
+    "name": "dotnet-lantern Nuremberg",
     "topic": "dotnet",
-    "city": "Nürnberg",
+    "city": "Nuremberg",
     "country": "DE",
     "lat": 49.4521,
     "lon": 11.0767,
@@ -137,7 +137,7 @@
     "capacity": 360,
     "remaining": 96,
     "price": 580,
-    "url": "/conf-sites/dotnet-lantern-nuernberg.html"
+    "url": "/conf-sites/dotnet-lantern-nuremberg.html"
   },
   {
     "id": "web-harbor-rotterdam",
@@ -154,10 +154,10 @@
     "url": "/conf-sites/web-harbor-rotterdam.html"
   },
   {
-    "id": "cloud-beacon-koeln",
-    "name": "cloud-beacon Köln",
+    "id": "cloud-beacon-cologne",
+    "name": "cloud-beacon Cologne",
     "topic": "cloud",
-    "city": "Köln",
+    "city": "Cologne",
     "country": "DE",
     "lat": 50.9375,
     "lon": 6.9603,
@@ -165,13 +165,13 @@
     "capacity": 480,
     "remaining": 205,
     "price": 660,
-    "url": "/conf-sites/cloud-beacon-koeln.html"
+    "url": "/conf-sites/cloud-beacon-cologne.html"
   },
   {
-    "id": "web-compass-antwerpen",
-    "name": "web-compass Antwerpen",
+    "id": "web-compass-antwerp",
+    "name": "web-compass Antwerp",
     "topic": "web",
-    "city": "Antwerpen",
+    "city": "Antwerp",
     "country": "BE",
     "lat": 51.2194,
     "lon": 4.4025,
@@ -179,13 +179,13 @@
     "capacity": 240,
     "remaining": 77,
     "price": 430,
-    "url": "/conf-sites/web-compass-antwerpen.html"
+    "url": "/conf-sites/web-compass-antwerp.html"
   },
   {
-    "id": "ng-foundry-wien",
-    "name": "ng-foundry Wien",
+    "id": "ng-foundry-vienna",
+    "name": "ng-foundry Vienna",
     "topic": "angular",
-    "city": "Wien",
+    "city": "Vienna",
     "country": "AT",
     "lat": 48.2082,
     "lon": 16.3738,
@@ -193,7 +193,7 @@
     "capacity": 320,
     "remaining": 174,
     "price": 620,
-    "url": "/conf-sites/ng-foundry-wien.html"
+    "url": "/conf-sites/ng-foundry-vienna.html"
   },
   {
     "id": "ai-quarry-berlin",
@@ -210,10 +210,10 @@
     "url": "/conf-sites/ai-quarry-berlin.html"
   },
   {
-    "id": "ng-anvil-zuerich",
-    "name": "ng-anvil Zürich",
+    "id": "ng-anvil-zurich",
+    "name": "ng-anvil Zurich",
     "topic": "angular",
-    "city": "Zürich",
+    "city": "Zurich",
     "country": "CH",
     "lat": 47.3769,
     "lon": 8.5417,
@@ -221,13 +221,13 @@
     "capacity": 280,
     "remaining": 131,
     "price": 940,
-    "url": "/conf-sites/ng-anvil-zuerich.html"
+    "url": "/conf-sites/ng-anvil-zurich.html"
   },
   {
-    "id": "cloud-meridian-krakau",
-    "name": "cloud-meridian Krakau",
+    "id": "cloud-meridian-krakow",
+    "name": "cloud-meridian Kraków",
     "topic": "cloud",
-    "city": "Krakau",
+    "city": "Kraków",
     "country": "PL",
     "lat": 50.0647,
     "lon": 19.945,
@@ -235,7 +235,7 @@
     "capacity": 400,
     "remaining": 226,
     "price": 350,
-    "url": "/conf-sites/cloud-meridian-krakau.html"
+    "url": "/conf-sites/cloud-meridian-krakow.html"
   },
   {
     "id": "dotnet-forge-graz",
@@ -252,10 +252,10 @@
     "url": "/conf-sites/dotnet-forge-graz.html"
   },
   {
-    "id": "ng-harbor-kopenhagen",
-    "name": "ng-harbor Kopenhagen",
+    "id": "ng-harbor-copenhagen",
+    "name": "ng-harbor Copenhagen",
     "topic": "angular",
-    "city": "Kopenhagen",
+    "city": "Copenhagen",
     "country": "DK",
     "lat": 55.6761,
     "lon": 12.5683,
@@ -263,13 +263,13 @@
     "capacity": 300,
     "remaining": 158,
     "price": 780,
-    "url": "/conf-sites/ng-harbor-kopenhagen.html"
+    "url": "/conf-sites/ng-harbor-copenhagen.html"
   },
   {
-    "id": "web-orbit-bruessel",
-    "name": "web-orbit Brüssel",
+    "id": "web-orbit-brussels",
+    "name": "web-orbit Brussels",
     "topic": "web",
-    "city": "Brüssel",
+    "city": "Brussels",
     "country": "BE",
     "lat": 50.8503,
     "lon": 4.3517,
@@ -277,7 +277,7 @@
     "capacity": 380,
     "remaining": 201,
     "price": 560,
-    "url": "/conf-sites/web-orbit-bruessel.html"
+    "url": "/conf-sites/web-orbit-brussels.html"
   },
   {
     "id": "ng-lantern-leipzig",
@@ -336,10 +336,10 @@
     "url": "/conf-sites/ng-beacon-utrecht.html"
   },
   {
-    "id": "cloud-forge-hannover",
-    "name": "cloud-forge Hannover",
+    "id": "cloud-forge-hanover",
+    "name": "cloud-forge Hanover",
     "topic": "cloud",
-    "city": "Hannover",
+    "city": "Hanover",
     "country": "DE",
     "lat": 52.3759,
     "lon": 9.732,
@@ -347,7 +347,7 @@
     "capacity": 420,
     "remaining": 268,
     "price": 640,
-    "url": "/conf-sites/cloud-forge-hannover.html"
+    "url": "/conf-sites/cloud-forge-hanover.html"
   },
   {
     "id": "web-anvil-poznan",
@@ -406,10 +406,10 @@
     "url": "/conf-sites/web-meridian-linz.html"
   },
   {
-    "id": "dotnet-harbor-luxemburg",
-    "name": "dotnet-harbor Luxemburg",
+    "id": "dotnet-harbor-luxembourg",
+    "name": "dotnet-harbor Luxembourg",
     "topic": "dotnet",
-    "city": "Luxemburg",
+    "city": "Luxembourg",
     "country": "LU",
     "lat": 49.6116,
     "lon": 6.1319,
@@ -417,6 +417,6 @@
     "capacity": 220,
     "remaining": 163,
     "price": 700,
-    "url": "/conf-sites/dotnet-harbor-luxemburg.html"
+    "url": "/conf-sites/dotnet-harbor-luxembourg.html"
   }
 ]

@@ -45,7 +45,7 @@ describe('catalogToContextEntry', () => {
   it('T4-AC-05 serializes the Gauge schema with value and max properties', () => {
     const gauge = payload.components['Gauge'];
 
-    expect(gauge.description).toContain('Restkarten');
+    expect(gauge.description).toContain('Tickets left');
     expect(gauge.schema.properties).toHaveProperty('value');
     expect(gauge.schema.properties).toHaveProperty('max');
   });

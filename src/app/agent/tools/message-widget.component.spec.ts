@@ -23,12 +23,12 @@ function call(
 describe('MessageWidgetComponent', () => {
   it('renders the text as markdown', async () => {
     const fixture = createWidget();
-    fixture.componentRef.setInput('toolCall', call('Hallo **Konferenz**'));
+    fixture.componentRef.setInput('toolCall', call('Hello **conference**'));
     await fixture.whenStable();
 
     await vi.waitFor(() => {
       const html = (fixture.nativeElement as HTMLElement).innerHTML;
-      expect(html).toContain('<strong>Konferenz</strong>');
+      expect(html).toContain('<strong>conference</strong>');
     });
   });
 
@@ -40,11 +40,11 @@ describe('MessageWidgetComponent', () => {
 
     fixture.componentRef.setInput('toolCall', call('Hal', 'in-progress'));
     await fixture.whenStable();
-    fixture.componentRef.setInput('toolCall', call('Hallo'));
+    fixture.componentRef.setInput('toolCall', call('Hello'));
     await fixture.whenStable();
 
     // The streaming-era render finishes after the final one.
-    resolvers.get('Hallo')?.('<p>FINAL</p>');
+    resolvers.get('Hello')?.('<p>FINAL</p>');
     resolvers.get('Hal')?.('<p>STALE</p>');
 
     await vi.waitFor(() => {

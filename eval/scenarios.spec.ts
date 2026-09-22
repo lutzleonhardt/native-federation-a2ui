@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { catalogToContextEntry } from '../src/app/a2ui/catalog-context';
+import { EXAMPLE_PROMPTS } from '../src/app/chat/example-prompts';
 import { announcedNames, SCENARIOS, type Scenario } from './scenarios';
 
 interface SerializedCatalog {
@@ -31,6 +32,13 @@ describe('SCENARIOS', () => {
       'A2-without-maps',
     ]);
     expect(CHARTS_ONLY.requests[1].prompt).toBe(BOTH.requests[1].prompt);
+  });
+
+  it('T9-AC-02: every scored request is one of the shell\'s demo prompts, in the shell\'s order', () => {
+    expect(BOTH.requests.map((request) => request.prompt)).toEqual(EXAMPLE_PROMPTS.slice(0, 3));
+    expect(CHARTS_ONLY.requests.map((request) => request.prompt)).toEqual(
+      EXAMPLE_PROMPTS.slice(0, 2),
+    );
   });
 
   // The scorer accepts these names, the model reads the context entry: both must be one list.

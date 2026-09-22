@@ -15,7 +15,7 @@ Accept: text/event-stream
   "threadId": "http-client-thread",
   "runId": "http-client-run-1",
   "messages": [
-    { "id": "m1", "role": "user", "content": "Welche Angular-Konferenzen gibt es?" }
+    { "id": "m1", "role": "user", "content": "Which Angular conferences are there?" }
   ],
   "tools": [],
   "context": [],

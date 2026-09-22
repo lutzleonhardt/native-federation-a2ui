@@ -48,7 +48,7 @@ describe('SurfaceToolRendererComponent', () => {
         version: 'v0.9',
         updateComponents: {
           surfaceId: SURFACE_ID,
-          components: [{ id: 'root', component: 'Text', text: 'Hallo Surface' }],
+          components: [{ id: 'root', component: 'Text', text: 'Hello surface' }],
         },
       },
     ]);
@@ -61,7 +61,7 @@ describe('SurfaceToolRendererComponent', () => {
 
     expect(host.querySelector('a2ui-v09-surface')).not.toBeNull();
     // The basic `Text` renders markdown asynchronously.
-    await vi.waitFor(() => expect(host.textContent).toContain('Hallo Surface'));
+    await vi.waitFor(() => expect(host.textContent).toContain('Hello surface'));
   });
 
   it('T6-AC-07 shows the error text for a complete call with an ok: false result', async () => {

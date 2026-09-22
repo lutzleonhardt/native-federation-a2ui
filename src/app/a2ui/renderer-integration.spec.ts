@@ -33,7 +33,7 @@ function gaugeSurfaceMessages(): A2uiMessage[] {
             component: 'Gauge',
             value: { path: '/selectedConf/remaining' },
             max: { path: '/selectedConf/capacity' },
-            label: 'Restkarten',
+            label: 'Tickets left',
           },
         ],
       },
@@ -66,7 +66,7 @@ describe('assistant catalog in the real renderer', () => {
     const svg = host.querySelector('svg');
     expect(svg?.textContent).toContain('12');
     expect(svg?.textContent).toContain('100');
-    expect(svg?.textContent).toContain('Restkarten');
+    expect(svg?.textContent).toContain('Tickets left');
   });
 
   it('T4-AC-06 re-renders the gauge when the bound data model path changes', async () => {

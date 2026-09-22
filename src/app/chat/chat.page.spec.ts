@@ -18,12 +18,12 @@ import { provideCapabilityStatus } from '../federation/capability-status.token';
 import { emptyRun, MockAgent, toolCallRun, toolCallsRun } from '../testing/mock-agent';
 import { ChatPage } from './chat.page';
 
-/** The demo requests as the plan spells them; the spec pins the literal texts, not the constant. */
+/** The demo requests; the spec pins the literal texts, not the constant. */
 const PROMPTS = [
-  'Welche Angular-Konferenzen gibt es in den nächsten Monaten?',
-  'Zeig sie auf einer Karte',
-  'Wann ist die nächste in meiner Nähe? Wenn ich eine anklicke, will ich Details.',
-  'Reservier mir eine Karte',
+  'Which Angular conferences are coming up in the next few months?',
+  'Show them on a map',
+  'Where and when is the next one near me? When I click one, I want details.',
+  'Reserve a ticket for me',
 ];
 
 const LOCAL: readonly AgentCapability[] = [chartsCapability, mapsCapability];
@@ -238,11 +238,11 @@ describe('ChatPage run requests through the HttpAgent', () => {
     await vi.waitFor(() => expect(requests).toHaveLength(1));
     expect(meOf(requests[0])).toMatchObject({ city: 'Berlin' });
 
-    location.setCity('wien');
+    location.setCity('vienna');
     await fixture.whenStable();
     clickPrompt(fixture, 1);
     await vi.waitFor(() => expect(requests).toHaveLength(2));
-    expect(meOf(requests[1])).toMatchObject({ city: 'Wien' });
+    expect(meOf(requests[1])).toMatchObject({ city: 'Vienna' });
   });
 });
 
@@ -352,7 +352,7 @@ describe('ChatPage with the scripted agent', () => {
     expect(agent.inputs).toHaveLength(1);
   });
 
-  it('T7-AC-05 the four example buttons send exactly the German texts as user messages', async () => {
+  it('T7-AC-05 the four example buttons send exactly the demo texts as user messages', async () => {
     const agent = new MockAgent((input) => emptyRun(input));
     const fixture = await renderChat(agent);
     expect(promptButtons(fixture)).toHaveLength(4);
@@ -409,7 +409,7 @@ describe('ChatPage with the scripted agent', () => {
     const agent = new MockAgent((input, run) =>
       run === 0
         ? toolCallsRun(input, [
-            { name: 'messageWidget', args: { text: 'Eine **Zeitleiste** gibt es hier nicht.' } },
+            { name: 'messageWidget', args: { text: 'There is no **timeline** here.' } },
             { name: 'renderSurface', args: { messages: mapSurface('text-and-surface') } },
           ])
         : emptyRun(input),
@@ -421,7 +421,7 @@ describe('ChatPage with the scripted agent', () => {
     await vi.waitFor(() => {
       expect(
         host(fixture).querySelector('copilot-chat app-message-widget strong')?.textContent,
-      ).toBe('Zeitleiste');
+      ).toBe('timeline');
       expect(host(fixture).querySelector('copilot-chat app-map')).not.toBeNull();
     });
     await settle();

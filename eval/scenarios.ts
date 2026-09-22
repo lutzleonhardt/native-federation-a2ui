@@ -1,6 +1,7 @@
 import type { CapabilityVocabulary } from '../shared/capabilities/agent-capability';
 import { chartsVocabulary } from '../projects/mfe-charts/src/charts/vocabulary';
 import { mapsVocabulary } from '../projects/mfe-maps/src/maps/vocabulary';
+import { EXAMPLE_PROMPTS } from '../src/app/chat/example-prompts';
 import type { AnnouncedNames, Requirement } from './score';
 
 export interface ScoredRequest {
@@ -17,10 +18,8 @@ export interface Scenario {
   readonly requests: readonly ScoredRequest[];
 }
 
-const CONFERENCES_REQUEST = 'Welche Angular-Konferenzen gibt es in den nächsten Monaten?';
-const MAP_REQUEST = 'Zeig sie auf einer Karte';
-const DETAILS_REQUEST =
-  'Wann ist die nächste in meiner Nähe? Wenn ich eine anklicke, will ich Details.';
+/** The shell's demo requests 1–3, word for word — the harness never spells its own. */
+const [CONFERENCES_REQUEST, MAP_REQUEST, DETAILS_REQUEST] = EXAMPLE_PROMPTS;
 
 /** Every eval run plays all of them; the second is the live moment before maps is switched on. */
 export const SCENARIOS: readonly Scenario[] = [

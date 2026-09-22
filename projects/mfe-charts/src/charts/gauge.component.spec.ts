@@ -44,11 +44,11 @@ describe('GaugeComponent', () => {
     const fixture = await renderGauge({
       value: boundProperty(25),
       max: boundProperty(100),
-      label: boundProperty('Restkarten'),
+      label: boundProperty('Tickets left'),
     });
 
     const svg = fixture.nativeElement.querySelector('svg') as SVGElement;
-    expect(svg.textContent).toContain('Restkarten');
+    expect(svg.textContent).toContain('Tickets left');
 
     const filledArc = svg.querySelector('path[stroke-dasharray]');
     const [filled] = (filledArc?.getAttribute('stroke-dasharray') ?? '').split(' ').map(Number);

@@ -48,11 +48,11 @@ describe('createAssistantAgent', () => {
     ]);
     const second = await agentWithContext([
       catalogEntry,
-      { description: LOCATION_CONTEXT_DESCRIPTION, value: JSON.stringify({ city: 'Wien' }) },
+      { description: LOCATION_CONTEXT_DESCRIPTION, value: JSON.stringify({ city: 'Vienna' }) },
     ]);
 
     expect(first).toContain('Berlin');
-    expect(second).toContain('Wien');
+    expect(second).toContain('Vienna');
     expect(second).not.toContain('Berlin');
   });
 });

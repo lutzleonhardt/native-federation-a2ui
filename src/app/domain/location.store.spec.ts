@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocationStore } from './location.store';
 
-const NEAR_MUENCHEN = { lat: 48.2489, lon: 11.6532 };
+const NEAR_MUNICH = { lat: 48.2489, lon: 11.6532 };
 
 function grantPosition(lat: number, lon: number): void {
   vi.spyOn(navigator.geolocation, 'getCurrentPosition').mockImplementation((onPosition) =>
@@ -20,12 +20,12 @@ describe('LocationStore', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('T3-AC-07 snaps a granted position to the nearest offered city', () => {
-    grantPosition(NEAR_MUENCHEN.lat, NEAR_MUENCHEN.lon);
+    grantPosition(NEAR_MUNICH.lat, NEAR_MUNICH.lon);
     const store = new LocationStore();
 
     store.init();
 
-    expect(store.me()?.city).toBe('München');
+    expect(store.me()?.city).toBe('Munich');
   });
 
   it('T3-AC-07 stays undefined on a denied permission until a city is picked', () => {
@@ -100,7 +100,7 @@ describe('LocationStore', () => {
     store.init();
     store.setCity('berlin');
     answerPrompt?.({
-      coords: { latitude: NEAR_MUENCHEN.lat, longitude: NEAR_MUENCHEN.lon },
+      coords: { latitude: NEAR_MUNICH.lat, longitude: NEAR_MUNICH.lon },
     } as unknown as GeolocationPosition);
 
     expect(store.me()?.city).toBe('Berlin');

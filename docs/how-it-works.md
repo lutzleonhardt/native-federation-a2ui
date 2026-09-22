@@ -54,6 +54,14 @@ From the user's question and the context the LLM then tries to compose a UI that
 answers the question. If the user wants to know where the Angular conferences take
 place, a `Map` fits. If they ask when, a `Timeline` fits.
 
+> [!NOTE]
+> The prompt is simplified. It is written for the demo's questions and nothing else. I did
+> not harden it against misuse: it names a refusal as one possible answer, but nothing says
+> what to refuse. An off-topic request ("write me a Python function") or an adversarial one
+> meets nothing but the shell's checks on the answer's shape — unknown names and forbidden
+> paths are rejected, the intent is not. A real deployment needs that layer: rules for what
+> the assistant does not do, and a check of what goes in, not only of what comes out.
+
 The answer describes a screen built from these names. The description is plain JSON, an
 A2UI message:
 

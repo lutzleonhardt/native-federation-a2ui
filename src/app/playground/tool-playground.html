@@ -1,18 +1,18 @@
 <section>
   <h2>Tool Playground</h2>
   <p>
-    Treibt die echte Client-Tool-Pipeline: gebundene Handler (Boundary-Validierung), Guards,
-    Client-Mount und die Tool-Renderer-Komponenten. Failure-Handler-Aufrufe erscheinen unten im
-    Log — dieselbe Bindung übernimmt später die Chat-Seite.
+    Drives the real client-tool pipeline: bound handlers (boundary validation), guards, the client
+    mount and the tool renderer components. Failure-handler calls appear in the log below — the
+    chat page uses the same binding.
   </p>
 
-  <h3>1 · Standort</h3>
+  <h3>1 · Location</h3>
   <button type="button" (click)="setCity('berlin')">Berlin</button>
-  <button type="button" (click)="setCity('muenchen')">München</button>
-  <span>Aktuell: {{ me()?.city ?? 'unbekannt' }}</span>
+  <button type="button" (click)="setCity('munich')">Munich</button>
+  <span>Current: {{ me()?.city ?? 'unknown' }}</span>
 
   <h3>2 · findConferences</h3>
-  <button type="button" (click)="runFindConferences()">Suche: nearKm 300</button>
+  <button type="button" (click)="runFindConferences()">Search: nearKm 300</button>
 
   <h3>3 · renderSurface</h3>
   @for (scenario of scenarios; track scenario.key) {
@@ -21,18 +21,18 @@
   @if (surfaceCall(); as call) {
     <app-surface-tool-renderer [toolCall]="call" />
   } @else {
-    <p class="muted">Noch keine Surface — erst suchen, dann ein Szenario starten.</p>
+    <p class="muted">No surface yet — search first, then start a scenario.</p>
   }
 
   <h3>4 · messageWidget</h3>
-  <button type="button" (click)="runMessageWidget()">Markdown-Antwort anzeigen</button>
+  <button type="button" (click)="runMessageWidget()">Show a Markdown answer</button>
   @if (messageCall(); as call) {
     <app-message-widget [toolCall]="call" />
   }
 
-  <h3>Ergebnisse &amp; Failure-Handler</h3>
+  <h3>Results &amp; failure handlers</h3>
   @if (entries().length === 0) {
-    <p class="muted">Noch keine Aufrufe.</p>
+    <p class="muted">No calls yet.</p>
   } @else {
     <ol>
       @for (entry of entries(); track $index) {

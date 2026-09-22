@@ -15,7 +15,7 @@ import { MapCenter, MapComponent, MapPoint, MapProps } from './map.component';
 
 const POINTS: MapPoint[] = [
   { id: 'berlin-conf', label: 'Berlin', lat: 52.52, lon: 13.405, remaining: 12, url: 'https://b.example' },
-  { id: 'muc-conf', label: 'München', lat: 48.1372, lon: 11.5756, remaining: 5, url: 'https://m.example' },
+  { id: 'muc-conf', label: 'Munich', lat: 48.1372, lon: 11.5756, remaining: 5, url: 'https://m.example' },
   { id: 'hh-conf', label: 'Hamburg', lat: 53.5511, lon: 9.9937, remaining: 9, url: 'https://h.example' },
 ];
 
@@ -62,7 +62,7 @@ describe('MapComponent', () => {
 
     expect(selected.onUpdate).toHaveBeenCalledExactlyOnceWith({
       id: 'muc-conf',
-      label: 'München',
+      label: 'Munich',
       lat: 48.1372,
       lon: 11.5756,
       remaining: 5,
@@ -213,14 +213,14 @@ describe('Map through the real renderer', () => {
     // The map's own marker label also renders the name, so the assertion must
     // target the Text component's element, not the whole DOM.
     const textEl = () => (fixture.nativeElement as HTMLElement).querySelector('a2ui-v09-text');
-    expect(textEl()?.textContent ?? '').not.toContain('München Days');
+    expect(textEl()?.textContent ?? '').not.toContain('Munich Days');
 
     click(markersOf(fixture)[1]);
     await fixture.whenStable();
 
-    await vi.waitFor(() => expect(textEl()?.textContent).toContain('München Days'));
+    await vi.waitFor(() => expect(textEl()?.textContent).toContain('Munich Days'));
     const surface = renderer.surfaceGroup.getSurface(SURFACE_ID);
-    expect(surface?.dataModel.get('/selectedConf')).toMatchObject({ id: 'muc-conf', name: 'München Days' });
+    expect(surface?.dataModel.get('/selectedConf')).toMatchObject({ id: 'muc-conf', name: 'Munich Days' });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

@@ -496,10 +496,12 @@ describes the code as it is.
   capability contract, catalog and model context composed from a runtime list,
   the shell as a Native Federation dynamic host, `charts` and `maps` as remotes,
   the capability panel, the module boundaries, and the second eval conversation.
-- **Eval gate, 2026-09-18.** 5/5, 5/5 and 4/5 with both capabilities; 5/5 and
-  5/5 with charts only. The map request without maps stood at 0/5 while the
-  static prompt's examples still named custom components — the reason for the
-  invariant *The server holds no vocabulary*.
+- **Eval gate, 2026-09-22 (English demo strings).** 5/5, 5/5 and 5/5 with both
+  capabilities; 5/5 and 5/5 with charts only. The map request without maps
+  stood at 0/5 on 2026-09-18 while the static prompt's examples still named
+  custom components — the reason for the invariant *The server holds no
+  vocabulary*. Request 3 needed "Where and when" in English: with "When" alone
+  the model answered with a timeline instead of a map in 4 of 10 runs.
 - **Next.** M3 adds the `reserve` handler, the MapLibre upgrade, and hosting with
   replay publication.
 - **Where the reasons are.** The spec is [`docs/spec.md`](./spec.md). The plans

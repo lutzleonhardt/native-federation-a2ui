@@ -58,7 +58,7 @@ function playgroundMessages(): A2uiMessage[] {
             component: 'Gauge',
             value: { path: '/selectedConf/remaining' },
             max: { path: '/selectedConf/capacity' },
-            label: 'Restkarten',
+            label: 'Tickets left',
           },
           {
             id: 'summary',

@@ -60,10 +60,10 @@ button:
     { "id": "root", "component": "Column", "children": ["name", "facts", "reserve"] },
     { "id": "name", "component": "Text", "text": { "path": "/selectedConf/name" }, "variant": "h3" },
     { "id": "facts", "component": "Row", "children": ["price-label", "price"] },
-    { "id": "price-label", "component": "Text", "text": "Ticketpreis", "variant": "caption" },
+    { "id": "price-label", "component": "Text", "text": "Ticket price", "variant": "caption" },
     { "id": "price", "component": "Text",
       "text": { "call": "formatCurrency", "args": { "value": { "path": "/selectedConf/price" }, "currency": "EUR" }, "returnType": "string" } },
-    { "id": "reserve-label", "component": "Text", "text": "Reservieren" },
+    { "id": "reserve-label", "component": "Text", "text": "Reserve" },
     { "id": "reserve", "component": "Button", "child": "reserve-label",
       "action": { "event": { "name": "reserve", "context": { "id": { "path": "/selectedConf/id" } } } } }
   ] } }

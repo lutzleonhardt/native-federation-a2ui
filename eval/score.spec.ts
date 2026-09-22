@@ -42,7 +42,7 @@ function detailComponents(selection = '/selectedConf'): unknown[] {
       value: { path: `${selection}/remaining` },
       max: { path: `${selection}/capacity` },
     },
-    { id: 'reserve-label', component: 'Text', text: 'Reservieren' },
+    { id: 'reserve-label', component: 'Text', text: 'Reserve' },
     {
       id: 'reserve',
       component: 'Button',
@@ -87,7 +87,7 @@ describe('score', () => {
   });
 
   it('T9-AC-02 fails when a data-model value carries a date literal', () => {
-    const verdict = score('A3', [withDataWrite('/heading', 'Nächste Konferenz am 2026-10-24')]);
+    const verdict = score('A3', [withDataWrite('/heading', 'Next conference on 2026-10-24')]);
 
     expect(verdict.passed).toBe(false);
     expect(verdict.reasons).toContainEqual(expect.stringContaining('date literal'));
@@ -190,7 +190,7 @@ describe('score A2-without-maps', () => {
   };
   const REFUSAL: RecordedText = {
     tool: 'messageWidget',
-    text: 'Eine Kartenansicht steht mir leider nicht zur Verfügung.',
+    text: 'A map view is not available in this session.',
   };
   const TIMELINE = wiredSurface([
     { id: 'root', component: 'Timeline', items: { path: '/filteredConfs' } },
@@ -224,7 +224,7 @@ describe('score A2-without-maps', () => {
           args: { value: { path: '/selectedConf/date' }, format: 'dd.MM.yyyy' },
         },
       },
-      { id: 'badge', component: 'Badge', label: 'neu' },
+      { id: 'badge', component: 'Badge', label: 'new' },
     ]);
 
     expect(score('A2-without-maps', [REFUSAL, surface], CHARTS_ONLY).reasons).toEqual([
@@ -236,7 +236,7 @@ describe('score A2-without-maps', () => {
     const silent = score('A2-without-maps', [TIMELINE], CHARTS_ONLY);
     const evasive = score(
       'A2-without-maps',
-      [{ tool: 'messageWidget', text: 'Hier ist die Zeitleiste.' }, TIMELINE],
+      [{ tool: 'messageWidget', text: 'Here is the timeline.' }, TIMELINE],
       CHARTS_ONLY,
     );
 

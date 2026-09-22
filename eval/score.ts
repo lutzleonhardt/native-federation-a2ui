@@ -53,7 +53,7 @@ export interface Verdict {
 const DATE_LITERAL = /\d{4}-\d{2}-\d{2}/;
 
 /** A keyword, not a judgement: the harness prints the text so a human can read it. */
-const MAP_WORD = /karte|map/i;
+const MAP_WORD = /map/i;
 
 const NOTHING_ANNOUNCED: AnnouncedNames = { components: [], functions: [] };
 
