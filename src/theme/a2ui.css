@@ -55,6 +55,15 @@
   font-style: normal;
 }
 
+/* The value that follows its caption (the pair idiom) is data: mono, like
+   every date, distance and count in the design. */
+a2ui-v09-component-host:has(> a2ui-v09-text .a2ui-text.caption)
+  + a2ui-v09-component-host
+  > a2ui-v09-text
+  .a2ui-text {
+  font-family: var(--cf-font-data);
+}
+
 /* <button> resets the font and A2UI exposes no variable for it. */
 .a2ui-button {
   font-family: inherit;
@@ -73,5 +82,11 @@ a2ui-v09-row {
      content so that a grouped caption/value pair moves as a whole. */
   > a2ui-v09-component-host > a2ui-v09-column {
     width: auto !important;
+  }
+
+  /* A pair whose value is a component, not a Text (the model puts the Gauge
+     there), takes the whole row instead of squeezing into the facts line. */
+  > a2ui-v09-component-host > a2ui-v09-column:has(> a2ui-v09-component-host > :not(a2ui-v09-text)) {
+    flex-basis: 100%;
   }
 }
