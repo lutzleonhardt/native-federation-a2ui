@@ -1,8 +1,12 @@
+/* The page is viewport-high on its own: the chat's scroll view sizes by
+   percentage, so the chain must be definite even where no flex parent sets
+   it (the unit-test fixture); inside app-root, flex: 1 decides the height. */
 :host {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
+  height: 100dvh;
 }
 copilot-chat {
   flex: 1;

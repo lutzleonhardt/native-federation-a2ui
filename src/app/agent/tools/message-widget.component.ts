@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  signal,
+  ViewEncapsulation,
+} from '@angular/core';
 import { MarkdownRenderer } from '@a2ui/angular/v0_9';
 import type { AngularToolCall, ToolRenderer } from '@copilotkit/angular';
 import type { MessageWidgetArgs } from './message-widget.definition';
@@ -7,11 +15,9 @@ import type { MessageWidgetArgs } from './message-widget.definition';
   selector: 'app-message-widget',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './message-widget.component.html',
-  styles: `
-    .cf-message-widget {
-      max-width: 40rem;
-    }
-  `,
+  styleUrl: './message-widget.component.css',
+  // The stylesheet must reach the innerHTML markdown (see there).
+  encapsulation: ViewEncapsulation.None,
 })
 export class MessageWidgetComponent implements ToolRenderer<MessageWidgetArgs> {
   readonly toolCall = input.required<AngularToolCall<MessageWidgetArgs>>();

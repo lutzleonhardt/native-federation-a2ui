@@ -1,0 +1,30 @@
+/* The pending line reads like the chat's "Thought for …" line; the failure
+   line is attention. */
+.cf-placeholder {
+  display: flex;
+  align-items: center;
+  gap: var(--cf-s-2);
+  margin: 0;
+  color: var(--cf-muted);
+  font-family: var(--cf-font-data);
+  font-size: var(--cf-t-3);
+}
+
+.cf-placeholder::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.cf-error {
+  display: inline-block;
+  margin: 0;
+  padding: var(--cf-s-2) var(--cf-s-3);
+  border-radius: var(--cf-r-md);
+  background: var(--cf-attention-bg);
+  color: var(--cf-attention-ink);
+  font-size: var(--cf-t-5);
+  line-height: 1.45;
+}

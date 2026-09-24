@@ -74,7 +74,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.css", "node_modules/@copilotkit/angular/dist/styles.css"],
+            "styles": ["node_modules/@copilotkit/angular/dist/styles.css", "src/styles.css"],
             "polyfills": ["es-module-shims"]
           },
           "configurations": {

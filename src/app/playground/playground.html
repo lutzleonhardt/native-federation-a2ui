@@ -28,4 +28,9 @@
   <a2ui-v09-surface [surfaceId]="benchId" />
   <h3>Message widget</h3>
   <app-message-widget [toolCall]="messageCall" />
+  <h3>Surface renderer</h3>
+  <div class="renderer-states">
+    <app-surface-tool-renderer [toolCall]="pendingCall" />
+    <app-surface-tool-renderer [toolCall]="failedCall" />
+  </div>
 </section>

@@ -4,3 +4,4 @@ Standing register of pre-existing code-health findings surfaced by the `/cs` gat
 
 - [ ] `agent/src/config.ts` — `parseProvider` (Complex Conditional, 2 complex conditional expressions, L78) — pre-existing; grazed by task 7 · source: cs
 - [ ] `shared/capabilities/surface-action.ts` — `dispatchSurfaceAction` (Excess Number of Function Arguments, Arguments = 5, L16) — pre-existing; grazed by task 1 · source: cs
+- [ ] `src/app/playground/playground.ts` — `benchMessages` (Large Method, LoC = 73 lines, L122) — pre-existing; grazed by task 4 · source: cs

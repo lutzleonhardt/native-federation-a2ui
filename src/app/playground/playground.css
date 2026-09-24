@@ -1,0 +1,15 @@
+section {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.muted {
+  color: var(--cf-muted);
+}
+
+.renderer-states {
+  display: grid;
+  justify-items: start;
+  gap: var(--cf-s-3);
+}

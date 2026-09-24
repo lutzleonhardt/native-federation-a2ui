@@ -1,0 +1,63 @@
+/* Reads like an answer's body Text; the markdown arrives through innerHTML,
+   outside emulated encapsulation, so every rule is scoped by the class. */
+.cf-message-widget {
+  max-width: 40rem;
+  color: var(--cf-ink);
+  font-size: var(--cf-t-5);
+  line-height: 1.5;
+}
+
+.cf-message-widget p,
+.cf-message-widget ul,
+.cf-message-widget ol {
+  margin: 0 0 var(--cf-s-2);
+}
+
+.cf-message-widget > :last-child {
+  margin-bottom: 0;
+}
+
+.cf-message-widget a {
+  color: var(--cf-rail);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cf-message-widget a:hover {
+  color: var(--cf-ink);
+}
+
+.cf-message-widget ul {
+  padding-left: var(--cf-s-5);
+  list-style: disc;
+}
+
+.cf-message-widget ol {
+  padding-left: var(--cf-s-5);
+  list-style: decimal;
+}
+
+.cf-message-widget li {
+  margin-bottom: var(--cf-s-1);
+}
+
+.cf-message-widget :not(pre) > code {
+  padding: 1px var(--cf-s-1);
+  border-radius: var(--cf-r-sm);
+  background: var(--cf-sub);
+  font-family: var(--cf-font-data);
+  font-size: var(--cf-t-4);
+}
+
+/* A fenced block: the quiet fill with ink text, not the chat's dark prose
+   block, which the inline rule above would have painted over. */
+.cf-message-widget pre {
+  margin: 0 0 var(--cf-s-2);
+  padding: var(--cf-s-2) var(--cf-s-3);
+  border-radius: var(--cf-r-md);
+  background: var(--cf-sub);
+  color: var(--cf-ink);
+  font-family: var(--cf-font-data);
+  font-size: var(--cf-t-4);
+  overflow-x: auto;
+}

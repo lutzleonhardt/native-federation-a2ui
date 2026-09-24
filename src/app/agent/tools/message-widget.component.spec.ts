@@ -32,6 +32,27 @@ describe('MessageWidgetComponent', () => {
     });
   });
 
+  it('styles inline code only; a fenced block keeps one quiet block look', async () => {
+    const fixture = createWidget();
+    fixture.componentRef.setInput(
+      'toolCall',
+      call('Run `npm run eval`\n\n```\n{ "ok": true }\n```'),
+    );
+    await fixture.whenStable();
+
+    await vi.waitFor(() => {
+      const host = fixture.nativeElement as HTMLElement;
+      const inline = host.querySelector(':not(pre) > code');
+      const block = host.querySelector('pre > code');
+      expect(inline).not.toBeNull();
+      expect(block).not.toBeNull();
+      const fill = getComputedStyle(block!.parentElement!).backgroundColor;
+      expect(fill).not.toBe('rgba(0, 0, 0, 0)');
+      expect(getComputedStyle(inline!).backgroundColor).toBe(fill);
+      expect(getComputedStyle(block!).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    });
+  });
+
   it('shows the latest text even when an earlier render resolves later', async () => {
     const resolvers = new Map<string, (html: string) => void>();
     const fixture = createWidget(

@@ -6,6 +6,8 @@ import { A2uiActionBus } from '../a2ui/action-bus';
 import { ASSISTANT_CATALOG_ID } from '../a2ui/assistant-catalog';
 import { MessageWidgetComponent } from '../agent/tools/message-widget.component';
 import type { MessageWidgetArgs } from '../agent/tools/message-widget.definition';
+import type { RenderSurfaceArgs } from '../agent/tools/render-surface.definition';
+import { SurfaceToolRendererComponent } from '../agent/tools/surface-tool-renderer.component';
 import { loadConferences } from '../domain/conference';
 import { findConferences } from '../domain/find-conferences';
 
@@ -194,19 +196,10 @@ function benchMessages(): A2uiMessage[] {
 
 @Component({
   selector: 'app-playground',
-  imports: [SurfaceComponent, MessageWidgetComponent],
+  imports: [SurfaceComponent, MessageWidgetComponent, SurfaceToolRendererComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './playground.html',
-  styles: `
-    section {
-      max-width: 56rem;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-    .muted {
-      color: var(--cf-muted);
-    }
-  `,
+  styleUrl: './playground.css',
 })
 export class Playground {
   protected readonly surfaceId = SURFACE_ID;
@@ -214,10 +207,25 @@ export class Playground {
   protected readonly actions = signal<readonly string[]>([]);
   protected readonly messageCall: AngularToolCall<MessageWidgetArgs> = {
     args: {
-      text: 'The **next conference** near you starts in 3 days — the details are in the surface above. _(Markdown)_',
+      text: [
+        'The **next conference** near you starts in 3 days — the details are in the surface above. _(Markdown)_',
+        'Inline `code` and a fenced block:',
+        '```\n{ "ok": true }\n```',
+      ].join('\n\n'),
     },
     status: 'complete',
     result: JSON.stringify({ ok: true }),
+  };
+  // The two renderer states the chat shows only around a real call.
+  protected readonly pendingCall: AngularToolCall<RenderSurfaceArgs> = {
+    args: {},
+    status: 'in-progress',
+    result: undefined,
+  };
+  protected readonly failedCall: AngularToolCall<RenderSurfaceArgs> = {
+    args: { messages: [] },
+    status: 'complete',
+    result: JSON.stringify({ ok: false, code: 'unknown_component' }),
   };
 
   constructor() {

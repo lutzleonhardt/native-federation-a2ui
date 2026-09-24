@@ -12,15 +12,7 @@ import type { RenderSurfaceArgs } from './render-surface.definition';
   imports: [SurfaceComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './surface-tool-renderer.component.html',
-  styles: `
-    .cf-placeholder {
-      color: #666;
-      font-style: italic;
-    }
-    .cf-error {
-      color: #b3261e;
-    }
-  `,
+  styleUrl: './surface-tool-renderer.component.css',
 })
 export class SurfaceToolRendererComponent implements ToolRenderer<RenderSurfaceArgs> {
   readonly toolCall = input.required<AngularToolCall<RenderSurfaceArgs>>();
