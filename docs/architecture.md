@@ -502,6 +502,17 @@ describes the code as it is.
   custom components — the reason for the invariant *The server holds no
   vocabulary*. Request 3 needed "Where and when" in English: with "When" alone
   the model answered with a timeline instead of a map in 4 of 10 runs.
+- **Eval gate, 2026-09-24 (detail-view section, grouped example).** On the
+  2026-09-22 strings request 3 had drifted to 3/5 (the model dropped the `Gauge`
+  or the `Map`). A `Map` description that claims "where" and "near me" questions
+  brought it back on its own: 5/5, 5/5, 5/5 and 5/5, 5/5, 4/5 in two runs while
+  the agent was still serving the old prompt (its watcher had stopped
+  reloading). On the final strings — that description, a static section saying
+  what a single conference's details show (a `Card` with name, facts and
+  button; tickets left and distance, no component named) and a detail example
+  with grouped caption/value pairs — 5/5, 5/5 and 5/5 with both capabilities
+  and 5/5 and 5/5 with charts only. The grouped example alone, on the drifted
+  baseline, had scored 3/5 and 2/5.
 - **Next.** M3 adds the `reserve` handler, the MapLibre upgrade, and hosting with
   replay publication.
 - **Where the reasons are.** The spec is [`docs/spec.md`](./spec.md). The plans

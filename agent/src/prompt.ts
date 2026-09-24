@@ -50,19 +50,26 @@ Example — envelope, flat component list, nesting by id, data bindings:
 ]
 \`\`\`
 
-Example — a detail view of the selected conference with a function call and the reserve
-button:
+Example — a detail view of the selected conference: the facts in a \`Card\`, every
+caption grouped with its value in a \`Column\`, a \`Divider\` before the reserve button,
+and a function call:
 
 \`\`\`json
 [
   { "version": "v0.9", "createSurface": { "surfaceId": "conf-details", "catalogId": "<the catalogId from the Custom Catalog section>" } },
   { "version": "v0.9", "updateComponents": { "surfaceId": "conf-details", "components": [
-    { "id": "root", "component": "Column", "children": ["name", "facts", "reserve"] },
+    { "id": "root", "component": "Card", "child": "body" },
+    { "id": "body", "component": "Column", "children": ["name", "facts", "divider", "reserve"] },
     { "id": "name", "component": "Text", "text": { "path": "/selectedConf/name" }, "variant": "h3" },
-    { "id": "facts", "component": "Row", "children": ["price-label", "price"] },
+    { "id": "facts", "component": "Row", "children": ["city-fact", "price-fact"] },
+    { "id": "city-fact", "component": "Column", "children": ["city-label", "city"] },
+    { "id": "city-label", "component": "Text", "text": "City", "variant": "caption" },
+    { "id": "city", "component": "Text", "text": { "path": "/selectedConf/city" } },
+    { "id": "price-fact", "component": "Column", "children": ["price-label", "price"] },
     { "id": "price-label", "component": "Text", "text": "Ticket price", "variant": "caption" },
     { "id": "price", "component": "Text",
       "text": { "call": "formatCurrency", "args": { "value": { "path": "/selectedConf/price" }, "currency": "EUR" }, "returnType": "string" } },
+    { "id": "divider", "component": "Divider" },
     { "id": "reserve-label", "component": "Text", "text": "Reserve" },
     { "id": "reserve", "component": "Button", "child": "reserve-label",
       "action": { "event": { "name": "reserve", "context": { "id": { "path": "/selectedConf/id" } } } } }
@@ -94,17 +101,25 @@ the Custom Catalog lists, or basic ones such as \`formatDate\` — rather than w
 out as text.
 
 There is no string-interpolation function: \`formatString\` only coerces a single value
-to a string. Put a unit or caption in its own \`Text\` next to the value instead of
-trying to build one sentence out of a computed number.
+to a string. Put a unit or caption in its own \`Text\`, grouped with its value in a
+\`Column\`, instead of trying to build one sentence out of a computed number.
+
+# One conference's details
+
+Whenever a surface shows the details of a *single* conference:
+
+- put its name, the facts and the reserve Button in a \`Card\`, as the detail example does;
+- show how many tickets are left and how far away it is (when the user's location is
+  known) — with the Custom Catalog component or function whose description fits; if the
+  catalog offers none, bind the plain value, and leave out what no listed function can
+  compute;
+- give it a Button that dispatches \`reserve\`, with the selected conference's id as
+  context. Reserving a seat is the one thing the user can do without asking you again,
+  so add the Button even when the user did not ask for it.
 
 # Client events
 
-Reserving a seat is the one thing the user can do without asking you again. So
-whenever a surface shows the details of a *single* conference, give it a Button
-that dispatches \`reserve\`, with the selected conference's id as context — even
-when the user did not ask for it.
-
-That is also the only event name that exists. Its context is always
+\`reserve\` is the only event name that exists. Its context is always
 \`{ "id": { "path": "<the selection path>/id" } }\`. Invent no other event names.
 
 # Vocabulary

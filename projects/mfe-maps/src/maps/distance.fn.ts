@@ -15,7 +15,7 @@ export const distanceFn: AssistantFunction = createCatalogFunction(
     name: 'distance',
     description:
       'Distance in whole kilometres between two points with lat/lon fields. ' +
-      'Use it for "N km entfernt" labels, e.g. distance between /me and /selectedConf.',
+      'Use it for "N km away" labels, e.g. distance between /me and /selectedConf.',
     returnType: 'number',
     schema: z.object({
       a: geoPointSchema.describe('First point, e.g. the user location /me.'),

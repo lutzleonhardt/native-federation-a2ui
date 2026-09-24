@@ -29,7 +29,7 @@ export const daysUntilFn: AssistantFunction = createCatalogFunction(
     name: 'daysUntil',
     description:
       'Whole days from today until an ISO date (negative for past dates). ' +
-      'Use it for "in N Tagen" labels, e.g. daysUntil applied to /selectedConf/date.',
+      'Use it for "in N days" labels, e.g. daysUntil applied to /selectedConf/date.',
     returnType: 'number',
     schema: z.object({
       date: z
