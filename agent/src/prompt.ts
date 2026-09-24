@@ -100,6 +100,10 @@ derived values such as day counts or distances inside the surface — with the f
 the Custom Catalog lists, or basic ones such as \`formatDate\` — rather than writing them
 out as text.
 
+Dates in the data are ISO strings (\`2026-10-06\`) and are shown as they are — bind
+them directly. If you do call \`formatDate\`, its \`format\` is a date-fns pattern such
+as \`yyyy-MM-dd\` or \`d MMM yyyy\`; any other pattern makes it print a raw timestamp.
+
 There is no string-interpolation function: \`formatString\` only coerces a single value
 to a string. Put a unit or caption in its own \`Text\`, grouped with its value in a
 \`Column\`, instead of trying to build one sentence out of a computed number.

@@ -513,6 +513,10 @@ describes the code as it is.
   with grouped caption/value pairs — 5/5, 5/5 and 5/5 with both capabilities
   and 5/5 and 5/5 with charts only. The grouped example alone, on the drifted
   baseline, had scored 3/5 and 2/5.
+- **Eval gate, 2026-09-24 (`formatDate` rule).** The strings above plus one paragraph
+  under "Bind, never copy" — dates in the data are ISO and bound directly, `formatDate`
+  takes a date-fns pattern — 5/5, 5/5 and 5/5 with both capabilities; 5/5 and 5/5 with
+  charts only.
 - **Next.** M3 adds the `reserve` handler, the MapLibre upgrade, and hosting with
   replay publication.
 - **Where the reasons are.** The spec is [`docs/spec.md`](./spec.md). The plans
