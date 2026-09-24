@@ -1,0 +1,56 @@
+/*
+ * Theme "Departure": the tokens, read by the shell's stylesheet and by each
+ * remote's standalone page. Inside the shell a remote's own stylesheet never
+ * loads, so remote components keep private aliases with the token value as
+ * fallback.
+ */
+@import '@fontsource-variable/archivo';
+@import '@fontsource/ibm-plex-mono';
+
+:root {
+  /* A2UI's default theme pairs `light dark` with light-dark() colours, which
+     turned surface text near-white on a dark OS. The app has no dark mode. */
+  color-scheme: only light;
+
+  --cf-ink: #10222f; /* text, band, primary button, selection ring */
+  --cf-ground: #edf1f4; /* app background */
+  --cf-surface: #ffffff; /* card, component frame, input */
+  --cf-line: #c8d3db; /* card border, divider, rail, tick marks, gauge track */
+  --cf-rail: #2b5fa8; /* marker, link, SELECTION; link hover snaps to --cf-ink */
+  --cf-attention: #e1730b; /* scarce / unreachable ONLY */
+  --cf-attention-bg: #fdf0e2;
+  --cf-attention-ink: #8a4607; /* attention text on light, 4.9:1 */
+  --cf-muted: #4e5f6b; /* captions, 4.6:1 on ground */
+  --cf-on-ink: #9fb3c2; /* muted text inside the band */
+  --cf-ink-line: #47606f; /* chip border and separator inside the band */
+  --cf-rail-on-ink: #6e9be0; /* dot inside the band */
+  --cf-level-high: #2f8f5b; /* gauge fill above 65 % */
+  --cf-level-mid: #e2b100; /* gauge fill 30–65 %, fill only, never text */
+  --cf-sub: #e3e9ee; /* quiet fill: phone capability strip, open panel header, disabled */
+
+  --cf-font-ui: 'Archivo Variable', system-ui, sans-serif;
+  --cf-font-data: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Type scale; the gauge numerals (32/38 px) stay local to that component. */
+  --cf-t-1: 10px;
+  --cf-t-2: 11px;
+  --cf-t-3: 12px;
+  --cf-t-4: 13px;
+  --cf-t-5: 15px;
+  --cf-t-6: 17px;
+  --cf-t-7: 21px;
+
+  --cf-r-sm: 3px;
+  --cf-r-md: 6px;
+  --cf-r-pill: 999px;
+
+  --cf-s-1: 4px;
+  --cf-s-2: 8px;
+  --cf-s-3: 12px;
+  --cf-s-4: 16px;
+  --cf-s-5: 24px;
+  --cf-s-6: 32px;
+  --cf-s-7: 48px;
+
+  --cf-tap: 44px; /* minimum hit target */
+}

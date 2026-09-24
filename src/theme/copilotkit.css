@@ -1,0 +1,176 @@
+/*
+ * CopilotKit chat. Its Tailwind utilities and preflight sit in @layer, so any
+ * unlayered rule here wins regardless of specificity; only its variable block
+ * on [data-copilotkit] is unlayered, hence angular.json loads its stylesheet
+ * first and this block wins by order. The chat's structure is CopilotKit's:
+ * `.cf-thinking` is the one forwarded class input that reaches the DOM
+ * (chat.page.html; `assistantMessageClass` is dead in 0.3.1), everything
+ * else targets rendered elements and the v1 `copilotKit*` hook classes.
+ */
+:root {
+  --cpk-container-3xl: 55rem; /* the 880 px chat column; CopilotKit ships 48rem */
+}
+
+[data-copilotkit] {
+  --background: var(--cf-ground);
+  --card: var(--cf-surface);
+  --input: var(--cf-surface);
+  --foreground: var(--cf-ink);
+  --muted: var(--cf-sub);
+  --muted-foreground: var(--cf-muted);
+  --border: var(--cf-line);
+  --primary: var(--cf-ink);
+  --ring: var(--cf-rail);
+  --radius: var(--cf-r-md);
+  font-family: var(--cf-font-ui);
+  color: var(--cf-ink);
+}
+
+copilot-chat-message-view > div {
+  gap: 22px;
+  padding-top: var(--cf-s-5);
+}
+
+/* A user turn: the renderer element is the bubble. Its template pads the
+   text with whitespace that pre-wrap would show as a leading space. */
+.copilotKitUserMessage {
+  padding-top: 0;
+}
+
+copilot-chat-user-message-renderer {
+  max-width: min(560px, 100%);
+  white-space: pre-line;
+  padding: var(--cf-s-3) var(--cf-s-4);
+  border: 1px solid var(--cf-line);
+  border-radius: var(--cf-r-md);
+  background: var(--cf-surface);
+  color: var(--cf-ink);
+  font-size: var(--cf-t-5);
+  line-height: 1.45;
+}
+
+/* A run's tool-call step leaves an assistant turn that renders nothing; it
+   would still take a row of the gap. */
+copilot-chat-assistant-message:not(
+  :has(copilot-chat-assistant-message-renderer > div > *, copilot-render-tool-calls > *)
+) {
+  display: none;
+}
+
+/* The answer container carries Tailwind's prose variables; the surfaces and
+   the message widget inherit from here. */
+.copilotKitAssistantMessage {
+  --tw-prose-body: var(--cf-ink);
+  --tw-prose-headings: var(--cf-ink);
+  --tw-prose-bold: var(--cf-ink);
+  --tw-prose-links: var(--cf-rail);
+  --tw-prose-code: var(--cf-ink);
+  color: var(--cf-ink);
+  font-size: var(--cf-t-5);
+  line-height: 1.5;
+}
+
+/* "Thinking…" / "Thought for …": one neutral dot before the text; CopilotKit's
+   own pulsing dot after the label is hidden. */
+.cf-thinking {
+  margin: 0;
+}
+
+.cf-thinking button {
+  gap: var(--cf-s-2);
+  padding: 0;
+  font-family: var(--cf-font-data);
+  font-size: var(--cf-t-3);
+  font-weight: 400;
+  color: var(--cf-muted);
+}
+
+.cf-thinking button::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.cf-thinking button > span {
+  font-weight: 400;
+}
+
+.cf-thinking button > span + span {
+  display: none;
+}
+
+/* Message input. CopilotKit lays the container over the end of the scroll
+   view and offsets the content padding and the scroll-to-bottom button by
+   the container's measured height, but it measures only in the seconds after
+   start: a first message sent later finds a height of 0 and the end of every
+   answer under the bar, one sent earlier a stale height. The bar is a flex
+   child below the scroll view instead, the two offsets are pinned to their
+   unmeasured values, the scroll view's viewport-based height gives way to the
+   flex chain (chat.page.css anchors it), and the gradient feather over the
+   scroll end is gone. */
+copilot-chat-view-scroll-view > div {
+  height: 100%;
+}
+
+copilot-chat-view-scroll-view [style*='padding-bottom'] {
+  padding-bottom: 32px !important;
+}
+
+/* The button's wrapper is the one bottom-offset element with a class. */
+copilot-chat-view-scroll-view [style*='bottom'][class*='z-30'] {
+  bottom: 16px !important;
+}
+
+copilot-chat-view-feather > div {
+  display: none;
+}
+
+copilot-chat-view-input-container > div {
+  position: static;
+  padding: 18px 0 14px;
+  border-top: 1px solid var(--cf-line);
+  background: var(--cf-surface);
+}
+
+/* The demo has neither attachments nor transcription. */
+copilot-chat-tools-menu,
+copilot-chat-add-file-button,
+copilot-chat-start-transcribe-button {
+  display: none;
+}
+
+copilot-chat-input .copilotKitInput {
+  min-height: 52px;
+  border: 1px solid var(--cf-line);
+  border-radius: var(--cf-r-md);
+  background: var(--cf-surface);
+  box-shadow: none !important; /* .ck-input-shadow is !important in CopilotKit's component styles */
+}
+
+.copilotKitInput [data-layout='compact'] {
+  padding: 0 var(--cf-s-3);
+}
+
+.copilotKitInput button[aria-label='Send message'] {
+  border-radius: var(--cf-r-sm);
+  background: var(--cf-ink);
+  color: var(--cf-surface);
+}
+
+.copilotKitInput button[aria-label='Send message']:disabled {
+  background: var(--cf-sub);
+  color: var(--cf-muted);
+  opacity: 1;
+}
+
+copilot-chat-view-disclaimer > div {
+  padding: var(--cf-s-2) var(--cf-s-4) 0;
+}
+
+@media (max-width: 640px) {
+  copilot-chat-view-input-container > div {
+    padding: 10px 0 6px;
+  }
+}

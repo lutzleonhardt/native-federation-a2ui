@@ -1,12 +1,10 @@
-/* Standalone page of the remote: the shell's ground and scheme as literals,
-   the fallback font stack — a remote never imports host CSS. */
-:root {
-  color-scheme: only light;
-}
+/* Standalone page of the remote: the shared theme contract, nothing from the host.
+   Components keep their token fallbacks — this file does not load inside the shell. */
+@import '../../../shared/theme/tokens.css';
 
 html,
 body {
   margin: 0;
-  background: #edf1f4; /* --cf-ground */
-  font-family: system-ui, sans-serif;
+  background: var(--cf-ground);
+  font-family: var(--cf-font-ui);
 }

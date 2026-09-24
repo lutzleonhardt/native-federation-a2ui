@@ -1,0 +1,77 @@
+/* A2UI zone: its variables mapped to the tokens, then the rules its
+   variables do not reach. */
+:root {
+  /* A2UI basic catalog. Plain :root beats its :where(:root) defaults. */
+  --a2ui-color-background: var(--cf-ground);
+  --a2ui-color-on-background: var(--cf-ink);
+  --a2ui-color-surface: var(--cf-surface);
+  --a2ui-color-on-surface: var(--cf-ink);
+  --a2ui-color-primary: var(--cf-ink);
+  --a2ui-color-on-primary: var(--cf-surface);
+  --a2ui-color-on-secondary: var(--cf-ink);
+  --a2ui-color-border: var(--cf-line);
+  --a2ui-border: 1px solid var(--cf-line);
+  --a2ui-border-radius: var(--cf-r-md);
+  --a2ui-text-color-text: var(--cf-ink);
+  --a2ui-text-caption-color: var(--cf-muted);
+  --a2ui-font-family-title: var(--cf-font-ui);
+  --a2ui-font-family-monospace: var(--cf-font-data);
+  /* Text maps h1–h3 → 2xl/xl/l, body and h4 → m, h5 → s, caption → xs;
+     six sizes on a seven-step scale, so h1 and h2 share the top step. */
+  --a2ui-font-size-xs: var(--cf-t-3);
+  --a2ui-font-size-s: var(--cf-t-4);
+  --a2ui-font-size-m: var(--cf-t-5);
+  --a2ui-font-size-l: var(--cf-t-6);
+  --a2ui-font-size-xl: var(--cf-t-7);
+  --a2ui-font-size-2xl: var(--cf-t-7);
+  --a2ui-card-background: var(--cf-surface);
+  --a2ui-card-border: 1px solid var(--cf-line);
+  --a2ui-card-border-radius: var(--cf-r-md);
+  --a2ui-card-box-shadow: none;
+  --a2ui-card-margin: 0;
+  --a2ui-card-padding: 20px var(--cf-s-5);
+  --a2ui-divider-border: 1px solid var(--cf-line);
+  --a2ui-divider-spacing: 0;
+  --a2ui-row-gap: var(--cf-s-4);
+  --a2ui-column-gap: var(--cf-s-3);
+  --a2ui-button-background: var(--cf-surface);
+  --a2ui-button-border: 1px solid var(--cf-line);
+  --a2ui-button-border-radius: var(--cf-r-sm);
+  --a2ui-button-box-shadow: none;
+  --a2ui-button-font-weight: 500;
+  --a2ui-button-margin: 0;
+  --a2ui-button-padding: var(--cf-s-2) var(--cf-s-4);
+}
+
+/* A2UI's Text renders <span class="a2ui-text caption"><em>…</em></span> under
+   emulated encapsulation, so the class is reachable from here. */
+.a2ui-text.caption {
+  font-family: var(--cf-font-data);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.a2ui-text.caption em {
+  font-style: normal;
+}
+
+/* <button> resets the font and A2UI exposes no variable for it. */
+.a2ui-button {
+  font-family: inherit;
+}
+
+/* A row of facts wraps whole entries, never a value inside itself ("359 km"):
+   the row may wrap, and each entry keeps at least its fit-content width. */
+a2ui-v09-row {
+  flex-wrap: wrap;
+
+  > a2ui-v09-component-host > * {
+    min-width: fit-content;
+  }
+
+  /* Column's host sets width: 100% inline; inside a Row it sizes to its
+     content so that a grouped caption/value pair moves as a whole. */
+  > a2ui-v09-component-host > a2ui-v09-column {
+    width: auto !important;
+  }
+}
