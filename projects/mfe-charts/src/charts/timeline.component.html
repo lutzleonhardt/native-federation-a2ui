@@ -1,25 +1,80 @@
-<svg viewBox="0 0 400 92" role="img" aria-label="Timeline">
-  <line [attr.x1]="xMin" [attr.y1]="axisY" [attr.x2]="xMax" [attr.y2]="axisY" class="cf-axis" />
-  @for (marker of markers(); track marker.item.id) {
-    <g
-      class="cf-marker"
-      [class.cf-selected]="marker.item.id === selectedId()"
-      (click)="pick(marker.item)"
-    >
+<div class="cf-frame">
+  <svg [attr.viewBox]="viewBox" role="img" aria-label="Timeline">
+    <line
+      class="cf-axis"
+      [attr.x1]="rail.xMin"
+      [attr.y1]="rail.axisY"
+      [attr.x2]="rail.xMax"
+      [attr.y2]="rail.axisY"
+    />
+    @for (marker of markers(); track marker.item.id) {
+      <g class="cf-marker" [class.cf-selected]="marker.selected" (click)="pick(marker.item)">
+        <line
+          class="cf-stem"
+          [attr.x1]="marker.x"
+          [attr.y1]="marker.stemY"
+          [attr.x2]="marker.x"
+          [attr.y2]="rail.axisY"
+        />
+        @if (marker.selected) {
+          <circle class="cf-ring" [attr.cx]="marker.x" [attr.cy]="rail.axisY" r="12" />
+        }
+        <circle class="cf-dot" [attr.cx]="marker.x" [attr.cy]="rail.axisY" r="7" />
+        <text class="cf-label" [attr.x]="marker.x" [attr.y]="marker.labelY" text-anchor="middle">
+          {{ labelOf(marker.item) }}
+        </text>
+        <text class="cf-date" [attr.x]="marker.x" [attr.y]="marker.dateY" text-anchor="middle">
+          {{ marker.item.date }}
+        </text>
+        @if (marker.selected) {
+          <text
+            class="cf-caption"
+            [attr.x]="marker.x"
+            [attr.y]="marker.captionY"
+            text-anchor="middle"
+          >
+            {{ caption() }}
+          </text>
+        }
+      </g>
+    }
+    <line
+      class="cf-month-axis"
+      [attr.x1]="rail.xMin"
+      [attr.y1]="rail.monthAxisY"
+      [attr.x2]="rail.xMax"
+      [attr.y2]="rail.monthAxisY"
+    />
+    @for (month of months(); track month.x) {
       <line
-        [attr.x1]="marker.x"
-        [attr.y1]="marker.labelY + 3"
-        [attr.x2]="marker.x"
-        [attr.y2]="axisY"
-        class="cf-stem"
+        class="cf-tick"
+        [attr.x1]="month.x"
+        [attr.y1]="rail.monthAxisY - rail.tickHalf"
+        [attr.x2]="month.x"
+        [attr.y2]="rail.monthAxisY + rail.tickHalf"
       />
-      <circle [attr.cx]="marker.x" [attr.cy]="axisY" r="5" class="cf-dot" />
-      <text [attr.x]="marker.x" [attr.y]="marker.labelY" text-anchor="middle" class="cf-label">
-        {{ labelOf(marker.item) }}
+      <text class="cf-month" [attr.x]="month.x" [attr.y]="rail.monthLabelY" text-anchor="middle">
+        {{ month.month }}
       </text>
-      <text [attr.x]="marker.x" [attr.y]="marker.dateY" text-anchor="middle" class="cf-date">
-        {{ marker.item.date }}
-      </text>
-    </g>
-  }
-</svg>
+      @if (month.year) {
+        <text class="cf-year" [attr.x]="month.x" [attr.y]="rail.yearY" text-anchor="middle">
+          {{ month.year }}
+        </text>
+      }
+    }
+  </svg>
+  <ol class="cf-board">
+    @for (marker of markers(); track marker.item.id) {
+      <!-- Pointer only, like the rail markers: keyboard access is out of this demo's scope. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <li class="cf-marker" [class.cf-selected]="marker.selected" (click)="pick(marker.item)">
+        <span class="cf-date">{{ marker.item.date }}</span>
+        <span class="cf-rail"><span class="cf-dot"></span></span>
+        <span class="cf-label">{{ labelOf(marker.item) }}</span>
+        @if (marker.selected) {
+          <span class="cf-caption">{{ caption() }}</span>
+        }
+      </li>
+    }
+  </ol>
+</div>

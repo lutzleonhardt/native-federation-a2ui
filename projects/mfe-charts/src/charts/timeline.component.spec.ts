@@ -33,7 +33,10 @@ function click(marker: SVGGElement): void {
 describe('TimelineComponent', () => {
   it('T5-AC-01 renders one marker per item ordered by date and writes the whole clicked item', async () => {
     const selected = boundProperty<unknown>(undefined);
-    const fixture = await renderTimeline({ items: boundProperty<readonly TimelineItem[]>(ITEMS), selected });
+    const fixture = await renderTimeline({
+      items: boundProperty<readonly TimelineItem[]>(ITEMS),
+      selected,
+    });
 
     const markers = markersOf(fixture);
     expect(markers).toHaveLength(3);
@@ -58,8 +61,8 @@ describe('TimelineComponent', () => {
   });
 
   it('positions markers proportionally inside an explicit range', async () => {
-    // Range spans 120 days from the first item; day 0 → axis start (x=40),
-    // day 66 → 40 + (66/120) * 320 = 216.
+    // Range spans 120 days from the first item; day 0 → axis start (x=64),
+    // day 66 → 64 + (66/120) * 704 = 451.2.
     const fixture = await renderTimeline({
       items: boundProperty<readonly TimelineItem[]>(ITEMS),
       range: boundProperty<{ from: string; to: string } | undefined>({
@@ -71,8 +74,8 @@ describe('TimelineComponent', () => {
     const xs = markersOf(fixture).map((marker) =>
       Number(marker.querySelector('circle')!.getAttribute('cx')),
     );
-    expect(xs[0]).toBe(40);
-    expect(xs[2]).toBe(216);
+    expect(xs[0]).toBe(64);
+    expect(xs[2]).toBeCloseTo(451.2);
   });
 
   it('survives a degenerate range with equal bounds', async () => {
@@ -88,7 +91,7 @@ describe('TimelineComponent', () => {
     const xs = markersOf(fixture).map((marker) =>
       Number(marker.querySelector('circle')!.getAttribute('cx')),
     );
-    expect(xs).toEqual([40, 40, 40]);
+    expect(xs).toEqual([64, 64, 64]);
   });
 
   it('highlights the marker whose id matches the selected value', async () => {
@@ -107,11 +110,125 @@ describe('TimelineComponent', () => {
   it('occupies real size inside a flex container', async () => {
     const fixture = await renderTimeline({ items: boundProperty<readonly TimelineItem[]>(ITEMS) });
     const host = fixture.nativeElement as HTMLElement;
-    host.parentElement!.style.display = 'flex';
+    const parent = host.parentElement!;
+    parent.style.display = 'flex';
+    try {
+      const rect = host.getBoundingClientRect();
+      expect(rect.width).toBeGreaterThan(100);
+      expect(rect.height).toBeGreaterThan(20);
+    } finally {
+      // The parent is the document body, shared with the tests that follow.
+      parent.style.display = '';
+    }
+  });
+});
 
-    const rect = host.querySelector('svg')!.getBoundingClientRect();
-    expect(rect.width).toBeGreaterThan(100);
-    expect(rect.height).toBeGreaterThan(20);
+function isoDaysFromToday(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function display(element: Element): string {
+  return getComputedStyle(element).display;
+}
+
+/** Container queries resolve on the container's layout, which getComputedStyle alone does not force. */
+function resize(host: HTMLElement, width: string): void {
+  host.style.width = width;
+  host.getBoundingClientRect();
+}
+
+describe('TimelineComponent in the Departure look', () => {
+  it('T6-AC-01 rings the selected marker without a second hue and draws an English month axis', async () => {
+    const fixture = await renderTimeline({
+      items: boundProperty<readonly TimelineItem[]>(ITEMS),
+      selected: boundProperty<unknown>(ITEMS[2]),
+    });
+    const host = fixture.nativeElement as HTMLElement;
+    host.style.width = '1000px';
+
+    const [first, selected] = markersOf(fixture);
+    expect(selected.classList.contains('cf-selected')).toBe(true);
+    expect(selected.querySelector('.cf-ring')).not.toBeNull();
+    expect(first.querySelector('.cf-ring')).toBeNull();
+    const fillOf = (marker: SVGGElement) => getComputedStyle(marker.querySelector('.cf-dot')!).fill;
+    expect(fillOf(selected)).toBe(fillOf(first));
+    expect(getComputedStyle(first.querySelector('.cf-date')!).fontFamily).toContain(
+      'IBM Plex Mono',
+    );
+
+    const months = [...host.querySelectorAll('.cf-month')].map((text) => text.textContent?.trim());
+    expect(months).toEqual(['SEP', 'OCT', 'NOV']);
+    const years = [...host.querySelectorAll('.cf-year')].map((text) => text.textContent?.trim());
+    expect(years).toEqual(['26']);
+  });
+
+  it('T6-AC-02 captions the selected item with an English relative time in both layouts', async () => {
+    const soon: TimelineItem = { id: 'soon', label: 'Soon', date: isoDaysFromToday(3) };
+    const fixture = await renderTimeline({
+      items: boundProperty<readonly TimelineItem[]>([soon, ITEMS[0]]),
+      selected: boundProperty<unknown>(soon),
+    });
+
+    const captions = [...(fixture.nativeElement as HTMLElement).querySelectorAll('.cf-caption')];
+    expect(captions.map((caption) => caption.textContent?.trim())).toEqual([
+      'in 3 days',
+      'in 3 days',
+    ]);
+  });
+
+  it('T6-AC-03 shows the board in a narrow container, the rail in a wide one, the board when forced', async () => {
+    const selected = boundProperty<unknown>(ITEMS[2]);
+    const fixture = await renderTimeline({
+      items: boundProperty<readonly TimelineItem[]>(ITEMS),
+      selected,
+    });
+    const host = fixture.nativeElement as HTMLElement;
+    const svg = host.querySelector('svg')!;
+    const board = host.querySelector('ol.cf-board')!;
+
+    resize(host, '1000px');
+    expect(display(svg)).toBe('block');
+    expect(display(board)).toBe('none');
+
+    resize(host, '600px');
+    expect(display(svg)).toBe('none');
+    expect(display(board)).toBe('grid');
+    const rows = [...board.querySelectorAll<HTMLLIElement>('li.cf-marker')];
+    expect(rows.map((row) => row.querySelector('.cf-label')?.textContent?.trim())).toEqual([
+      'First',
+      'Second',
+      'Third',
+    ]);
+    expect(rows.filter((row) => row.classList.contains('cf-selected'))).toEqual([rows[1]]);
+    expect(rows[1].querySelector('.cf-caption')).not.toBeNull();
+    expect(rows[0].querySelector('.cf-caption')).toBeNull();
+    rows[2].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(selected.onUpdate).toHaveBeenCalledExactlyOnceWith(ITEMS[0]);
+
+    host.setAttribute('data-layout', 'board');
+    resize(host, '1000px');
+    expect(display(svg)).toBe('none');
+    expect(display(board)).toBe('grid');
+  });
+
+  it('keeps the board rail straight when the selected caption is wider than the dates', async () => {
+    const longAgo: TimelineItem = { id: 'past', label: 'Past', date: isoDaysFromToday(-200) };
+    const fixture = await renderTimeline({
+      items: boundProperty<readonly TimelineItem[]>([longAgo, ...ITEMS]),
+      selected: boundProperty<unknown>(longAgo),
+    });
+    const host = fixture.nativeElement as HTMLElement;
+    resize(host, '600px');
+
+    const rows = [...host.querySelectorAll<HTMLLIElement>('li.cf-marker')];
+    // Found by class, not by index: the fixed fixture dates overtake the relative one in 2027.
+    const selected = rows.find((row) => row.classList.contains('cf-selected'));
+    expect(selected?.querySelector('.cf-caption')?.textContent?.trim()).toBe('200 days ago');
+    const dotLefts = rows.map((row) => row.querySelector('.cf-dot')!.getBoundingClientRect().left);
+    expect(new Set(dotLefts).size).toBe(1);
   });
 });
 
@@ -151,8 +268,14 @@ function timelineSurfaceMessages(): A2uiMessage[] {
         ],
       },
     },
-    { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/filteredConfs', value: ITEMS } },
-    { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/x', value: { id: 'x-marks' } } },
+    {
+      version: 'v0.9',
+      updateDataModel: { surfaceId: SURFACE_ID, path: '/filteredConfs', value: ITEMS },
+    },
+    {
+      version: 'v0.9',
+      updateDataModel: { surfaceId: SURFACE_ID, path: '/x', value: { id: 'x-marks' } },
+    },
   ];
 }
 
@@ -187,11 +310,19 @@ describe('Timeline through the real renderer', () => {
         updateComponents: {
           surfaceId: SURFACE_ID,
           components: [
-            { id: 'root', component: 'Timeline', items: { path: '/filteredConfs' }, selected: 'unbound' },
+            {
+              id: 'root',
+              component: 'Timeline',
+              items: { path: '/filteredConfs' },
+              selected: 'unbound',
+            },
           ],
         },
       },
-      { version: 'v0.9', updateDataModel: { surfaceId: SURFACE_ID, path: '/filteredConfs', value: ITEMS } },
+      {
+        version: 'v0.9',
+        updateDataModel: { surfaceId: SURFACE_ID, path: '/filteredConfs', value: ITEMS },
+      },
     ]);
 
     const fixture = TestBed.createComponent(SurfaceHost);

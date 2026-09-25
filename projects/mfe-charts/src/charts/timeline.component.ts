@@ -1,7 +1,15 @@
-import { ChangeDetectionStrategy, Component, Injector, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Injector,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
 import type { BoundProperty } from '@a2ui/angular/v0_9';
 import type { Action } from '@a2ui/web_core/v0_9';
 import { dispatchSurfaceAction } from '../../../../shared/capabilities/surface-action';
+import { type MonthMark, dateScale, monthMarks, relativeDays } from './timeline-dates';
 
 /**
  * `label` is optional at runtime: path-bound items bypass schema validation,
@@ -24,59 +32,44 @@ export interface TimelineProps {
 
 interface TimelineMarker {
   readonly item: TimelineItem;
+  readonly selected: boolean;
   readonly x: number;
   readonly labelY: number;
   readonly dateY: number;
+  readonly captionY: number;
+  /** Far end of the stem; the near end is the dot on the axis. */
+  readonly stemY: number;
 }
 
-const AXIS_Y = 55;
-// Wide enough that middle-anchored labels of edge markers stay in the viewBox.
-const X_MIN = 40;
-const X_MAX = 360;
+/**
+ * Rail geometry in viewBox units — the frame's desktop pixels. The viewBox is fixed and the
+ * svg scales uniformly, so the rendered width changes how large labels are, never whether
+ * two of them overlap; the label-fit rule rests on that.
+ */
+const RAIL = {
+  width: 832,
+  height: 220,
+  // Room for the middle-anchored labels of the edge markers.
+  xMin: 64,
+  xMax: 768,
+  axisY: 99,
+  monthAxisY: 184,
+  tickHalf: 4.5,
+  // A three-letter mono month label at 10 units is about 20 wide.
+  monthLabelGap: 28,
+  monthLabelY: 204,
+  yearY: 216,
+} as const;
+
+// Labels alternate above and below the axis; each side reads label, date, caption away from the dot.
+const ABOVE = { labelY: 12, dateY: 29, captionY: 46, stemY: 54 } as const;
+const BELOW = { labelY: 132, dateY: 149, captionY: 166, stemY: 120 } as const;
 
 @Component({
   selector: 'app-timeline',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './timeline.component.html',
-  styles: `
-    /* Explicit width: a viewBox-only svg has no intrinsic size and would
-       collapse to 0x0 inside the renderer's flex rows. */
-    :host {
-      display: block;
-      width: 100%;
-      min-width: 20rem;
-    }
-    svg {
-      display: block;
-      width: 100%;
-    }
-    .cf-axis {
-      stroke: #999;
-    }
-    .cf-stem {
-      stroke: #ccc;
-    }
-    .cf-marker {
-      cursor: pointer;
-    }
-    .cf-dot {
-      fill: #3f51b5;
-    }
-    .cf-selected .cf-dot {
-      fill: #ff9800;
-      r: 7px;
-    }
-    .cf-label {
-      font-size: 8px;
-    }
-    .cf-selected .cf-label {
-      font-weight: 700;
-    }
-    .cf-date {
-      font-size: 6px;
-      fill: #666;
-    }
-  `,
+  styleUrl: './timeline.component.css',
 })
 export class TimelineComponent {
   /**
@@ -88,34 +81,48 @@ export class TimelineComponent {
   readonly componentId = input.required<string>();
   readonly dataContextPath = input<string>('/');
 
-  protected readonly axisY = AXIS_Y;
-  protected readonly xMin = X_MIN;
-  protected readonly xMax = X_MAX;
+  protected readonly rail = RAIL;
+  protected readonly viewBox = `0 0 ${RAIL.width} ${RAIL.height}`;
 
   private readonly injector = inject(Injector);
 
-  protected readonly selectedId = computed(
+  private readonly selectedId = computed(
     () => (this.props().selected?.value() as { id?: unknown } | undefined)?.id,
   );
 
+  private readonly items = computed<readonly TimelineItem[]>(() =>
+    [...(this.props().items.value() ?? [])].sort((a, b) => a.date.localeCompare(b.date)),
+  );
+
+  private readonly scale = computed(() => {
+    const items = this.items();
+    if (items.length === 0) return undefined;
+    const dates = items.map((item) => item.date);
+    return dateScale(dates, this.props().range?.value(), RAIL.xMin, RAIL.xMax);
+  });
+
   protected readonly markers = computed<readonly TimelineMarker[]>(() => {
-    const items = [...(this.props().items.value() ?? [])].sort((a, b) =>
-      a.date.localeCompare(b.date),
-    );
-    if (items.length === 0) return [];
-
-    const range = this.props().range?.value();
-    const times = items.map((item) => Date.parse(item.date));
-    const from = range === undefined ? Math.min(...times) : Date.parse(range.from);
-    const span = Math.max((range === undefined ? Math.max(...times) : Date.parse(range.to)) - from, 1);
-
-    return items.map((item, index) => ({
+    const scale = this.scale();
+    if (scale === undefined) return [];
+    const selectedId = this.selectedId();
+    return this.items().map((item, index) => ({
       item,
-      x: X_MIN + ((Date.parse(item.date) - from) / span) * (X_MAX - X_MIN),
-      // Alternating label rows keep close-by markers readable.
-      labelY: index % 2 === 0 ? 14 : 30,
-      dateY: index % 2 === 0 ? 70 : 82,
+      selected: item.id === selectedId,
+      x: scale.x(Date.parse(item.date)),
+      ...(index % 2 === 0 ? ABOVE : BELOW),
     }));
+  });
+
+  protected readonly months = computed<readonly MonthMark[]>(() => {
+    const scale = this.scale();
+    if (scale === undefined) return [];
+    return monthMarks(scale, RAIL.monthLabelGap);
+  });
+
+  /** Relative-time caption of the selected item; English whatever the browser language. */
+  protected readonly caption = computed(() => {
+    const selected = this.markers().find((marker) => marker.selected);
+    return selected === undefined ? '' : relativeDays(selected.item.date);
   });
 
   protected labelOf(item: TimelineItem): string {

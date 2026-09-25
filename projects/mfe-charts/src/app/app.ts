@@ -75,7 +75,8 @@ function releaseSurface(): A2uiMessage[] {
   templateUrl: './app.html',
   styles: `
     main {
-      max-width: 48rem;
+      /* Wide enough for the timeline rail; below about 813 px it switches to the board. */
+      max-width: 56rem;
       margin: 0 auto;
       padding: 1rem;
     }

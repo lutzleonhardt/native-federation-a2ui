@@ -1,0 +1,212 @@
+/* The theme arrives as --cf-* from the shell; the fallbacks carry the same values for the
+   remote's standalone page, whose own stylesheet never loads inside the shell. */
+:host {
+  --_ink: var(--cf-ink, #10222f);
+  --_muted: var(--cf-muted, #4e5f6b);
+  --_line: var(--cf-line, #c8d3db);
+  --_rail: var(--cf-rail, #2b5fa8);
+  --_surface: var(--cf-surface, #ffffff);
+  --_font-ui: var(--cf-font-ui, 'Archivo Variable', system-ui, sans-serif);
+  --_font-data: var(--cf-font-data, 'IBM Plex Mono', ui-monospace, monospace);
+  --_r-md: var(--cf-r-md, 6px);
+
+  /* Explicit width: a viewBox-only svg has no intrinsic size and would collapse to 0x0
+     inside the renderer's flex rows. The host is the query container of the layout switch. */
+  display: block;
+  width: 100%;
+  min-width: 20rem;
+  container-type: inline-size;
+  color: var(--_ink);
+  font-family: var(--_font-ui);
+}
+
+.cf-frame {
+  box-sizing: border-box;
+  padding: 24px 24px 18px;
+  border: 1px solid var(--_line);
+  border-radius: var(--_r-md);
+  background: var(--_surface);
+}
+
+/* Rail */
+
+svg {
+  display: block;
+  width: 100%;
+}
+
+svg line {
+  stroke: var(--_line);
+  vector-effect: non-scaling-stroke;
+}
+
+svg .cf-axis {
+  stroke-width: 2;
+}
+
+svg .cf-marker {
+  cursor: pointer;
+}
+
+svg .cf-dot {
+  fill: var(--_rail);
+}
+
+svg .cf-ring {
+  fill: var(--_surface);
+  stroke: var(--_ink);
+  stroke-width: 1.5;
+}
+
+svg .cf-label {
+  font-size: 12px;
+  fill: var(--_ink);
+}
+
+svg .cf-selected .cf-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+svg .cf-date,
+svg .cf-caption,
+svg .cf-month,
+svg .cf-year {
+  font-family: var(--_font-data);
+  fill: var(--_muted);
+}
+
+svg .cf-date {
+  font-size: 11px;
+}
+
+svg .cf-caption,
+svg .cf-month,
+svg .cf-year {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+svg .cf-caption {
+  text-transform: uppercase;
+}
+
+/* Board: one row per item — date, dot on a continuous rail, label. */
+
+.cf-board {
+  display: none;
+  grid-template-columns: max-content 12px 1fr;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Subgrid shares the date column across rows, so the rail stays straight when the selected
+   row's caption is wider than a date. */
+.cf-board .cf-marker {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  cursor: pointer;
+}
+
+.cf-board .cf-date {
+  grid-column: 1;
+  font: 11px/18px var(--_font-data);
+  color: var(--_muted);
+  text-align: right;
+}
+
+.cf-board .cf-rail {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+/* The rail runs through the row gaps and ends on the first and last dot. */
+.cf-board .cf-rail::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+  left: 5px;
+  width: 2px;
+  background: var(--_line);
+}
+
+.cf-board .cf-marker:first-child .cf-rail::before {
+  top: 9px;
+}
+
+.cf-board .cf-marker:last-child .cf-rail::before {
+  bottom: calc(100% - 9px);
+}
+
+.cf-board .cf-dot {
+  position: relative;
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: var(--_rail);
+}
+
+.cf-board .cf-selected .cf-dot {
+  box-shadow:
+    0 0 0 3px var(--_surface),
+    0 0 0 4.5px var(--_ink);
+}
+
+.cf-board .cf-label {
+  grid-column: 3;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.cf-board .cf-selected .cf-label,
+.cf-board .cf-selected .cf-date {
+  font-weight: 700;
+  color: var(--_ink);
+}
+
+.cf-board .cf-caption {
+  grid-column: 1;
+  grid-row: 2;
+  font: 10px/16px var(--_font-data);
+  color: var(--_muted);
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Rail or board, by the container's width. The viewBox is 832 units wide and a label 12 units,
+   so a label renders at 12 × svgWidth / 832 px and falls under 11 px once the svg is narrower
+   than 763 px — the host narrower than 763 + 2 × 24 padding + 2 × 1 border ≈ 813 px. */
+@container (width < 813px) {
+  svg {
+    display: none;
+  }
+
+  .cf-board {
+    display: grid;
+  }
+
+  .cf-frame {
+    padding: 14px 14px 6px;
+  }
+}
+
+/* The label-fit rule forces the board regardless of width through this attribute. */
+:host([data-layout='board']) svg {
+  display: none;
+}
+
+:host([data-layout='board']) .cf-board {
+  display: grid;
+}
+
+:host([data-layout='board']) .cf-frame {
+  padding: 14px 14px 6px;
+}
