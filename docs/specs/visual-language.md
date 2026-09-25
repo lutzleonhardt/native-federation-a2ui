@@ -1,6 +1,6 @@
 # Spec: Visual language "Departure"
 
-Status: draft v1, 2026-09-19. Relation to `docs/spec.md`: its own milestone between M2 (NF split) and
+Status: implemented, 2026-09-25 (draft v1, 2026-09-19). Relation to `docs/spec.md`: its own milestone between M2 (NF split) and
 M3 (reserve, MapLibre, publication). It has to land before M3 captures replay recordings and the
 Post-2 screenshots, because section 7 changes prompt examples and therefore model output.
 
@@ -358,14 +358,20 @@ so they are passed as values, not inherited as custom properties.
 - **Open — NF mark.** Ask for an SVG; the use itself is settled, the demo goes onto the official
   Native Federation site. Until then the PNG from `native-federation.com` serves (transparent
   centre, fine as a pure mark at 18 px).
-- **Open — does the model group caption/value pairs?** Settled by the prompt task against real
-  output (section 7); whether the slot class inputs of section 5 are exposed on `copilot-chat`
-  itself or only on its inner components is settled by the chat-frame task.
-- **Later — English demo content.** The suggested prompts (`src/app/chat/example-prompts.ts`), the
-  eval scenarios (`eval/scenarios.ts`), the labels in the prompt examples (`agent/src/prompt.ts`),
-  the playground samples and one schema description (`gauge.schema.ts`) are German. Translating the
-  prompt, the scenarios or a schema description changes what the model sees and needs an eval run —
-  the same run the prompt task of section 7 needs, so doing both together saves one.
+- **Settled — the model groups caption/value pairs** once the prompt's detail example shows it:
+  both live samples on the final strings carried the `Card` and the grouped pairs, with the eval
+  gate at 5/5 (2026-09-24). Nothing enforces it — the improvements register holds the structural
+  option.
+- **Settled — CopilotKit's slot class inputs** (`@copilotkit/angular` 0.3.1): `copilot-chat`
+  forwards only `assistantMessageClass`, `reasoningMessageClass`, `messageViewChildrenClass` and the
+  `*Component` slots; `inputContainerClass`, `featherClass`, `disclaimerClass`/`disclaimerText`,
+  `userMessageClass`, `scrollToBottomButtonClass`, `addFileButtonClass` and
+  `startTranscribeButtonClass` stay on the inner components, and `assistantMessageClass`, though
+  forwarded, never reaches the DOM. The chat frame is therefore styled through global CSS under
+  `[data-copilotkit]` (`src/theme/copilotkit.css`); no CopilotKit component is replaced.
+- **Done — English demo content** (2026-09-22, before this milestone): prompts, eval scenarios, the
+  labels in the prompt examples, the playground samples and the schema description are English, and
+  the eval gate was re-run on the English strings.
 - **Later — calendar view** as an alternative to `Timeline` for the same data; postponed, and a
   vocabulary change with prompt and eval impact when it comes. Findings so far: FullCalendar has
   the multi-month view the sparse data needs (seven conferences across seven months leave a single
@@ -376,10 +382,11 @@ so they are passed as values, not inherited as custom properties.
 ## 10a. Verification
 
 `/playground` renders a surface from component names without a model call — the bench for every
-visual task. It lacks what this work styles: extend its sample with `Card`, `Divider`, caption and
-body pairs (grouped and ungrouped), both button variants, a `messageWidget` text, and a dense
-timeline (thirty items, and four within a week). Each visual task records screenshots at 1280 and
-390 px against the frames, and once with the operating system in dark mode. Existing specs hook
+visual task; its sample was extended with what this work styles (`Card`, `Divider`, caption and
+body pairs grouped and ungrouped, both button variants, a `messageWidget` text, dense timelines).
+Verification is a look, not a diff (decided 2026-09-22): each visual task ended with the user
+checking `/playground` and the app at desktop and phone width; there is no screenshot comparison
+against the frames, which are orientation, not a pixel spec. Existing specs hook
 into `.cf-selected`, `.cf-label`, `circle` and `svg` (timeline), `path[stroke-dasharray]` (gauge),
 and `li` and `a` (capability panel); keep those hooks or move the specs with the markup.
 

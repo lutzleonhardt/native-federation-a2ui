@@ -243,8 +243,8 @@ The demo shows the effect of a new remote in two steps:
 1. Open the app with charts only (`/?capabilities=charts`) and ask for the conferences
    on a map. The LLM has never heard of `Map`. It answers in text that it has no map
    component and offers a timeline instead.
-2. Switch maps on. A link in the app's header reloads the app with both remotes. Ask
-   again. Now the answer is a map.
+2. Switch maps on. The capability panel in the app's header has a _Switch on_ link per
+   remote; it reloads the app with both remotes. Ask again. Now the answer is a map.
 
 Between the two steps nothing changed except what was loaded.
 
@@ -309,10 +309,11 @@ Three things follow from this:
   add a remote the deployment does not know, so a link cannot bring in foreign code. I
   decided against localStorage: the selection lives only in the URL, so it is always
   visible and you can share it.
-- **A remote is down.** The app still starts, with the remaining vocabulary. The panel
-  in the header shows every remote of the manifest as _loaded_ (with the origin it came
-  from), _unreachable_ or _not selected_. A failed remote must not look like one that
-  was switched off.
+- **A remote is down.** The app still starts, with the remaining vocabulary. The header
+  shows every remote of the manifest as a chip: _loaded_, _unreachable_ or _off_. The
+  panel behind _Details_ adds the origin it came from, its components and functions, and
+  the link that switches it on or off. A failed remote must not look like one that was
+  switched off.
 - **`./capability` is the only thing a remote exposes.** One module with one export, in
   the shape shown in [A capability has two halves](#a-capability-has-two-halves). I
   defined this contract myself. It is not part of A2UI or AG-UI. Everything else inside

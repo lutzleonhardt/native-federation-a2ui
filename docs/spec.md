@@ -177,7 +177,9 @@ Sheriff wie im Buch-Repo für Modulgrenzen (Shell importiert keine Remotes; Remo
 
 **M2 — NF-Split.** Dynamic Host, Capability-Vertrag, `mfe-charts` und `mfe-maps` als Remotes, Manifest + `?capabilities=`, Shared-Deps (Zod-Singleton mit einer Katalogkomponente aus dem Remote prüfen). Der Live-Moment (Degradation ohne `mfe-maps`, Reload → Karte) läuft.
 
-**M3 — Reserve, Karten-Upgrade, Veröffentlichung.** `ConferenceStore` + `reserve`-Handler (Anfrage 4, samt Prompt-/Eval-Erweiterung). MapLibre-Upgrade **innerhalb** von `mfe-maps` (echte Tiles hier erlaubt; Vokabular, Schema und Prompt bleiben unverändert; Toggle = Reload bleibt). Hosting: `ReplayAgent` (aufgezeichnete Runs pro Anfrage × Capability-Set, Capture-Skript; Aufnahmen enthalten dank Datenmontage nur Struktur und pinnen die Protokollversion) als **verpflichtender**, klar gekennzeichneter Default — Besucher brauchen keinen API-Key; `BrowserAgent` (BYOK, ein Modellaufruf pro Run) als optionaler Schalter; statisches Deployment wie Frankenstein. README mit Architekturbild, Wann-lohnt-es-sich-Regel, Datenstand. Post 2. **Demo fertig und veröffentlicht.**
+**Visuelle Sprache „Departure" (zwischen M2 und M3).** Ein Look für die Demo — Kopfband in Tinte, Mono-Ziffern für Datum, Distanz und Anzahl, Blau für Linie und Auswahl, Amber nur für Aufmerksamkeit — über Shell-Chrome, Chat-Rahmen, Agent-Primitive, `Timeline` und `Gauge`, getragen von `--cf-*`-Custom-Properties über die Föderationsgrenze; dazu die eine Nicht-CSS-Änderung, Prompt-Beispiele mit gruppierten Beschriftung/Wert-Paaren. Eigene Spec: `docs/specs/visual-language.md`. Liegt vor M3, weil die Prompt-Änderung vor den Replay-Aufnahmen stehen muss.
+
+**M3 — Reserve, Karten-Upgrade, Veröffentlichung.** `ConferenceStore` + `reserve`-Handler (Anfrage 4, samt Prompt-/Eval-Erweiterung). MapLibre-Upgrade **innerhalb** von `mfe-maps` (echte Tiles hier erlaubt; Vokabular, Schema und Prompt bleiben unverändert; Toggle = Reload bleibt; das Karten-Kit steht in `docs/specs/visual-language.md`, Abschnitt 8.3). Hosting: `ReplayAgent` (aufgezeichnete Runs pro Anfrage × Capability-Set, Capture-Skript; Aufnahmen enthalten dank Datenmontage nur Struktur und pinnen die Protokollversion) als **verpflichtender**, klar gekennzeichneter Default — Besucher brauchen keinen API-Key; `BrowserAgent` (BYOK, ein Modellaufruf pro Run) als optionaler Schalter; statisches Deployment wie Frankenstein. README mit Architekturbild, Wann-lohnt-es-sich-Regel, Datenstand. Post 2. **Demo fertig und veröffentlicht.**
 
 ## 8b. Spätere Erweiterungen (v3.3 — außerhalb jeder verbindlichen Abnahme)
 
@@ -212,7 +214,7 @@ die Demo nach der Veröffentlichung wächst.
 
 | # | Frage | Stand |
 |---|---|---|
-| E1 | Projektname | **ConferenceFinder** (MeetupFinder: Markenrisiko; TalkFinder: passt nicht zu den Daten) |
+| E1 | Projektname | **ConferenceFinder** (MeetupFinder: Markenrisiko; TalkFinder: passt nicht zu den Daten); Anzeigename in Titel und Kopfzeile: **Conference Finder** mit Leerzeichen |
 | E2 | Datensatz | fiktive Konferenzen, reale Städte, `dayOffset` statt Datum, eigene Demo-Websites |
 | E3 | Modell | Entwicklung/Aufzeichnung: Claude Sonnet 5; Gegenprobe: günstiges OpenAI-Modell (Buch: GPT-5.4 mini); DeepSeek als dritter Provider ohne Versprechen |
 | E4 | `action` auf `Map`/`Timeline` | Schema ab M1 (eine Zeile), erster Nutzer: `reserve`-Button (Handler in M3); `submitAnswer` → Spätere Erweiterungen |

@@ -21,8 +21,8 @@ sandboxes: `/playground` (catalog components on a hand-built surface) and
 
 It has three parts. *Big picture* is the map. *At runtime, in order* follows the
 app from page load through one chat turn. The rest is lookup material: who owns
-which layer, what must stay true while you change code, how model behaviour is
-measured, and where the project stands.
+which layer and which styling zone, what must stay true while you change code,
+how model behaviour is measured, and where the project stands.
 
 | You want to know | Read |
 | --- | --- |
@@ -30,6 +30,7 @@ measured, and where the project stands.
 | What happens before the first message | [Boot](#boot-the-shell-loads-its-remotes) |
 | What happens when the user sends a message | [One chat turn](#one-chat-turn-in-plain-words), then its two details: [One AG-UI run](#one-ag-ui-run) and [The renderSurface round trip](#the-rendersurface-round-trip) |
 | Which package does what, and which of our files patches which upstream gap | [Layers and ownership](#layers-and-ownership) |
+| Who owns which styling zone, and how the look reaches a remote | [Styling zones](#styling-zones), then the theme rule under [Federation and boundaries](#federation-and-boundaries) |
 | What you must not break | [Invariants worth knowing](#invariants-worth-knowing), grouped by area |
 | How model behaviour is measured | [The eval harness](#the-eval-harness) |
 | What is done, what comes next, and where the reasons are recorded | [Status and history](#status-and-history) |
@@ -344,6 +345,30 @@ renderer). We bypass it deliberately — our tool is `renderSurface` on
 `@a2ui/angular` — and the tool names `render_a2ui` and `AGUISendStateSnapshot`
 stay reserved to CopilotKit.
 
+### Styling zones
+
+One look ("Departure": an ink header band, mono numerals for every date,
+distance and count, blue for the line and the selection, amber for attention
+only) across zones that different owners render. The look is a set of custom
+properties, `--cf-*`, declared once in `shared/theme/tokens.css`; every zone is
+reached through its owner's own variables or classes, never by restyling a DOM
+the owner may change.
+
+| Zone | Rendered by | The theme reaches it through |
+| --- | --- | --- |
+| Shell chrome: header band, location picker, prompt row, capability panel, and the two chat-side renderers (`app-message-widget`, `app-surface-tool-renderer`) | shell components | their own component stylesheets, on `--cf-*` |
+| Chat frame: bubbles, message input, the "Thought for…" line | `@copilotkit/angular` | CopilotKit's theme variables under `[data-copilotkit]`, the class inputs `copilot-chat` forwards, and global rules on its rendered elements — `src/theme/copilotkit.css` |
+| Agent primitives: `Column`, `Row`, `Card`, `Divider`, `Text`, `Button` | `@a2ui/angular` | the `--a2ui-*` variables mapped to the tokens on `:root`, plus the few rules those variables do not reach — `src/theme/a2ui.css`; which primitives an answer arranges is the model's choice |
+| Widgets: `Timeline`, `Gauge` | `mfe-charts` | inside the component, as private aliases of `--cf-*` (see *Federation and boundaries*) |
+| `Map` | `mfe-maps` | untouched — the map keeps its look until the MapLibre upgrade |
+
+`src/styles.css` is the shell's manifest: the tokens, then the A2UI zone, then
+the CopilotKit zone, in cascade order. CopilotKit's own stylesheet loads before
+it (`angular.json`), so the shell's unlayered variable block wins by order; the
+header of `src/theme/copilotkit.css` documents that. A remote's standalone page
+imports the token file only; what it needs of a zone it re-declares (the charts
+page carries two of the shell's Row rules).
+
 ## Invariants worth knowing
 
 Each rule is stated once, here, grouped by the area you are about to change.
@@ -441,6 +466,15 @@ What keeps a remote loadable, replaceable and movable.
   measured distance. What the single workspace simplifies
   compared with that real shape is argued once, in
   [`how-it-works.md`](./how-it-works.md#the-monorepo-is-a-simplification).
+- **The theme crosses the boundary as custom properties, never as CSS.**
+  `shared/theme/tokens.css` declares `--cf-*` on `:root`; the shell's stylesheet
+  and each remote's standalone stylesheet import it, and a remote never imports
+  host CSS (the A2UI and CopilotKit zone files are the shell's). A remote
+  component reads the tokens as private aliases whose fallback is the token's
+  own value (`--_rail: var(--cf-rail, #2b5fa8)`), so it renders the Departure
+  look even in a host that declares no `--cf-*` — the styling form of *Remotes
+  stay repo-portable*. A bare colour, radius or font in a remote component is
+  therefore only ever a `var()` fallback.
 - **The capability contract is `shared/capabilities/`.** It is this project's own
   contract, not part of A2UI or AG-UI. Everything a remote needs
   to describe a capability (`AgentCapability`, `CapabilityVocabulary`, the
@@ -471,6 +505,25 @@ The wire between the browser and the agent server.
 - **Loopback only, CORS on top.** The agent binds to `127.0.0.1` — CORS
   restricts browsers, not access; without the bound host any LAN peer could
   spend the API key.
+
+### Theme and widgets
+
+The look, and the rules the charts widgets rest on.
+
+- **One light scheme per app.** `color-scheme: only light` stands once, in the
+  token file, so the shell and both standalone pages pin it. A2UI's default
+  theme pairs `color-scheme: light dark` with `light-dark()` colours, which
+  turned surface text near-white on a dark operating system; the app has no
+  dark mode, so the scheme is pinned rather than themed twice.
+- **The Timeline is one uniformly scaled SVG.** A fixed `viewBox` (832 × 220
+  units, the desktop frame's pixels) inside a host that takes the container's
+  width, so rail, labels and dates scale together with the svg — text sizes
+  are viewBox units, not CSS pixels. Which layout shows, rail or board, is
+  decided without measuring the DOM: both are in the markup and CSS shows one,
+  either by a container query below 813 px (where a 12-unit label falls under
+  11 px) or by `labelsFit`, a pure estimate over items and range in viewBox
+  units that sets `data-layout="board"` on the host. Tests and DevTools read
+  the layout from that attribute; the gauge's `data-level` has the same shape.
 
 ## The eval harness
 
@@ -517,8 +570,16 @@ describes the code as it is.
   under "Bind, never copy" — dates in the data are ISO and bound directly, `formatDate`
   takes a date-fns pattern — 5/5, 5/5 and 5/5 with both capabilities; 5/5 and 5/5 with
   charts only.
+- **Visual language "Departure", 2026-09-25.** One look across shell chrome,
+  chat frame, agent primitives, `Timeline` and `Gauge`, carried by the `--cf-*`
+  custom properties, plus the one prompt change of the 2026-09-24 gates (grouped
+  caption/value pairs); the map keeps its look until the MapLibre upgrade. The
+  spec is [`docs/specs/visual-language.md`](./specs/visual-language.md); each
+  visual step was verified by looking at `/playground` and the app at desktop
+  and phone width, not by screenshot comparison.
 - **Next.** M3 adds the `reserve` handler, the MapLibre upgrade, and hosting with
   replay publication.
-- **Where the reasons are.** The spec is [`docs/spec.md`](./spec.md). The plans
+- **Where the reasons are.** The spec is [`docs/spec.md`](./spec.md), the look's
+  spec [`docs/specs/visual-language.md`](./specs/visual-language.md). The plans
   and task logs under `docs/work/` record why each decision was taken and hold
   the evidence for every upstream gap named in *Layers and ownership*.
