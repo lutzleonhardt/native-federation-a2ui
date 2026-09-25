@@ -7,6 +7,7 @@ Scope: make the repository ready to be public under the name `native-federation-
 Decisions taken while planning; do not re-derive:
 
 - **This scope starts after both predecessors are merged.** The hero GIF and the screenshot show the final design and the English prompts, and one FAQ answer (design consistency across teams) only becomes true with the design pass.
+- **This scope runs after M3 (user, 2026-09-25).** The README's facts — the hosted replay demo, the MapLibre map, request 4 — come from M3, and Task 2 must be last anyway; both tasks run in one pass once M3 is merged. `docs/spec.md` §8 names the publication as its own step after M3.
 - **Who writes what.** Prose that carries the user's voice — README, FAQ — is written by the user; the agent supplies verified facts and checks the result against the code. The FAQ doubles as the user's talk script.
 - **SRI is named, never built.** The README describes it as a trade-off under "what a real deployment needs".
 - **A new GitHub repository instead of a rename.** After a force-push the old commits stay fetchable by hash; a fresh repository never had them. The app keeps the name ConferenceFinder.

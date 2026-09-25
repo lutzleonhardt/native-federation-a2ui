@@ -394,9 +394,9 @@ and `li` and `a` (capability panel); keep those hooks or move the specs with the
 
 - §8: name this milestone between M2 and M3; the M3 MapLibre sentence points at section 8.3.
 - §9 E1: display name "Conference Finder" with a space; the project name stays.
-- Undecided idea, outside this spec: renaming the repository to `native-federation-a2ui`, with
-  "Federated Agentic UI" as the README tagline. GitHub redirects old URLs; the local folder can
-  keep its name.
+- Decided since, outside this spec (publication scope, 2026-09-22): the public repository is a new
+  one named `native-federation-a2ui`, not a rename, with "Federated Agentic UI" as the README
+  tagline; the app keeps its name. The publication runs after M3 (`docs/spec.md` §8).
 
 ## 12. Key measures
 

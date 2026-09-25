@@ -1,6 +1,6 @@
 # Spec: ConferenceFinder — föderiertes A2UI-Vokabular mit Native Federation
 
-Status: Entwurf v3.3, 2026-09-09 (Entschlackung: 2 Remotes, Anfragen 1–4, Replay verpflichtend; v3.2: 2026-08-27). Projekt: **ConferenceFinder**. Eigene App ohne Flights-Bezug.
+Status: Entwurf v3.4, 2026-09-25 (Veröffentlichung als eigener Schritt nach M3; v3.3: 2026-09-09, Entschlackung: 2 Remotes, Anfragen 1–4, Replay verpflichtend; v3.2: 2026-08-27). Projekt: **ConferenceFinder**. Eigene App ohne Flights-Bezug.
 Hintergrundwissen: `docs/book-learnings.md`. Taskzuschnitt folgt später per `/plan` je Meilenstein. Diese Spec wandert als `docs/spec.md` ins Projekt-Repo, sobald es existiert.
 
 ## 0. Leitgedanke (Anker für README, Post und Talk)
@@ -179,7 +179,9 @@ Sheriff wie im Buch-Repo für Modulgrenzen (Shell importiert keine Remotes; Remo
 
 **Visuelle Sprache „Departure" (zwischen M2 und M3).** Ein Look für die Demo — Kopfband in Tinte, Mono-Ziffern für Datum, Distanz und Anzahl, Blau für Linie und Auswahl, Amber nur für Aufmerksamkeit — über Shell-Chrome, Chat-Rahmen, Agent-Primitive, `Timeline` und `Gauge`, getragen von `--cf-*`-Custom-Properties über die Föderationsgrenze; dazu die eine Nicht-CSS-Änderung, Prompt-Beispiele mit gruppierten Beschriftung/Wert-Paaren. Eigene Spec: `docs/specs/visual-language.md`. Liegt vor M3, weil die Prompt-Änderung vor den Replay-Aufnahmen stehen muss.
 
-**M3 — Reserve, Karten-Upgrade, Veröffentlichung.** `ConferenceStore` + `reserve`-Handler (Anfrage 4, samt Prompt-/Eval-Erweiterung). MapLibre-Upgrade **innerhalb** von `mfe-maps` (echte Tiles hier erlaubt; Vokabular, Schema und Prompt bleiben unverändert; Toggle = Reload bleibt; das Karten-Kit steht in `docs/specs/visual-language.md`, Abschnitt 8.3). Hosting: `ReplayAgent` (aufgezeichnete Runs pro Anfrage × Capability-Set, Capture-Skript; Aufnahmen enthalten dank Datenmontage nur Struktur und pinnen die Protokollversion) als **verpflichtender**, klar gekennzeichneter Default — Besucher brauchen keinen API-Key; `BrowserAgent` (BYOK, ein Modellaufruf pro Run) als optionaler Schalter; statisches Deployment wie Frankenstein. README mit Architekturbild, Wann-lohnt-es-sich-Regel, Datenstand. Post 2. **Demo fertig und veröffentlicht.**
+**M3 — Reserve, Karten-Upgrade, Hosting.** `ConferenceStore` + `reserve`-Handler (Anfrage 4, samt Prompt-/Eval-Erweiterung). MapLibre-Upgrade **innerhalb** von `mfe-maps` (echte Tiles hier erlaubt; Vokabular, Schema und Prompt bleiben unverändert; Toggle = Reload bleibt; das Karten-Kit steht in `docs/specs/visual-language.md`, Abschnitt 8.3). Hosting: `ReplayAgent` (aufgezeichnete Runs pro Anfrage × Capability-Set, Capture-Skript; Aufnahmen enthalten dank Datenmontage nur Struktur und pinnen die Protokollversion) als **verpflichtender**, klar gekennzeichneter Default — Besucher brauchen keinen API-Key; `BrowserAgent` (BYOK, ein Modellaufruf pro Run) als optionaler Schalter; statisches Deployment wie Frankenstein. **Die gehostete Demo läuft.**
+
+**Veröffentlichung (nach M3).** README als Eingangstür des öffentlichen Repos: Architekturbild, Wann-lohnt-es-sich-Regel, Datenstand, FAQ als Vortragsskript — ihre Fakten (gehostete Replay-Demo, MapLibre-Karte, Anfrage 4) stammen aus M3, deshalb erst danach. Historie ohne Buchnotizen und privaten Kontext; dann ein neues GitHub-Repository `native-federation-a2ui` statt einer Umbenennung (die App bleibt ConferenceFinder). Post 2. **Demo fertig und veröffentlicht.**
 
 ## 8b. Spätere Erweiterungen (v3.3 — außerhalb jeder verbindlichen Abnahme)
 
@@ -222,6 +224,7 @@ die Demo nach der Veröffentlichung wächst.
 | E6 | A2UI-Transport | Client-Tool `renderSurface` |
 | E7 | Bindung vs. Agent | lokal bevorzugen, per Prompt-Regel |
 | E8 | Scope-Entschlackung v3.3 | 2 Remotes, Anfragen 1–4, drei Meilensteine, Replay verpflichtend/BYOK optional; `mfe-filter`, `mfe-embed`, `BarChart`/`ChartGrid`, `submitAnswer` → §8b (2026-09-09) |
+| E9 | Reihenfolge M3 → Veröffentlichung | Hosting bleibt in M3; README, Historie, neues Repo `native-federation-a2ui` und Post 2 bilden den Schritt „Veröffentlichung" danach, weil die README-Fakten aus M3 stammen (2026-09-25) |
 
 ## 10. Risiken
 
@@ -248,6 +251,6 @@ Server-Tools, DSL/Dashboard, HITL-Interrupts, MCP, Streaming, Late-Binding zur L
 
 ## 13. Veröffentlichung
 
-Post 1 (Buch) ist raus. Post 2 nach M3: Screenshots der Anfragen, GIF des Live-Moments, Repo-Link, Link auf die gehostete Replay-Demo. Repo-Lizenz: MIT.
+Post 1 (Buch) ist raus. Post 2 mit der Veröffentlichung nach M3: Screenshots der Anfragen, GIF des Live-Moments, Repo-Link, Link auf die gehostete Replay-Demo. Repo-Lizenz: MIT.
 
 README und Post führen das Argument aus Abschnitt 0 explizit — Begriff „föderierbares Vokabular", die Formel, der Klick-Kaskaden-Moment, der Live-Moment, die Wann-lohnt-es-sich-Regel. Ohne diese Erklärung liest sich die Demo als „Charts und Karten mit KI".
