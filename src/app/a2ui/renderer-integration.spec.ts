@@ -66,7 +66,7 @@ describe('assistant catalog in the real renderer', () => {
     const svg = host.querySelector('svg');
     expect(svg?.textContent).toContain('12');
     expect(svg?.textContent).toContain('100');
-    expect(svg?.textContent).toContain('Tickets left');
+    expect(host.querySelector('app-gauge')?.textContent).toContain('Tickets left');
   });
 
   it('T4-AC-06 re-renders the gauge when the bound data model path changes', async () => {

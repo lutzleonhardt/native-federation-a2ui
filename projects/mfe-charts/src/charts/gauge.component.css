@@ -1,0 +1,145 @@
+/* The theme arrives as --cf-* from the shell; the fallbacks carry the same values for the
+   remote's standalone page, whose own stylesheet never loads inside the shell. */
+:host {
+  --_ink: var(--cf-ink, #10222f);
+  --_muted: var(--cf-muted, #4e5f6b);
+  --_line: var(--cf-line, #c8d3db);
+  --_surface: var(--cf-surface, #ffffff);
+  --_sub: var(--cf-sub, #e3e9ee);
+  --_attention: var(--cf-attention, #e1730b);
+  --_attention-bg: var(--cf-attention-bg, #fdf0e2);
+  --_attention-ink: var(--cf-attention-ink, #8a4607);
+  --_level-high: var(--cf-level-high, #2f8f5b);
+  --_level-mid: var(--cf-level-mid, #e2b100);
+  --_font-data: var(--cf-font-data, 'IBM Plex Mono', ui-monospace, monospace);
+  --_r-md: var(--cf-r-md, 6px);
+  --_r-pill: var(--cf-r-pill, 999px);
+
+  /* Hugs its content on desktop; the inner frame is the card, the host stays invisible.
+     The min-width keeps a sibling that claims the row (an a2ui Column sets width: 100 %)
+     from squeezing it; only a narrow container itself wraps the badge under the arc. */
+  display: block;
+  width: fit-content;
+  min-width: fit-content;
+  max-width: 100%;
+  color: var(--_ink);
+}
+
+.cf-frame {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 28px;
+  box-sizing: border-box;
+  padding: 20px 26px;
+  border: 1px solid var(--_line);
+  border-radius: var(--_r-md);
+  background: var(--_surface);
+}
+
+/* Arc: 100 viewBox units = 190 px, so the 20-unit value renders at 38 px; the phone's
+   160 px make it 32 px without a second font size. */
+svg {
+  display: block;
+  flex: none;
+  width: 190px;
+}
+
+.cf-track,
+.cf-fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.cf-track {
+  stroke: var(--_line);
+}
+
+.cf-fill {
+  stroke: var(--_level-high);
+}
+
+.cf-gauge-value {
+  font: 600 20px var(--_font-data);
+  fill: var(--_ink);
+}
+
+.cf-gauge-max {
+  font: 6.3px var(--_font-data);
+  fill: var(--_muted);
+}
+
+/* Badge and percentage */
+
+.cf-reading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--_font-data);
+  white-space: nowrap;
+}
+
+.cf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--_r-pill);
+  background: var(--_sub);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+/* Neutral: grey dot, no signal colour. */
+.cf-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--_muted);
+}
+
+.cf-percent {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--_muted);
+}
+
+:host([data-level='mid']) {
+  .cf-fill {
+    stroke: var(--_level-mid); /* fill only, never text */
+  }
+}
+
+/* Amber means scarce: fill, badge and dot switch together, nowhere else. */
+:host([data-level='low']) {
+  .cf-fill {
+    stroke: var(--_attention);
+  }
+
+  .cf-badge {
+    background: var(--_attention-bg);
+    color: var(--_attention-ink);
+
+    &::before {
+      background: var(--_attention);
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  :host {
+    width: 100%;
+  }
+
+  svg {
+    width: 160px;
+  }
+
+  .cf-frame {
+    gap: 20px;
+    padding: 16px 20px;
+  }
+}

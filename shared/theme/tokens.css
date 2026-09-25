@@ -6,6 +6,7 @@
  */
 @import '@fontsource-variable/archivo';
 @import '@fontsource/ibm-plex-mono';
+@import '@fontsource/ibm-plex-mono/600.css'; /* the gauge numerals */
 
 :root {
   /* A2UI's default theme pairs `light dark` with light-dark() colours, which

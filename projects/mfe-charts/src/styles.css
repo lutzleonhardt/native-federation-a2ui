@@ -8,3 +8,14 @@ body {
   background: var(--cf-ground);
   font-family: var(--cf-font-ui);
 }
+
+/* As in the shell's A2UI zone: a Row wraps whole entries and a Column inside it sizes to its
+   content (its host sets width: 100% inline), so the summary column stands beside the gauge at
+   desktop width and drops below it, not out of view, once the gauge takes the phone width. */
+a2ui-v09-row {
+  flex-wrap: wrap;
+
+  > a2ui-v09-component-host > a2ui-v09-column {
+    width: auto !important;
+  }
+}
