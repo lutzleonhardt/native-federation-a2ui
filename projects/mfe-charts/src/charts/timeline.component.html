@@ -21,10 +21,10 @@
         }
         <circle class="cf-dot" [attr.cx]="marker.x" [attr.cy]="rail.axisY" r="7" />
         <text class="cf-label" [attr.x]="marker.x" [attr.y]="marker.labelY" text-anchor="middle">
-          {{ labelOf(marker.item) }}
+          {{ marker.label }}
         </text>
         <text class="cf-date" [attr.x]="marker.x" [attr.y]="marker.dateY" text-anchor="middle">
-          {{ marker.item.date }}
+          {{ marker.date }}
         </text>
         @if (marker.selected) {
           <text
@@ -68,9 +68,9 @@
       <!-- Pointer only, like the rail markers: keyboard access is out of this demo's scope. -->
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <li class="cf-marker" [class.cf-selected]="marker.selected" (click)="pick(marker.item)">
-        <span class="cf-date">{{ marker.item.date }}</span>
+        <span class="cf-date">{{ marker.date }}</span>
         <span class="cf-rail"><span class="cf-dot"></span></span>
-        <span class="cf-label">{{ labelOf(marker.item) }}</span>
+        <span class="cf-label">{{ marker.label }}</span>
         @if (marker.selected) {
           <span class="cf-caption">{{ caption() }}</span>
         }

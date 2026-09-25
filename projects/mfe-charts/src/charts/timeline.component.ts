@@ -10,6 +10,7 @@ import type { BoundProperty } from '@a2ui/angular/v0_9';
 import type { Action } from '@a2ui/web_core/v0_9';
 import { dispatchSurfaceAction } from '../../../../shared/capabilities/surface-action';
 import { type MonthMark, dateScale, monthMarks, relativeDays } from './timeline-dates';
+import { labelsFit } from './timeline-labels';
 
 /**
  * `label` is optional at runtime: path-bound items bypass schema validation,
@@ -32,8 +33,11 @@ export interface TimelineProps {
 
 interface TimelineMarker {
   readonly item: TimelineItem;
+  readonly label: string;
+  readonly date: string;
   readonly selected: boolean;
   readonly x: number;
+  readonly side: 'above' | 'below';
   readonly labelY: number;
   readonly dateY: number;
   readonly captionY: number;
@@ -55,21 +59,25 @@ const RAIL = {
   axisY: 99,
   monthAxisY: 184,
   tickHalf: 4.5,
-  // A three-letter mono month label at 10 units is about 20 wide.
+  // A three-letter month or a four-digit year in mono at 10 units is at most about 24 wide.
   monthLabelGap: 28,
   monthLabelY: 204,
   yearY: 216,
 } as const;
 
 // Labels alternate above and below the axis; each side reads label, date, caption away from the dot.
-const ABOVE = { labelY: 12, dateY: 29, captionY: 46, stemY: 54 } as const;
-const BELOW = { labelY: 132, dateY: 149, captionY: 166, stemY: 120 } as const;
+const ABOVE = { side: 'above', labelY: 12, dateY: 29, captionY: 46, stemY: 54 } as const;
+const BELOW = { side: 'below', labelY: 132, dateY: 149, captionY: 166, stemY: 120 } as const;
+
+/** The rail's text sizes as `timeline.component.css` sets them; the gap is half a label character. */
+const LABELS = { labelSize: 12, dateSize: 11, minGap: 6 } as const;
 
 @Component({
   selector: 'app-timeline',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './timeline.component.html',
   styleUrl: './timeline.component.css',
+  host: { '[attr.data-layout]': 'layout()' },
 })
 export class TimelineComponent {
   /**
@@ -107,10 +115,25 @@ export class TimelineComponent {
     const selectedId = this.selectedId();
     return this.items().map((item, index) => ({
       item,
+      label: labelOf(item),
+      date: item.date,
       selected: item.id === selectedId,
       x: scale.x(Date.parse(item.date)),
       ...(index % 2 === 0 ? ABOVE : BELOW),
     }));
+  });
+
+  /**
+   * `'board'` when a side of the rail cannot hold its label blocks, `null` to let the width rule
+   * in the CSS choose. Decided on the positions the rail draws, so a squeezing `range` counts and
+   * the rendered width never does.
+   */
+  protected readonly layout = computed<'board' | null>(() => {
+    const markers = this.markers();
+    const rows = [ABOVE.side, BELOW.side].map((side) =>
+      markers.filter((marker) => marker.side === side),
+    );
+    return rows.every((row) => labelsFit(row, LABELS)) ? null : 'board';
   });
 
   protected readonly months = computed<readonly MonthMark[]>(() => {
@@ -125,10 +148,6 @@ export class TimelineComponent {
     return selected === undefined ? '' : relativeDays(selected.item.date);
   });
 
-  protected labelOf(item: TimelineItem): string {
-    return String(item.label ?? item['name'] ?? item.id);
-  }
-
   protected pick(item: TimelineItem): void {
     this.props().selected?.onUpdate(item);
     const action = this.props().action?.value();
@@ -142,4 +161,8 @@ export class TimelineComponent {
       );
     }
   }
+}
+
+function labelOf(item: TimelineItem): string {
+  return String(item.label ?? item['name'] ?? item.id);
 }

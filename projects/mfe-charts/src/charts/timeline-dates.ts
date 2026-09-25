@@ -10,7 +10,7 @@ export interface DateScale {
 export interface MonthMark {
   readonly x: number;
   readonly month: string;
-  /** Two-digit year; present at the first mark and at every January. */
+  /** Four-digit year — two digits under a month read as a day; at the first mark and every January. */
   readonly year?: string;
 }
 
@@ -74,7 +74,7 @@ function tickAt(time: number, withYear: boolean): MonthTick {
   return {
     time,
     month: MONTHS[date.getUTCMonth()] ?? '',
-    year: withYear && Number.isFinite(time) ? String(date.getUTCFullYear()).slice(-2) : undefined,
+    year: withYear && Number.isFinite(time) ? String(date.getUTCFullYear()) : undefined,
   };
 }
 

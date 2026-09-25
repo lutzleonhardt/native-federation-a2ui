@@ -23,8 +23,9 @@ const BERLIN = { city: 'Berlin', lat: 52.52, lon: 13.405 };
  */
 function playgroundMessages(): A2uiMessage[] {
   const today = new Date();
+  // The set of demo request 1: seven conferences whose labels share one rail.
   const { confs } = findConferences(
-    { nearKm: 300 },
+    { topic: 'angular', withinDays: 180 },
     { confs: loadConferences(today), me: BERLIN, today },
   );
   const pick = { event: { name: 'pick', context: { id: { path: '/selectedConf/id' } } } };
@@ -100,17 +101,19 @@ const FACTS = [
 
 const BUTTONS = ['default', 'primary', 'borderless'] as const;
 
+function isoFromToday(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 /** `count` items from today, `stepDays` apart — only what the Timeline schema requires. */
 function timelineItems(prefix: string, count: number, stepDays: number) {
-  return Array.from({ length: count }, (_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() + index * stepDays);
-    return {
-      id: `${prefix}-${index + 1}`,
-      label: `${prefix} ${index + 1}`,
-      date: date.toISOString().slice(0, 10),
-    };
-  });
+  return Array.from({ length: count }, (_, index) => ({
+    id: `${prefix}-${index + 1}`,
+    label: `${prefix} ${index + 1}`,
+    date: isoFromToday(index * stepDays),
+  }));
 }
 
 /**
@@ -175,7 +178,13 @@ function benchMessages(): A2uiMessage[] {
             text(`btn-${variant}-label`, `${variant[0].toUpperCase()}${variant.slice(1)} button`),
           ]),
           { id: 'year', component: 'Timeline', items: { path: '/year' } },
-          { id: 'week', component: 'Timeline', items: { path: '/week' } },
+          // Four talks in the first week of a quarter: the range squeezes them off the rail.
+          {
+            id: 'week',
+            component: 'Timeline',
+            items: { path: '/week' },
+            range: { from: isoFromToday(0), to: isoFromToday(90) },
+          },
         ],
       },
     },

@@ -162,7 +162,7 @@ describe('TimelineComponent in the Departure look', () => {
     const months = [...host.querySelectorAll('.cf-month')].map((text) => text.textContent?.trim());
     expect(months).toEqual(['SEP', 'OCT', 'NOV']);
     const years = [...host.querySelectorAll('.cf-year')].map((text) => text.textContent?.trim());
-    expect(years).toEqual(['26']);
+    expect(years).toEqual(['2026']);
   });
 
   it('T6-AC-02 captions the selected item with an English relative time in both layouts', async () => {
@@ -229,6 +229,96 @@ describe('TimelineComponent in the Departure look', () => {
     expect(selected?.querySelector('.cf-caption')?.textContent?.trim()).toBe('200 days ago');
     const dotLefts = rows.map((row) => row.querySelector('.cf-dot')!.getBoundingClientRect().left);
     expect(new Set(dotLefts).size).toBe(1);
+  });
+});
+
+/** The seven Angular conferences of demo request 1, with their offsets from a fixed day. */
+const REQUEST_1: TimelineItem[] = [
+  { id: 'munich', label: 'ng-atlas Munich', date: '2026-09-28' },
+  { id: 'berlin', label: 'ng-forge Berlin', date: '2026-10-07' },
+  { id: 'hamburg', label: 'ng-loft Hamburg', date: '2026-11-18' },
+  { id: 'vienna', label: 'ng-foundry Vienna', date: '2026-12-30' },
+  { id: 'zurich', label: 'ng-anvil Zurich', date: '2027-01-15' },
+  { id: 'copenhagen', label: 'ng-harbor Copenhagen', date: '2027-02-15' },
+  { id: 'leipzig', label: 'ng-lantern Leipzig', date: '2027-03-15' },
+];
+
+function itemsEvery(count: number, stepDays: number, prefix: string): TimelineItem[] {
+  const start = Date.UTC(2026, 9, 5);
+  return Array.from({ length: count }, (_, index) => ({
+    id: `${prefix}-${index + 1}`,
+    label: `${prefix} ${index + 1}`,
+    date: new Date(start + index * stepDays * 86_400_000).toISOString().slice(0, 10),
+  }));
+}
+
+function layoutOf(host: HTMLElement): string | null {
+  return host.getAttribute('data-layout');
+}
+
+describe('TimelineComponent label-fit rule', () => {
+  it('T7-AC-01 forces the board for thirty items whose label blocks cannot share the rail', async () => {
+    const items = itemsEvery(30, 12, 'Event');
+    const fixture = await renderTimeline({ items: boundProperty<readonly TimelineItem[]>(items) });
+    const host = fixture.nativeElement as HTMLElement;
+    resize(host, '1000px');
+
+    expect(layoutOf(host)).toBe('board');
+    expect(display(host.querySelector('svg')!)).toBe('none');
+    expect(display(host.querySelector('ol.cf-board')!)).toBe('grid');
+    const labels = [...host.querySelectorAll('li.cf-marker .cf-label')].map((label) =>
+      label.textContent?.trim(),
+    );
+    expect(labels).toEqual(items.map((item) => item.label));
+  });
+
+  it('T7-AC-02 T7-AC-04 four items of one week fit their own rail and are boarded when a quarter squeezes them', async () => {
+    const items = boundProperty<readonly TimelineItem[]>(itemsEvery(4, 2, 'Talk'));
+    const range = boundProperty<{ from: string; to: string } | undefined>(undefined);
+    const fixture = await renderTimeline({ items, range });
+    const host = fixture.nativeElement as HTMLElement;
+    resize(host, '1000px');
+
+    expect(layoutOf(host)).toBeNull();
+    expect(display(host.querySelector('svg')!)).toBe('block');
+
+    range.value.set({ from: '2026-10-05', to: '2027-01-03' });
+    await fixture.whenStable();
+
+    expect(layoutOf(host)).toBe('board');
+    expect(display(host.querySelector('ol.cf-board')!)).toBe('grid');
+  });
+
+  it('T7-AC-03 draws the rail for the seven conferences of request 1', async () => {
+    const fixture = await renderTimeline({
+      items: boundProperty<readonly TimelineItem[]>(REQUEST_1),
+      selected: boundProperty<unknown>(REQUEST_1[5]),
+    });
+    const host = fixture.nativeElement as HTMLElement;
+    resize(host, '1000px');
+
+    expect(layoutOf(host)).toBeNull();
+    expect(display(host.querySelector('svg')!)).toBe('block');
+    expect(markersOf(fixture)).toHaveLength(7);
+  });
+
+  it('T7-AC-05 keeps the overlap decision when the host is resized', async () => {
+    const dense = await renderTimeline({
+      items: boundProperty<readonly TimelineItem[]>(itemsEvery(30, 12, 'Event')),
+    });
+    const sparse = await renderTimeline({
+      items: boundProperty<readonly TimelineItem[]>(REQUEST_1),
+    });
+
+    for (const width of ['1000px', '600px', '1000px']) {
+      resize(dense.nativeElement, width);
+      resize(sparse.nativeElement, width);
+      expect(layoutOf(dense.nativeElement)).toBe('board');
+      expect(layoutOf(sparse.nativeElement)).toBeNull();
+    }
+    // The width rule alone shows the sparse board at 600 px — the two conditions stay independent.
+    resize(sparse.nativeElement, '600px');
+    expect(display(sparse.nativeElement.querySelector('ol.cf-board')!)).toBe('grid');
   });
 });
 

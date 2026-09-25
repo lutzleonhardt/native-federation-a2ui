@@ -4,7 +4,10 @@ Unscheduled follow-ups promoted from task logs. Nothing reads this
 automatically; it feeds `/plan` only when a task is deliberately opened
 from it.
 
-- [ ] Timeline/Map label collision layout for densely clustered items (alternating rows are not enough for 3+ near-same-date markers; real fix is measured collision avoidance, M3 material) — from task 5, scope m1-spike · source: wrap-up
+- [x] Timeline label collision layout for densely clustered items (alternating rows are not enough for 3+ near-same-date markers) — from task 5, scope m1-spike · source: wrap-up · done in task 7, scope visual-language (an estimated label-fit rule in viewBox units switches to the board layout instead of measured collision avoidance)
+- [ ] Map label collision layout for densely clustered items (real fix is measured collision avoidance, M3 MapLibre material) — from task 5, scope m1-spike · source: wrap-up
+- [ ] Timeline rail: a label longer than about 17 characters on the first or last marker can be clipped by the viewBox edge (64 units of margin beside the rail, Task-6 geometry); the label-fit rule checks overlap only, and its 0.6 em estimate would already board request 1 if it checked the edges — from task 7, scope visual-language · source: wrap-up
+- [ ] The shell mounts `/filteredConfs` with the domain objects as they are (`name`, no `label`), so Timeline and Map each fall back `label ?? name ?? id` — a conference-domain leak in two remotes. Mount the results with `label: conf.name` in the shell (render-surface tool, prompt description, shell specs) and reduce both remotes to `label ?? id`, the guard for path-bound data that bypasses validation — from task 7, scope visual-language · source: wrap-up
 - [x] Wire RENDER_FAILURE_HANDLER to the Task-7 chat correction run; the default handler only logs — from task 6, scope m1-spike · source: wrap-up · done in task 7
 - [x] Verify createFrontendTool/registerFrontendTool with the real CopilotKit provider during Task-7 chat integration — from task 6, scope m1-spike · source: wrap-up · done in task 7
 - [x] Implement meToContextEntry(me) when assembling the Task-7 agent context (carried from Task 3) — from task 6, scope m1-spike · source: wrap-up · done in task 7

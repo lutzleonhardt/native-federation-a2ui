@@ -30,11 +30,11 @@ describe('monthMarks', () => {
       'MAR',
     ]);
     expect(marks.map((mark) => mark.year)).toEqual([
-      '26',
+      '2026',
       undefined,
       undefined,
       undefined,
-      '27',
+      '2027',
       undefined,
       undefined,
     ]);
@@ -49,7 +49,7 @@ describe('monthMarks', () => {
 
   it('is a single mark for a span inside one month', () => {
     expect(monthMarks(scaleOf('2026-09-14', '2026-09-20'), 28)).toEqual([
-      { x: 64, month: 'SEP', year: '26' },
+      { x: 64, month: 'SEP', year: '2026' },
     ]);
   });
 
@@ -59,10 +59,10 @@ describe('monthMarks', () => {
     const marks = monthMarks(scale, 28);
     expect(marks.map((mark) => mark.month)).toEqual(['OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR']);
     expect(marks.map((mark) => mark.year)).toEqual([
-      '26',
+      '2026',
       undefined,
       undefined,
-      '27',
+      '2027',
       undefined,
       undefined,
     ]);
