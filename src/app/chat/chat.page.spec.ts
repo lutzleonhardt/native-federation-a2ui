@@ -7,6 +7,7 @@ import { ASSISTANT_AGENT_ID } from '../../../shared/agent-contract';
 import type { AgentCapability } from '../../../shared/capabilities/agent-capability';
 import { provideAgentCapabilities } from '../a2ui/agent-capabilities.token';
 import { ASSISTANT_CATALOG_ID } from '../a2ui/assistant-catalog';
+import { provideReserveHandler } from '../a2ui/reserve-handler';
 import { ASSISTANT_AGENT, provideAssistantAgent } from '../agent/assistant-agent.token';
 import { MAX_CORRECTIONS_PER_TURN } from '../agent/render-failure-correction';
 import { SurfaceDataStore } from '../agent/surface-data.store';
@@ -52,6 +53,7 @@ async function renderChat(
       provideAgentCapabilities(capabilities),
       provideCapabilityStatus(REMOTES),
       provideAssistantAgent(),
+      provideReserveHandler(),
       { provide: ASSISTANT_AGENT, useValue: agent },
     ],
   });
@@ -74,6 +76,19 @@ function clickPrompt(fixture: ComponentFixture<ChatPage>, index: number): void {
 
 function markersOf(fixture: ComponentFixture<ChatPage>): SVGGElement[] {
   return [...host(fixture).querySelectorAll<SVGGElement>('a2ui-v09-surface g.cf-marker')];
+}
+
+/** The gauge readings of every surface in the transcript, in message order. */
+function gaugeValues(fixture: ComponentFixture<ChatPage>): string[] {
+  return [...host(fixture).querySelectorAll('a2ui-v09-surface .cf-gauge-value')].map(
+    (el) => el.textContent?.trim() ?? '',
+  );
+}
+
+function reserveButtons(fixture: ComponentFixture<ChatPage>): HTMLButtonElement[] {
+  return [
+    ...host(fixture).querySelectorAll<HTMLButtonElement>('a2ui-v09-surface a2ui-v09-button button'),
+  ];
 }
 
 function settle(): Promise<void> {
@@ -271,6 +286,36 @@ describe('ChatPage with the scripted agent', () => {
     await vi.waitFor(() => expect(nameText()).toContain(second.name));
     // findConferences asks for a follow-up run, renderSurface ends the turn.
     expect(agent.inputs).toHaveLength(2);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('T1-AC-03 reserve in the chat: the gauge drops without a request, and the next answer starts from the reduced count', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const agent = new MockAgent((input, run) => {
+      if (run === 0 || run === 2) return toolCallRun(input, 'findConferences', { topic: 'angular' });
+      if (run === 1) return toolCallRun(input, 'renderSurface', { messages: requestThreeSurface('request-3') });
+      if (run === 3) return toolCallRun(input, 'renderSurface', { messages: requestThreeSurface('request-3-again') });
+      return emptyRun(input);
+    });
+    const fixture = await renderChat(agent);
+    TestBed.inject(LocationStore).setCity('berlin');
+    await fixture.whenStable();
+
+    clickPrompt(fixture, 2);
+    await vi.waitFor(() => expect(gaugeValues(fixture)).toHaveLength(1));
+    const [first] = TestBed.inject(SurfaceDataStore).confs();
+    expect(gaugeValues(fixture)).toEqual([String(first.remaining)]);
+
+    reserveButtons(fixture)[0].click();
+    await vi.waitFor(() => expect(gaugeValues(fixture)).toEqual([String(first.remaining - 1)]));
+
+    // renderSurface ended the turn, so the example buttons are usable again.
+    await vi.waitFor(() => expect(promptButtons(fixture).some((button) => button.disabled)).toBe(false));
+    clickPrompt(fixture, 2);
+    await vi.waitFor(() => expect(gaugeValues(fixture)).toHaveLength(2));
+
+    expect(gaugeValues(fixture)).toEqual([String(first.remaining - 1), String(first.remaining - 1)]);
+    expect(agent.inputs).toHaveLength(4);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 

@@ -69,7 +69,7 @@ reservation, a new surface mounts the reduced `remaining`.
 - **T1-AC-01** — Given a surface whose data model holds the selected conference and the result list, when the reserve Button is clicked, the value bound to the selection's `remaining` and the same conference's entry in the list drop by one, and no request leaves the browser.
 - **T1-AC-02** — Given a conference with no tickets left, clicking reserve leaves it at zero.
 - **T1-AC-03** — After a reservation, every surface rendered later shows the reduced `remaining` for that conference; the store keeps the reservation for the page's lifetime.
-- **T1-AC-04** — The handler finds the conference wherever the model put the selection: a surface whose selection path is not `/selectedConf` updates the same way.
+- **T1-AC-04** — *(amended 2026-09-26)* The selection has one fixed home, `/selectedConf`: a surface that binds `selected` or the reserve context elsewhere is rejected at the `renderSurface` boundary with a correction naming the path; the handler writes only the list entry and the selection, an object elsewhere with the same id stays untouched.
 - Contributes to XC-01.
 
 ### Quick functional check
@@ -276,6 +276,27 @@ local mode, the DevTools link is present in both.
 
 ## Task 4: Self-contained prompts, capture script, the sixteen recordings
 
+> **Amendment (2026-09-26, from Task 1):** the selection path is fixed to `/selectedConf` and the
+> path is client-owned (`CLIENT_OWNED_SEGMENTS`, `findSelectionPathViolations` in
+> `surface-host-rules.ts`). Carry it to the model side in this task, on the eval run planned here:
+> the prompt's "`<the selection path>/id`" becomes "`/selectedConf/id`" with one sentence that the
+> selection always binds `/selectedConf`; the scorer stops deriving the selection path and checks
+> the fixed one (`hasReserveButton`, `score.spec.ts` "follows the selection path the model chose").
+> On the same run, give the model the conference's fields (user decision, 2026-09-26): one
+> sentence in the `findConferences` tool description (`find-conferences.definition.ts`, shared with
+> the eval) listing every field of a mounted entry — id, name, topic, city, country, lat, lon, date
+> (ISO), capacity, remaining, price, url, and distanceKm when the user's location is known — plus a
+> test that every key of `ConferenceRecord` appears in that sentence, so the list cannot drift from
+> the type. The prompt examples stay; the list fills the gaps between them. Today the model knows
+> the fields only from prompt examples and component schema descriptions.
+> The self-contained wording of prompt 4 must pin its conference through the filters that exist —
+> topic, date window, distance from the user ("the next Angular conference near me") — never a
+> name or a city: `findConferences` has no name filter and the selection is client-owned, so a
+> named conference reaches the card only when it happens to be the nearest or the next one
+> (Task 1's live check: "the conference in Munich for Angular" worked from Munich by distance and
+> from Dresden by date, ng-atlas Munich being the next Angular conference; ng-foundry Vienna would
+> not; register entry).
+
 Depends on Task 3 (the recording format and the `ReplayAgent`). Assumes Task 1's reserve handler for
 the last check.
 
@@ -399,6 +420,16 @@ The remotes' standalone pages must be reachable under `charts/` and `maps/` of t
 - Spec §12 acceptance 6: the hosted demo runs statically in a clearly labelled replay mode without an API key. SRI is named in the README later, never built (publication plan).
 
 ## Task 6: Docs — reserve, replay, map zone, spec on both sides
+
+> **Amendment (2026-09-26, from Task 1):** be honest about what can be asked. The model's reach
+> is the tools' reach: topic, date window, distance from the user's location, grouping by month or
+> topic, the map, details with selection, reserving. Say so in the docs and list a handful of
+> requests the architecture answers well — "all Angular conferences within 100 km of Dresden"
+> (with Dresden as the location), ".NET conferences in the next 60 days", "how many per month, as
+> a chart", "the next one near me with the tickets left", "reserve a ticket for the next Angular
+> conference near me" — and name what it cannot: a conference by name or a city other than the
+> user's, the user's own reservations (both register entries from Task 1's live check). If the
+> Details panel's Agent section (Task 3) has room, one line of this belongs there too.
 
 ### Instructions
 

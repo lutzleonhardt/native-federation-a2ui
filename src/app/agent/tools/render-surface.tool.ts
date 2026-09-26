@@ -5,8 +5,10 @@ import {
   createdSurface,
   findForbiddenModelWrites,
   findFunctionCalls,
+  findSelectionPathViolations,
   findStructuralViolations,
-  segmentsOf,
+  LIST_PATH,
+  SELECTION_PATH,
 } from '../../a2ui/surface-host-rules';
 import type { FrontendToolSpec, ToolResult } from '../create-frontend-tool';
 import { RENDER_FAILURE_HANDLER } from '../render-failure-handler.token';
@@ -39,13 +41,7 @@ export const renderSurfaceTool: FrontendToolSpec<RenderSurfaceArgs> = {
 
     try {
       renderer.processMessages(messages);
-      renderer.processMessages(
-        createClientDataMessages(
-          surface.surfaceId,
-          store,
-          writesFirstSegment(messages, 'selectedConf'),
-        ),
-      );
+      renderer.processMessages(createClientDataMessages(surface.surfaceId, store));
     } catch (error) {
       // Messages apply one by one, so a failure can leave the surface of an
       // already-applied createSurface (or a half-mounted data model) behind —
@@ -80,7 +76,8 @@ type RenderRequest =
 /**
  * Everything that must hold before a single message is applied: envelope schema,
  * the cross-message rules, a `createSurface` with a fresh id, no writes to
- * client-owned paths, no unknown component or function name. The first violation wins.
+ * client-owned paths, the selection at its fixed path, no unknown component or
+ * function name. The first violation wins.
  */
 function validateRenderRequest(
   args: unknown,
@@ -130,6 +127,11 @@ function validateRenderRequest(
     };
   }
 
+  const selectionViolations = findSelectionPathViolations(messages);
+  if (selectionViolations.length > 0) {
+    return { ok: false, code: 'invalid_messages', result: selectionViolations };
+  }
+
   // An unknown catalog id stays with the processor, which throws for it.
   const catalog = catalogs.find((candidate) => candidate.id === surface.catalogId);
   if (catalog !== undefined) {
@@ -177,32 +179,24 @@ function findUnknownComponents(
   return [...unknown];
 }
 
-function writesFirstSegment(messages: readonly A2uiMessage[], segment: string): boolean {
-  return messages.some(
-    (message) =>
-      'updateDataModel' in message && segmentsOf(message.updateDataModel.path)[0] === segment,
-  );
-}
-
-function createClientDataMessages(
-  surfaceId: string,
-  store: SurfaceDataStore,
-  modelWroteSelectedConf: boolean,
-): A2uiMessage[] {
+function createClientDataMessages(surfaceId: string, store: SurfaceDataStore): A2uiMessage[] {
   const set = (path: string, value: unknown): A2uiMessage => ({
     version: 'v0.9',
     updateDataModel: { surfaceId, path, value },
   });
 
-  const confs = store.confs();
-  const messages = [set('/filteredConfs', [...confs])];
+  // The renderer patches a mounted object in place (the reserve handler writes `remaining`), so
+  // copies cross the boundary and the store's objects stay untouched.
+  const confs = store.confs().map((conf) => ({ ...conf }));
+  const messages = [set(LIST_PATH, confs)];
   const me = store.me();
   if (me !== undefined) messages.push(set('/me', me));
   const byMonth = store.byMonth();
   if (byMonth !== undefined) messages.push(set('/byMonth', [...byMonth]));
   const byTopic = store.byTopic();
   if (byTopic !== undefined) messages.push(set('/byTopic', [...byTopic]));
-  if (!modelWroteSelectedConf && confs.length > 0) messages.push(set('/selectedConf', confs[0]));
+  // Pre-set so a detail view is never empty; the model binds the selection, never writes it.
+  if (confs.length > 0) messages.push(set(SELECTION_PATH, { ...confs[0] }));
   return messages;
 }
 

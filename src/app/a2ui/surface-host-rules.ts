@@ -15,10 +15,15 @@
 /** First path segments the client mounts after the model's messages; the model only binds them. */
 export const CLIENT_OWNED_SEGMENTS: ReadonlySet<string> = new Set([
   'filteredConfs',
+  'selectedConf',
   'me',
   'byMonth',
   'byTopic',
 ]);
+
+/** Where the client mounts the search result and the selection; components bind these names. */
+export const LIST_PATH = '/filteredConfs';
+export const SELECTION_PATH = '/selectedConf';
 
 /** Shaped like the zod issues it is reported next to. */
 export interface SurfaceViolation {
@@ -75,6 +80,53 @@ export function findForbiddenModelWrites(messages: readonly unknown[]): string[]
     }
   }
   return paths;
+}
+
+/**
+ * The selection has one home: a `selected` binding must point at {@link SELECTION_PATH} and a
+ * `reserve` action's `id` context at its `id`, so the shell knows where a reservation lands.
+ */
+export function findSelectionPathViolations(messages: readonly unknown[]): SurfaceViolation[] {
+  const violations: SurfaceViolation[] = [];
+  messages.forEach((message, index) => {
+    const components = record(record(message)?.['updateComponents'])?.['components'];
+    if (!Array.isArray(components)) return;
+    for (const component of components) {
+      const part = record(component);
+      if (part === undefined) continue;
+      const selected = pathOf(part['selected']);
+      if (selected !== undefined && !addresses(selected, SELECTION_PATH)) {
+        violations.push({
+          path: ['messages', index],
+          message: `Component '${String(part['id'])}': bind selected to ${SELECTION_PATH}, not '${selected}'.`,
+        });
+      }
+      const event = record(record(part['action'])?.['event']);
+      if (event?.['name'] !== 'reserve') continue;
+      const id = pathOf(record(event['context'])?.['id']);
+      if (id === undefined || !addresses(id, `${SELECTION_PATH}/id`)) {
+        violations.push({
+          path: ['messages', index],
+          message: `Component '${String(part['id'])}': the reserve context id must bind ${SELECTION_PATH}/id.`,
+        });
+      }
+    }
+  });
+  return violations;
+}
+
+/**
+ * Absolute only: inside a `List` template the renderer resolves a relative `selectedConf/id`
+ * against the item's context (`/filteredConfs/0/selectedConf/id`), where nothing lives.
+ * A trailing slash is tolerated, as the data model tolerates it.
+ */
+function addresses(path: string, expected: string): boolean {
+  return path.startsWith('/') && segmentsOf(path).join('/') === segmentsOf(expected).join('/');
+}
+
+function pathOf(value: unknown): string | undefined {
+  const path = record(value)?.['path'];
+  return typeof path === 'string' ? path : undefined;
 }
 
 /**

@@ -5,6 +5,7 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideAgentCapabilities } from './a2ui/agent-capabilities.token';
+import { provideReserveHandler } from './a2ui/reserve-handler';
 import { provideAssistantAgent } from './agent/assistant-agent.token';
 import { routes } from './app.routes';
 import { loadedCapabilities, type CapabilityStatus } from './federation/capability-status';
@@ -24,6 +25,7 @@ export function createAppConfig(remotes: readonly CapabilityStatus[]): Applicati
       provideAgentCapabilities(loadedCapabilities(remotes)),
       provideCapabilityStatus(remotes),
       provideAssistantAgent(),
+      provideReserveHandler(),
     ],
   };
 }

@@ -6,6 +6,7 @@ import { provideAgentCapabilities } from '../../a2ui/agent-capabilities.token';
 import { ASSISTANT_CATALOG_ID } from '../../a2ui/assistant-catalog';
 import { capability as chartsCapability } from '../../../../projects/mfe-charts/src/capability';
 import { capability as mapsCapability } from '../../../../projects/mfe-maps/src/capability';
+import { ConferenceStore } from '../../domain/conference.store';
 import type { ConferenceResult, FindConferencesResult } from '../../domain/find-conferences';
 import { LocationStore } from '../../domain/location.store';
 import { z } from 'zod';
@@ -42,10 +43,10 @@ const CONFS = [
   conference('c3', 'Gamma Conf', 'Hamburg', '2026-12-01'),
 ];
 
-function createMsg(): unknown {
+function createMsg(surfaceId = SURFACE_ID): unknown {
   return {
     version: 'v0.9',
-    createSurface: { surfaceId: SURFACE_ID, catalogId: ASSISTANT_CATALOG_ID },
+    createSurface: { surfaceId, catalogId: ASSISTANT_CATALOG_ID },
   };
 }
 
@@ -124,7 +125,7 @@ describe('renderSurfaceTool', () => {
 
     // 'me' and '/me/' address the same location as '/me' in the data model's
     // path parsing; '' and '/' are root writes replacing every mounted path.
-    for (const path of ['/filteredConfs', '/me', '/filteredConfs/0', 'me', '/me/', '', '/']) {
+    for (const path of ['/filteredConfs', '/me', '/selectedConf', '/filteredConfs/0', 'me', '/me/', '', '/']) {
       const outcome = await runTool([createMsg(), timelineMsg(), dataMsg(path, [])]);
       expect(outcome).toMatchObject({ ok: false, code: 'forbidden_model_writes' });
       expect(surfaceOf(SURFACE_ID)).toBeUndefined();
@@ -294,7 +295,7 @@ describe('renderSurfaceTool', () => {
     ]);
   });
 
-  it("T6-AC-05 keeps the model's own /selectedConf write instead of pre-setting the first conference", async () => {
+  it("T6-AC-05 rejects the model's own /selectedConf write: the selection is client-owned and pre-set", async () => {
     seedStore();
 
     const outcome = await runTool([
@@ -303,8 +304,131 @@ describe('renderSurfaceTool', () => {
       dataMsg('/selectedConf', { id: 'model-pick' }),
     ]);
 
-    expect(outcome).toMatchObject({ ok: true });
-    expect(surfaceOf(SURFACE_ID)?.dataModel.get('/selectedConf')).toMatchObject({ id: 'model-pick' });
+    expect(outcome).toMatchObject({ ok: false, code: 'forbidden_model_writes' });
+    expect(surfaceOf(SURFACE_ID)).toBeUndefined();
+  });
+
+  it('rejects a selected binding outside /selectedConf and names the fixed path', async () => {
+    seedStore();
+
+    const outcome = await runTool([
+      createMsg(),
+      componentsMsg([
+        { id: 'root', component: 'Map', points: { path: '/filteredConfs' }, selected: { path: '/pick' } },
+      ]),
+    ]);
+
+    expect(outcome).toMatchObject({ ok: false, code: 'invalid_messages' });
+    expect(JSON.stringify(outcome.result)).toContain('/selectedConf');
+    expect(surfaceOf(SURFACE_ID)).toBeUndefined();
+    expect(onFailure).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a reserve context outside /selectedConf/id', async () => {
+    seedStore();
+
+    const outcome = await runTool([
+      createMsg(),
+      componentsMsg([
+        { id: 'label', component: 'Text', text: 'Reserve' },
+        {
+          id: 'root',
+          component: 'Button',
+          child: 'label',
+          action: { event: { name: 'reserve', context: { id: { path: '/pick/id' } } } },
+        },
+      ]),
+    ]);
+
+    expect(outcome).toMatchObject({ ok: false, code: 'invalid_messages' });
+    expect(JSON.stringify(outcome.result)).toContain('/selectedConf/id');
+    expect(surfaceOf(SURFACE_ID)).toBeUndefined();
+  });
+
+  it('rejects a relative selection path: inside a List template it would resolve against the item', async () => {
+    seedStore();
+
+    // The renderer resolves `selectedConf/id` in a template item to `/filteredConfs/0/selectedConf/id`.
+    const outcome = await runTool([
+      createMsg(),
+      componentsMsg([
+        { id: 'root', component: 'List', children: { componentId: 'item', path: '/filteredConfs' } },
+        { id: 'label', component: 'Text', text: 'Reserve' },
+        {
+          id: 'item',
+          component: 'Button',
+          child: 'label',
+          action: { event: { name: 'reserve', context: { id: { path: 'selectedConf/id' } } } },
+        },
+      ]),
+    ]);
+    expect(outcome).toMatchObject({ ok: false, code: 'invalid_messages' });
+    expect(JSON.stringify(outcome.result)).toContain('/selectedConf/id');
+    expect(surfaceOf(SURFACE_ID)).toBeUndefined();
+
+    const relativeSelected = await runTool([
+      createMsg(),
+      componentsMsg([
+        { id: 'root', component: 'Map', points: { path: '/filteredConfs' }, selected: { path: 'selectedConf' } },
+      ]),
+    ]);
+    expect(relativeSelected).toMatchObject({ ok: false, code: 'invalid_messages' });
+    expect(surfaceOf(SURFACE_ID)).toBeUndefined();
+  });
+
+  it('accepts the selection at /selectedConf for the binding and the reserve context alike', async () => {
+    seedStore();
+
+    const outcome = await runTool([
+      createMsg(),
+      componentsMsg([
+        { id: 'root', component: 'Column', children: ['map', 'reserve'] },
+        { id: 'map', component: 'Map', points: { path: '/filteredConfs' }, selected: { path: '/selectedConf' } },
+        { id: 'label', component: 'Text', text: 'Reserve' },
+        {
+          id: 'reserve',
+          component: 'Button',
+          child: 'label',
+          action: { event: { name: 'reserve', context: { id: { path: '/selectedConf/id' } } } },
+        },
+      ]),
+    ]);
+
+    expect(outcome).toMatchObject({ ok: true, surfaceId: SURFACE_ID });
+    expect(surfaceOf(SURFACE_ID)?.dataModel.get('/selectedConf')).toMatchObject({ id: 'c1' });
+  });
+
+  it('T1-AC-03 mounts the reduced remaining into a later surface, untouched by the patch on the earlier one', async () => {
+    const reserved = conference('ng-forge-berlin', 'ng Forge', 'Berlin', '2026-10-01');
+    const before = reserved.remaining;
+    seedStore({ confs: [reserved, CONFS[1]] });
+    expect(await runTool([createMsg(), timelineMsg()])).toMatchObject({ ok: true });
+
+    // What the reserve click does to the surface that is already up.
+    TestBed.inject(ConferenceStore).reserve(reserved.id);
+    TestBed.inject(A2uiRendererService).processMessages([
+      {
+        version: 'v0.9',
+        updateDataModel: { surfaceId: SURFACE_ID, path: '/selectedConf/remaining', value: before - 1 },
+      },
+      {
+        version: 'v0.9',
+        updateDataModel: { surfaceId: SURFACE_ID, path: '/filteredConfs/0/remaining', value: before - 1 },
+      },
+    ]);
+
+    const second = 'chat-surface-2';
+    const outcome = await runTool([
+      createMsg(second),
+      componentsMsg([{ id: 'root', component: 'Timeline', items: { path: '/filteredConfs' } }], second),
+    ]);
+    expect(outcome).toMatchObject({ ok: true, surfaceId: second });
+
+    const dataModel = surfaceOf(second)?.dataModel;
+    expect(dataModel?.get('/selectedConf/remaining')).toBe(before - 1);
+    expect(dataModel?.get('/filteredConfs/0/remaining')).toBe(before - 1);
+    expect(dataModel?.get('/filteredConfs/1/remaining')).toBe(CONFS[1].remaining);
+    expect(reserved.remaining).toBe(before);
   });
 
   it('T6-AC-06 reports all forbidden model writes and invokes the failure handler exactly once', async () => {
