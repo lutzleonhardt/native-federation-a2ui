@@ -1,19 +1,22 @@
 # Plan: ConferenceFinder — M3: Reserve, map upgrade, hosting
 
 Spec: `docs/spec.md` (Entwurf v3.4, 2026-09-25) — §8 "M3 — Reserve, Karten-Upgrade, Hosting", with request 4 (§2, line 42), store and handler (§5, line 145), the client event rule (§6, line 154), the test matrix (§7, lines 166–167), the freshness risk (§10, line 236) and acceptance 3 and 6 (§12); the map kit in `docs/specs/visual-language.md` §8.3. Predecessor: `docs/work/visual-language/plan.md` (the design pass, merged to `main` 2026-09-25: the Departure look across shell chrome, chat frame, primitives, `Timeline` and `Gauge`; eval gate 5/5 on the final strings; the map left for this scope).
-Scope: the `reserve` handler (request 4's click path), MapLibre inside `mfe-maps`, and hosting as a static site in a replay mode that needs no server and no key. Out of scope: a browser-side BYOK agent, a prompt/eval extension for request 4 beyond two self-contained prompt texts and the `A4` scorer the capture needs, the facts component (register entry 46), the gauge caption duplicate (47), the `label` mount and venue coordinates (10, 41), the `T9-AC-02` tag rename (36), a Playwright smoke test of the deploy output (the user checks it by hand), the README (publication scope, after M3).
+Scope: the `reserve` handler (request 4's click path), MapLibre inside `mfe-maps`, hosting as a static site in a replay mode that needs no server and no key, and (since 2026-09-28) the slider distance filter as a catalog function inside `mfe-maps` (Task 3.5). Out of scope: a browser-side BYOK agent, a prompt/eval extension beyond the four badge texts and the scorer requirements of the 2026-09-28 amendment (Task 4), the user's own reservations (register entry from Task 1, sharpened in Task 6), the facts component (register entry 46), the gauge caption duplicate (47), the `label` mount and venue coordinates (10, 41), the `T9-AC-02` tag rename (36), a Playwright smoke test of the deploy output (the user checks it by hand), the README (publication scope, after M3).
 
 Decisions taken while planning; do not re-derive:
 
 - **A button is a recording (user, 2026-09-26).** Each example prompt is recorded as the first message of a fresh conversation, per capability set. Replay looks at two things only: the loaded capability set and the clicked prompt; the transcript's history is ignored. A recording is self-contained because a model without history has to fetch its data. Free text is answered with "not recorded". The chain-with-fallback variant was considered and dropped as not worth its complexity.
 - **All reachable capability sets are recorded.** Two remotes make four sets — none, `charts`, `maps`, `charts,maps` — and the panel lets a visitor reach every one of them. Sixteen recordings today; the set list is derived from the manifest.
 - **Your own key means the local agent server (user, 2026-09-26).** The key belongs on a server, never in the browser; `.env.example`, `agent/src/config.ts` and `npm start` already give anyone with a key the live demo. The spec's optional `BrowserAgent` is not built; the spec is corrected in Task 6. The agent mode is therefore `local | replay`, chosen at boot like the capabilities (`?agent=`), with a build-time default: `local` in development, `replay` in the deploy build.
-- **Prompts 2 and 4 become self-contained (user, 2026-09-26).** "Show them on a map" and "Reserve a ticket for me" refer to earlier answers that a recording does not have; both get wording that stands alone. The eval plays the same texts, so the gate is run once on the new strings before the capture.
+- **Prompts 2 and 4 become self-contained (user, 2026-09-26).** "Show them on a map" and "Reserve a ticket for me" refer to earlier answers that a recording does not have; both get wording that stands alone. The eval plays the same texts, so the gate is run once on the new strings before the capture. *Superseded 2026-09-28: all four badges are rewritten, see the four-forms decision below.*
 - **The replay mode is labelled where it matters, not everywhere.** One line above the chat in replay mode, an "Agent" section in the existing Details panel in every mode (what replay is, the live alternative, the Native Federation DevTools link), and CopilotKit's "AI can make mistakes" line hidden while no model runs.
 - **MapLibre draws on OpenFreeMap vector tiles, no key, no account.** An existing muted style (`positron`) is recoloured with the kit's values; nothing is redrawn. The popup shows the label only: a neutral primitive cannot know ticket counts, the detail view beside the map shows them.
 - **Register entries taken in:** 8 (map label collision → MapLibre), 21 (replay — superseded by set × button, ticked with that note), 25 (deploy manifest with relative URLs), 30 (extract the eval's drive loop). Left open: 24 (no automated boot check; the manual check is noted), 46, 47, 10, 41, 36, 33.
+- **Four badges, four forms (user, 2026-09-28; fix-lane log `docs-demo-variation-decisions`).** The four example prompts converged on one answer, Timeline, Map and Gauge in nearly every surface, for three reasons: they queried one data slice (Angular, upcoming); the prompt's wiring and detail rules reward a selection component plus a detail Card for every question; and the scorer forbids nothing extra, so the capture would have accepted the convergent answers. Decided: the badges are a timeline (when), a map with a distance slider (where), a three-Card comparison, and the explore-and-reserve detail view. Reserving is the Button click in badge 4, not a badge of its own; spec §2 already defines request 4 as the click. The form rules live in the system prompt, and the capture requirements carry a negative list per badge, so the hosted demo's variation is fixed at capture time while the badge texts stay natural questions. Supersedes "Prompts 2 and 4 become self-contained".
+- **The distance filter is a catalog function in `mfe-maps`, not a third remote (user, 2026-09-28).** Spec §8b.1 proposed `mfe-filter` for `withinKm`; a third selectable remote would double the recording matrix to eight sets and grow manifest, panel and deploy script. The function sits beside `distance`; the Slider is the basic catalog's. The renderer already re-evaluates a function-call prop when an argument path changes (`DataContext.resolveSignal`), so a Slider drives the Map without a model call. The one contract change: `binding()` must accept the call shape, because the processor validates every custom prop against its schema. Deliberately less than §8b.1 asked for.
+- **`reserved` per conference is deferred (user, 2026-09-28).** A `reserved` field in the existing `applyReservations` join plus a second write per fixed home would make "your tickets" bindable. It adds legibility, not a new mechanism (the gauge already carries the cross-surface state), lies beside the federation thesis, and costs prompt budget on the detail Card, the requirement with the least slack. The Text-renders-0-as-empty defect it would have exposed is fixed anyway in Task 3.5. The register entry on the user's reservations is sharpened in Task 6 with both variants (field in the join; `onlyReserved` filter plus a totals mount). Weighed in the same review and dropped: a `BarChart` on `/byTopic`, a `sortBy` tool argument, a `myReservations` tool, a facts component, a Timeline-plus-Map badge, a third remote; each a second instance of a shown point, off the thesis, or a doubled recording matrix.
 
-Conventions of the earlier scopes stay in force: zoneless, OnPush, signals-first, `inject()`, standalone, `templateUrl`/`styleUrl` with their own files; a remote reads `--cf-*` through private aliases with the token value as fallback and imports no host CSS; nothing reachable from a `vocabulary.ts` imports Angular; the static prompt names no custom component; dev servers, model calls and Chromium run outside the sandbox; task logs are English. Order: Task 1 and Task 3 before Task 4 (the chat spec clicks reserve and replays the format), Task 3 before Task 5 (the deploy build configuration), Task 2 independent of the recordings (the vocabulary does not change), Task 6 last.
+Conventions of the earlier scopes stay in force: zoneless, OnPush, signals-first, `inject()`, standalone, `templateUrl`/`styleUrl` with their own files; a remote reads `--cf-*` through private aliases with the token value as fallback and imports no host CSS; nothing reachable from a `vocabulary.ts` imports Angular; the static prompt names no custom component; dev servers, model calls and Chromium run outside the sandbox; task logs are English. Order: Task 1 and Task 3 before Task 4 (the chat spec clicks reserve and replays the format), Task 3 before Task 5 (the deploy build configuration), Task 2 independent of the recordings (the vocabulary does not change), Task 3.5 before Task 4 (the vocabulary, the announced schemas and the rendering of a bound 0 change before anything is recorded) and independent of Task 3, Task 6 last.
 
 > The executing agent may adjust scope and ordering based on more
 > up-to-date context discovered during implementation, as long as
@@ -274,6 +277,89 @@ local mode, the DevTools link is present in both.
 - The NF `build` target delegates to the `esbuild` target per configuration name (`shell:esbuild:production`), so a `deploy` configuration needs an entry on both targets.
 - Capability contract versioning (memory): the vocabulary is deliberately unversioned; the recordings file is one of the two places where a version pin matters.
 
+## Task 3.5: Slider distance filter in mfe-maps, call-shaped bindings, the zero fix
+
+> Added 2026-09-28 by the demo-variation amendment (fix-lane log `docs-demo-variation-decisions`).
+> Independent of Task 3; before Task 4, because the vocabulary, the announced schemas and the
+> rendering of a bound 0 change, and nothing may be recorded before that.
+
+### Instructions
+
+**`withinKm`** (`projects/mfe-maps/src/maps/within-km.fn.ts`, announced in `vocabulary.ts` beside
+`distance`): `withinKm({ points, center, maxKm })` returns the points whose haversine distance to
+`center` is at most `maxKm` kilometres, in input order. `points` is an array of objects with
+`lat`/`lon` (extra fields pass through, as with `Map.points`), `center` a `lat`/`lon` object, `maxKm`
+a non-negative number; `returnType: 'array'`. The description tells the model what it is for: bind it
+to a `Map`'s `points` with `points` bound to `/filteredConfs`, `center` to `/me` and `maxKm` to the
+path a `Slider` writes, e.g. `/filter/maxKm`, so the map follows the slider without a new request.
+Nothing reachable from `vocabulary.ts` imports Angular (the eval reads it under Node).
+
+**Call-shaped bindings.** `shared/capabilities/binding.ts` accepts a third alternative beside the
+literal and the path: `{ call: string, args: Record<string, unknown>, returnType?: … }`, the shape of
+web_core's `FunctionCallSchema` (`src/v0_9/schema/common-types.js`), defined locally on the root
+`zod/v3` line and never imported from web_core's nested zod copy (the register's `k._parse is not a
+function`). The processor validates every custom prop with `componentApi.schema.safeParse` before it
+mutates state, so without this a `Map` with a call on `points` is refused before the renderer sees it.
+The announced JSON schema of every custom prop then shows three alternatives; the catalog-context
+spec follows.
+
+**Slider look.** The basic `Slider` exposes `--a2ui-slider-thumb-color` and
+`--a2ui-slider-track-color`; map them in `src/theme/a2ui.css` to the kit's rail and line colours,
+where the other `--a2ui-*` hooks are mapped. Decide the exact values on the first render.
+
+**The zero fix.** `@a2ui/angular` 0.10.5 computes a basic `Text` as `props.text.value() || ''`
+(`fesm2022/a2ui-angular-src-v0_9.mjs:823`), so a bound 0 renders empty: "0 km" for a visitor whose
+city hosts a conference, `daysUntil` on the event day. Patch the one line to `?? ''` with
+`patch-package` (`patches/`, a devDependency, `postinstall` runs it first); the patch header names the
+upstream fix. This closes the "should the demo hide it meanwhile" question of the register's
+Distance-0 entry.
+
+**Visual check.** One more static surface in the playground (`src/app/playground/playground.ts`): a
+`Slider` on `/filter/maxKm` (0 to 800, initial 300), a `Text` showing the value, and a `Map` whose
+`points` is the `withinKm` call over `/filteredConfs`, `/me` and that path, with the Angular
+conferences mounted and Berlin as `/me`. Their distances from Berlin span 0 to about 670 km, so the
+markers come one at a time. Check whether the map re-fitting its bounds on every step (the
+`showMarkers` effect) is acceptable; if it jumps, fit only when the new set leaves the current
+bounds, and record the choice.
+
+**Tests.** `within-km.fn.spec.ts` (inside, on the edge, outside, empty, pass-through of extra
+fields); a `binding` spec (a call-shaped value passes the `Map` schema, an unknown key in `points`
+still fails); the catalog-context spec updated for the third alternative; a renderer spec through the
+real renderer (the `renderer-integration.spec.ts` pattern) with Slider, Map and `withinKm`: writing
+the slider path through the data model changes the marker count, `fetch` is never called; a Text
+bound to 0 renders "0". `npm run test:eval` still imports `vocabulary.ts` under Node.
+
+### Acceptance
+
+- **T3.5-AC-01** — Given a surface with a `Slider` whose `value` binds a path and a `Map` whose `points` is a `withinKm` call over `/filteredConfs`, `/me` and that path, moving the slider adds or removes markers, and no request leaves the browser.
+- **T3.5-AC-02** — A call-shaped value is accepted for every custom prop at the `renderSurface` boundary and by the processor; the serialized catalog context shows the call alternative on every custom prop; a malformed prop is still rejected.
+- **T3.5-AC-03** — A basic `Text` bound to the number 0 renders "0".
+- **T3.5-AC-04** — The maps vocabulary announces `withinKm` with its description under Node; `npm run lint:boundaries`, the maps standalone page and every existing spec stay green.
+- Contributes to XC-03, XC-04.
+
+### Quick functional check
+
+`npm run start`, open the playground: the new surface shows the slider at 300 km with Berlin, Leipzig and Hamburg; pull it to 800 and all nine Angular markers are there; the network tab shows tiles only. In the chat with a key, ask badge 2's question once and watch the markers follow the slider.
+
+### Key Locations
+
+- `projects/mfe-maps/src/maps/distance.fn.ts` + `distance.fn.spec.ts` (the function pattern), `geo.ts` (`haversineKm`), `vocabulary.ts` (`functions`), `map.schema.ts` (`points` uses `binding`).
+- `shared/capabilities/binding.ts`, `shared/capabilities/catalog-function.ts` (`A2uiReturnType`), `src/app/a2ui/catalog-context.ts` + spec (`toJsonSchema`).
+- `src/theme/a2ui.css` (the `--a2ui-*` mapping), `src/app/playground/playground.ts` (static surfaces).
+- `package.json` (`postinstall`, devDependencies), `node_modules/@a2ui/angular/fesm2022/a2ui-angular-src-v0_9.mjs:823`.
+- `src/app/a2ui/renderer-integration.spec.ts` (browser-mode pattern), `projects/mfe-maps/src/maps/map.component.ts` (the `showMarkers` effect, `fit`).
+- `docs/improvements.md` (the Distance-0 entry's open question).
+
+### Key Discoveries
+
+- `Slider` is in the A2UI basic catalog (`SliderApi`: `label`, literal `min`/`max`, `value` as a dynamic number) and implemented in the Angular renderer; `value.onUpdate` writes the bound path. No new input primitive is needed.
+- `DataContext.resolveSignal` turns a `{ call }` value into a signal that re-evaluates in an `effect` whenever an argument signal changes (`rendering/data-context.js:146-201`); the Angular binder uses it for every prop, custom components included. A function returning an array is an ordinary value there.
+- `processing/message-processor.js:247` runs `componentApi.schema.safeParse(properties)` for every known component before mutating; a `{ call }` on a `binding()` prop fails today with a union error, which the render tool turns into a correction run.
+- `FunctionCallSchema` (`schema/common-types.js:22`): `call`, `args` as a record, `returnType` enum defaulting to `boolean`. Define the same shape locally; a union across zod copies breaks parsing.
+- `TextComponent` (`a2ui-angular-src-v0_9.mjs:823`) drops falsy values; the register recorded the cause on 2026-09-24 and left the remedy open.
+- The eval's `announcedNames` reads `vocabulary.functions`, so `withinKm` reaches the scorer without a change there.
+- After a lockfile change, `ng test` rewrites the vite deps cache the running dev server serves (`ngDevMode is not defined`): restart that server, never `pkill -f` an `ng serve` pattern.
+
 ## Task 4: Self-contained prompts, capture script, the sixteen recordings
 
 > **Amendment (2026-09-26, from Task 1):** the selection path is fixed to `/selectedConf` and the
@@ -289,31 +375,70 @@ local mode, the DevTools link is present in both.
 > test that every key of `ConferenceRecord` appears in that sentence, so the list cannot drift from
 > the type. The prompt examples stay; the list fills the gaps between them. Today the model knows
 > the fields only from prompt examples and component schema descriptions.
-> The self-contained wording of prompt 4 must pin its conference through the filters that exist —
+> *(Superseded 2026-09-28: there is no reserve badge, see the next amendment.)* The self-contained wording of prompt 4 must pin its conference through the filters that exist —
 > topic, date window, distance from the user ("the next Angular conference near me") — never a
 > name or a city: `findConferences` has no name filter and the selection is client-owned, so a
 > named conference reaches the card only when it happens to be the nearest or the next one
 > (Task 1's live check: "the conference in Munich for Angular" worked from Munich by distance and
 > from Dresden by date, ng-atlas Munich being the next Angular conference; ng-foundry Vienna would
 > not; register entry).
+>
+> **Amendment (2026-09-28, from the demo-variation review, fix-lane log `docs-demo-variation-decisions`):**
+> the four badges are rewritten so that each renders a different form; reserving is the Button in
+> badge 4's Card, no badge of its own, so `A4` is not added. The prompt gets one paragraph of form
+> rules and one control rule, the scorer a negative list per requirement, and the eval plays every
+> badge as the first message of a fresh session, as the capture does; the demo never shows a
+> history-dependent answer. Depends on Task 3.5 (`withinKm`, call-shaped bindings, the zero fix).
+> The four texts, the requirements, the matrix and the amended acceptance criteria are written into
+> the sections below. `docs/demo-variation-assessment.md`, the review's working paper, was deleted
+> on 2026-09-28 in favour of this amendment and the fix-lane log.
 
 Depends on Task 3 (the recording format and the `ReplayAgent`). Assumes Task 1's reserve handler for
 the last check.
 
 ### Instructions
 
-**Prompts.** In `src/app/chat/example-prompts.ts` give prompts 2 and 4 wording that stands alone,
-e.g. "Show the upcoming Angular conferences on a map" and "Reserve a ticket for the next conference
-near me"; prompts 1 and 3 stay (3 carries the "Where and when" cue the detail requirement depends on).
+**Badges** *(amended 2026-09-28)*. `src/app/chat/example-prompts.ts` carries these four texts, sent
+verbatim, natural questions without steering clauses (the form rules live in the system prompt):
+
+1. "Which Angular conferences are coming up in the next six months?" — a Timeline alone.
+2. "Where are the Angular conferences around me? Let me narrow them down by distance with a slider." — a Map with `/me`, a Slider and a Text with the kilometre value; the markers follow the slider.
+3. "Compare the next three Angular conferences: date, city, ticket price and tickets left." — a Row of three Cards bound by index (`/filteredConfs/0` … `/2`, `limit: 3`), each with name, date, city, the price through `formatCurrency` and a Gauge; no reserve Button, no Map, no Timeline.
+4. "Where and when is the next Angular conference near me? When I click one, I want details and a way to reserve a seat." — the proven request-3 form: a Map with the selection and a Card with name, `daysUntil`, `distance`, Gauge and the reserve Button.
+
 Adjust the literal `PROMPTS` in `chat.page.spec.ts`.
 
-**Scorer.** `eval/score.ts` gets two requirements: `A4` — one surface with a `Button` dispatching
-`reserve` whose `id` context is bound to `<selection>/id`, the selection path derived from that
-Button, a `Text` bound to `<selection>/name`, and, when a `Gauge` is announced, a `Gauge` bound to
-`<selection>/remaining`; and `host-rules` — the host rules alone (structure, no client-owned writes,
-no date literal, names within the announced vocabulary) plus at least one `renderSurface` or
-`messageWidget` call. Add request 4 as `A4` to the default eval scenario. Run the gate once on the new
-strings (agent up, `npm run eval`) and record the figures; it must hold before anything is captured.
+**Prompt.** One paragraph in `WIRING_RULES`, "Answer the form asked": an overview question gets only
+its overview component, a timeline for when, a map for where; a comparison gets one Card per
+conference bound by index and no reserve Button, because the Button belongs to the selected
+conference at `/selectedConf` alone; the full detail Card with Gauge, days, distance and the Button
+only when the user asks for details or an action on one conference; never add a Map or Timeline the
+user did not ask for. One control rule beside it: a control the user asks for must drive something.
+Bind a `Slider`'s value to a path and feed that path into a catalog function that computes what a
+component shows; if no listed function consumes it, name the gap and draw no control. The
+"One conference's details" section is scoped to the selected conference. Task 1's amendment above
+(the fixed selection path, the typed field list) rides on the same run.
+
+**Scorer** *(amended 2026-09-28)*. `eval/score.ts` judges the form, wanted and unwanted, per badge.
+`A1`: a Timeline with `items` bound to `/filteredConfs`; no Map, Gauge or Slider. `A2`: a Map whose
+`points` is a `withinKm` call with `points` bound to `/filteredConfs`, `center` to `/me` and `maxKm`
+to a path P, a Slider whose `value` binds P, the Map's `center` bound to `/me`; no Gauge, Timeline
+or Card. `A2-without-maps`: the `messageWidget` text names the missing map or distance filter; no
+Slider and no Map in any surface (a Timeline may stand in). `A-compare`: `findConferences` called
+with `limit: 3`; exactly three Cards, each with a Text bound to `/filteredConfs/<i>/name`, a Gauge
+with `value` bound to `/filteredConfs/<i>/remaining` when a Gauge is announced, and a
+`formatCurrency` call over `/filteredConfs/<i>/price`; no Map, Timeline or reserve Button. `A3`: as
+today (Map with the selection, Text on the name, Gauge on `remaining`, the reserve Button, `daysUntil`
+and `distance`), plus no Timeline and no Slider. `host-rules`: the host rules alone (structure, no
+client-owned writes, no date literal, names within the announced vocabulary) plus at least one
+`renderSurface` or `messageWidget` call. `A4` is not added. `boundTo`/`pathOf` learn to read a path
+inside a call's `args`. `eval/scenarios.ts` lists the four badges with the requirements of the
+matrix; the harness plays each badge as the first message of a fresh session (shared `drive.ts`, see
+Capture). Run the gate once on the new strings (agent up, `npm run eval`) and record the figures; it
+must hold before anything is captured. Should `A2` miss 4 of 5 twice, badge 2 falls back to the
+plain map question ("Where are the conferences within 300 km of me?"; `A2` then as before: Map on
+`/filteredConfs`, `center` on `/me`, nothing else) and the decision is recorded; `withinKm` stays
+announced.
 
 **Capture.** Extract the drive loop of `run-eval.ts` (`driveRequest`, `execute`, `recordSurface`,
 `recordRejectedSurface`, `pendingToolCalls`, `toAgUiTool`, the session) into `eval/drive.ts` shared by
@@ -326,24 +451,26 @@ to three times, then abort without writing. Write `public/recordings.json` in Ta
 file header comment says when to re-run: after any change to a prompt text, a component or function
 description, the agent prompt or the manifest's remotes.
 
-| Set | Prompt 1 | Prompt 2 | Prompt 3 | Prompt 4 |
+| Set | Badge 1 | Badge 2 | Badge 3 | Badge 4 |
 | --- | --- | --- | --- | --- |
-| `charts,maps` | A1 | A2 | A3 | A4 |
-| `charts` | A1 | A2-without-maps | host-rules | A4 |
+| `charts,maps` | A1 | A2 | A-compare | A3 |
+| `charts` | A1 | A2-without-maps | A-compare | host-rules |
 | `maps` | host-rules | A2 | host-rules | host-rules |
 | none | host-rules | A2-without-maps | host-rules | host-rules |
 
 **Proof.** A chat-page spec over the captured file (import the JSON), replay mode: with
-`charts,maps` prompt 1 shows a Timeline, prompt 2 a Map with markers, prompt 3 Map plus Gauge plus
-the name, prompt 4 a reserve Button whose click lowers the Gauge by one; with `charts`, prompt 2
-names the missing map; `fetch` is never called. This is the spec's "agent loop without a model" row.
+`charts,maps` badge 1 shows a Timeline and nothing else of the custom vocabulary, badge 2 a Map with
+a Slider whose move changes the marker count, badge 3 three Cards with a Gauge each, badge 4 Map
+plus Gauge plus the name and a reserve Button whose click lowers the Gauge by one; with `charts`,
+badge 2 names the missing map and shows no Slider; `fetch` is never called. This is the spec's
+"agent loop without a model" row.
 
 ### Acceptance
 
-- **T4-AC-01** — Prompts 2 and 4 read as complete questions on their own, and the eval gate holds on the new strings: A1–A4 with both capabilities and A1, A2-without-maps with charts only, each at least 4 of 5.
+- **T4-AC-01** — *(amended 2026-09-28)* The four badge texts read as complete questions on their own, and the eval gate holds on them: A1, A2, A-compare, A3 with both capabilities and A1, A2-without-maps, A-compare with charts only, each at least 4 of 5, every badge played as the first message of a fresh session.
 - **T4-AC-02** — `npm run capture` writes one recording per reachable set × example prompt (sixteen today), each with at least one tool call, no rejected call and no date literal; a set × prompt that fails its check three times aborts the run without writing.
 - **T4-AC-03** — Every recording is self-contained: played as the first message of a fresh conversation it renders, because it fetches its own data.
-- **T4-AC-04** — With the captured file, replay mode plays requests 1–4 with both remotes — timeline, map, detail view with map and gauge, reserve Button whose click lowers the gauge — and names the missing map with charts only; no network request in any of these.
+- **T4-AC-04** — *(amended 2026-09-28)* With the captured file, replay mode plays badges 1–4 with both remotes — a timeline alone, a map whose markers follow the slider, three comparison cards, the detail view with map and gauge whose reserve Button's click lowers the gauge — and names the missing map, without a slider, with charts only; no network request in any of these.
 - **T4-AC-05** — Eval and capture drive the agent through one shared module; `npm run test:eval` and `npm run eval` keep working.
 - Contributes to XC-01, XC-04, XC-05.
 
@@ -363,7 +490,7 @@ names the missing map; `fetch` is never called. This is the spec's "agent loop w
 ### Key Discoveries
 
 - The eval harness runs under Node and imports `vocabulary.ts` files only; `tsx` fails inside the sandbox (`listen EPERM`) — run eval and capture outside it. The agent reads the repository-root `.env`; `tsx watch` has stopped reloading `prompt.ts` after a checkout before — check the agent log before a paid run. A run of `got 0` on every request means the key was refused, not a prompt regression.
-- `score()` judges exactly one surface for A1–A3 and reads the announced names for `A2-without-maps`; `hasReserveButton(parts, selection)` exists; `detailFailures` derives the selection from `Map.selected` — `A4` derives it from the Button's context instead.
+- `score()` judges exactly one surface for A1–A3 and reads the announced names for `A2-without-maps`; `hasReserveButton(parts, selection)` exists; `detailFailures` derives the selection from `Map.selected` — `A4` derives it from the Button context instead (dropped 2026-09-28 with the reserve badge; `A-compare` and the negative lists replace it).
 - `ME` fixed to Berlin keeps runs comparable; recordings never contain `me`, the client mounts the visitor's own city.
 - Recorded surfaces carry the ids the model chose; Task 3 re-ids them per playback.
 - Spec §10: recordings stay fresh only without dates in model output; `DATE_LITERAL` in `hostRuleFailures` is the guard, `host-rules` must include it.
@@ -425,11 +552,25 @@ The remotes' standalone pages must be reachable under `charts/` and `maps/` of t
 > is the tools' reach: topic, date window, distance from the user's location, grouping by month or
 > topic, the map, details with selection, reserving. Say so in the docs and list a handful of
 > requests the architecture answers well — "all Angular conferences within 100 km of Dresden"
-> (with Dresden as the location), ".NET conferences in the next 60 days", "how many per month, as
-> a chart", "the next one near me with the tickets left", "reserve a ticket for the next Angular
+> (with Dresden as the location), ".NET conferences in the next 60 days", "the next one near me with the tickets left", "reserve a ticket for the next Angular
 > conference near me" — and name what it cannot: a conference by name or a city other than the
 > user's, the user's own reservations (both register entries from Task 1's live check). If the
 > Details panel's Agent section (Task 3) has room, one line of this belongs there too.
+>
+> **Amendment (2026-09-28, from the demo-variation review):** the docs describe the four badges of
+> Task 4's amendment and the slider filter of Task 3.5. Spec (both sides): §2 table rewritten to the
+> four badges with what each proves (output vocabulary; function vocabulary driving a basic control
+> without a token; composition from basic catalog and charts; the click cascade and the shell-owned
+> action, request 4 staying the Button click); §3.1 the badge line; §4 a `withinKm` row under maps;
+> §7 the "Fehlendes Vokabular" row gets the slider case (without maps: name the gap, draw no
+> control); §8b.1 marked as realised as a function inside maps, deliberately without `mfe-filter`;
+> §12 criterion 1 names the four badges; §9 rows for the four-forms and the function-in-maps
+> decisions. Tour and architecture walk through the new set. `docs/improvements.md`: the entry on
+> the user's reservations is replaced by the sharpened version (a `reserved` field in the
+> `applyReservations` join plus a second write per fixed home, or an `onlyReserved` filter with a
+> totals mount; deferred, see the plan's decisions); the Distance-0 entry notes the Task 3.5 patch.
+> The example "how many per month, as a chart" was struck from the list above: no chart for it
+> exists.
 
 ### Instructions
 
@@ -482,8 +623,8 @@ A grep for `Task [0-9]`, `T[0-9]-AC` and `plan.md` over `docs/architecture.md` a
 
 ## Cross-Cutting Acceptance
 
-- **XC-01** — Request 4 end to end without a model: in replay mode with both remotes, the fourth prompt renders a reserve Button and its click lowers the gauge; a later surface shows the reduced count. **Touches:** T1, T3, T4.
+- **XC-01** — *(amended 2026-09-28)* Request 4 end to end without a model: in replay mode with both remotes, badge 4's detail Card carries a reserve Button and its click lowers the gauge; a later surface shows the reduced count. **Touches:** T1, T3, T4.
 - **XC-02** — The `Map` vocabulary and the agent prompt are byte-identical before and after the MapLibre upgrade; recordings made before it still play. **Touches:** T2, T4.
-- **XC-03** — A remote imports no host CSS and the shell imports nothing from a remote; `npm run lint:boundaries` stays green with `maplibre-gl` and the replay code in place. **Touches:** T2, T3.
+- **XC-03** — A remote imports no host CSS and the shell imports nothing from a remote; `npm run lint:boundaries` stays green with `maplibre-gl`, `withinKm` and the replay code in place. **Touches:** T2, T3, T3.5.
 - **XC-04** — The deploy build answers every example prompt in every reachable capability set without a request beyond the site's own files and the map tiles. **Touches:** T3, T4, T5.
 - **XC-05** — Nothing in `agent/` changes: the same server records the answers and serves the local mode with a key. **Touches:** T3, T4, T5.
