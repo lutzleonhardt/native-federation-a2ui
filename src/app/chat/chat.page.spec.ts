@@ -13,6 +13,7 @@ import { MAX_CORRECTIONS_PER_TURN } from '../agent/render-failure-correction';
 import { SurfaceDataStore } from '../agent/surface-data.store';
 import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
 import { capability as mapsCapability } from '../../../projects/mfe-maps/src/capability';
+import { provideOfflineMap } from '../../../projects/mfe-maps/src/testing/offline-map';
 import { LocationStore } from '../domain/location.store';
 import type { CapabilityStatus } from '../federation/capability-status';
 import { provideCapabilityStatus } from '../federation/capability-status.token';
@@ -54,6 +55,7 @@ async function renderChat(
       provideCapabilityStatus(REMOTES),
       provideAssistantAgent(),
       provideReserveHandler(),
+      provideOfflineMap(),
       { provide: ASSISTANT_AGENT, useValue: agent },
     ],
   });
@@ -74,8 +76,8 @@ function clickPrompt(fixture: ComponentFixture<ChatPage>, index: number): void {
   promptButtons(fixture)[index].click();
 }
 
-function markersOf(fixture: ComponentFixture<ChatPage>): SVGGElement[] {
-  return [...host(fixture).querySelectorAll<SVGGElement>('a2ui-v09-surface g.cf-marker')];
+function markersOf(fixture: ComponentFixture<ChatPage>): HTMLElement[] {
+  return [...host(fixture).querySelectorAll<HTMLElement>('a2ui-v09-surface app-map .cf-marker')];
 }
 
 /** The gauge readings of every surface in the transcript, in message order. */
@@ -117,12 +119,20 @@ function requestThreeSurface(surfaceId: string): unknown[] {
             center: { path: '/me' },
             selected: { path: '/selectedConf' },
           },
-          { id: 'details', component: 'Column', children: ['name', 'days', 'distance', 'gauge', 'reserve'] },
+          {
+            id: 'details',
+            component: 'Column',
+            children: ['name', 'days', 'distance', 'gauge', 'reserve'],
+          },
           { id: 'name', component: 'Text', text: { path: '/selectedConf/name' } },
           {
             id: 'days',
             component: 'Text',
-            text: { call: 'daysUntil', args: { date: { path: '/selectedConf/date' } }, returnType: 'number' },
+            text: {
+              call: 'daysUntil',
+              args: { date: { path: '/selectedConf/date' } },
+              returnType: 'number',
+            },
           },
           {
             id: 'distance',
@@ -218,7 +228,9 @@ describe('ChatPage run requests through the HttpAgent', () => {
   }
 
   function meOf(request: RunAgentInput): unknown {
-    const entry = request.context.find((candidate: Context) => candidate.description === 'User location (me)');
+    const entry = request.context.find(
+      (candidate: Context) => candidate.description === 'User location (me)',
+    );
     return entry === undefined ? undefined : JSON.parse(entry.value);
   }
 
@@ -266,7 +278,8 @@ describe('ChatPage with the scripted agent', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const agent = new MockAgent((input, run) => {
       if (run === 0) return toolCallRun(input, 'findConferences', { topic: 'angular' });
-      if (run === 1) return toolCallRun(input, 'renderSurface', { messages: requestThreeSurface('request-3') });
+      if (run === 1)
+        return toolCallRun(input, 'renderSurface', { messages: requestThreeSurface('request-3') });
       return emptyRun(input);
     });
     const fixture = await renderChat(agent);
@@ -292,9 +305,14 @@ describe('ChatPage with the scripted agent', () => {
   it('T1-AC-03 reserve in the chat: the gauge drops without a request, and the next answer starts from the reduced count', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const agent = new MockAgent((input, run) => {
-      if (run === 0 || run === 2) return toolCallRun(input, 'findConferences', { topic: 'angular' });
-      if (run === 1) return toolCallRun(input, 'renderSurface', { messages: requestThreeSurface('request-3') });
-      if (run === 3) return toolCallRun(input, 'renderSurface', { messages: requestThreeSurface('request-3-again') });
+      if (run === 0 || run === 2)
+        return toolCallRun(input, 'findConferences', { topic: 'angular' });
+      if (run === 1)
+        return toolCallRun(input, 'renderSurface', { messages: requestThreeSurface('request-3') });
+      if (run === 3)
+        return toolCallRun(input, 'renderSurface', {
+          messages: requestThreeSurface('request-3-again'),
+        });
       return emptyRun(input);
     });
     const fixture = await renderChat(agent);
@@ -310,11 +328,16 @@ describe('ChatPage with the scripted agent', () => {
     await vi.waitFor(() => expect(gaugeValues(fixture)).toEqual([String(first.remaining - 1)]));
 
     // renderSurface ended the turn, so the example buttons are usable again.
-    await vi.waitFor(() => expect(promptButtons(fixture).some((button) => button.disabled)).toBe(false));
+    await vi.waitFor(() =>
+      expect(promptButtons(fixture).some((button) => button.disabled)).toBe(false),
+    );
     clickPrompt(fixture, 2);
     await vi.waitFor(() => expect(gaugeValues(fixture)).toHaveLength(2));
 
-    expect(gaugeValues(fixture)).toEqual([String(first.remaining - 1), String(first.remaining - 1)]);
+    expect(gaugeValues(fixture)).toEqual([
+      String(first.remaining - 1),
+      String(first.remaining - 1),
+    ]);
     expect(agent.inputs).toHaveLength(4);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -323,7 +346,12 @@ describe('ChatPage with the scripted agent', () => {
     silenceRenderFailureLogs();
     const agent = new MockAgent((input, run) =>
       run === 0
-        ? toolCallRun(input, 'renderSurface', { messages: forbiddenWriteSurface('request-bad') }, 'call-bad')
+        ? toolCallRun(
+            input,
+            'renderSurface',
+            { messages: forbiddenWriteSurface('request-bad') },
+            'call-bad',
+          )
         : emptyRun(input),
     );
     const fixture = await renderChat(agent);
@@ -348,8 +376,16 @@ describe('ChatPage with the scripted agent', () => {
     const agent = new MockAgent((input, run) =>
       run === 0
         ? toolCallsRun(input, [
-            { name: 'renderSurface', args: { messages: forbiddenWriteSurface('bad-1') }, toolCallId: 'call-1' },
-            { name: 'renderSurface', args: { messages: forbiddenWriteSurface('bad-2') }, toolCallId: 'call-2' },
+            {
+              name: 'renderSurface',
+              args: { messages: forbiddenWriteSurface('bad-1') },
+              toolCallId: 'call-1',
+            },
+            {
+              name: 'renderSurface',
+              args: { messages: forbiddenWriteSurface('bad-2') },
+              toolCallId: 'call-2',
+            },
           ])
         : emptyRun(input),
     );
@@ -358,7 +394,10 @@ describe('ChatPage with the scripted agent', () => {
     clickPrompt(fixture, 1);
 
     await vi.waitFor(() => expect(agent.inputs).toHaveLength(2));
-    expect(agent.inputs[1].messages.slice(-2).map((message) => message.role)).toEqual(['tool', 'tool']);
+    expect(agent.inputs[1].messages.slice(-2).map((message) => message.role)).toEqual([
+      'tool',
+      'tool',
+    ]);
     await settle();
     expect(agent.inputs).toHaveLength(2);
   });
@@ -386,14 +425,18 @@ describe('ChatPage with the scripted agent', () => {
     expect(promptButtons(fixture).some((button) => button.disabled)).toBe(false);
 
     clickPrompt(fixture, 0);
-    await vi.waitFor(() => expect(promptButtons(fixture).every((button) => button.disabled)).toBe(true));
+    await vi.waitFor(() =>
+      expect(promptButtons(fixture).every((button) => button.disabled)).toBe(true),
+    );
     clickPrompt(fixture, 1);
     expect(agent.inputs).toHaveLength(1);
 
     for (const event of emptyRun(agent.inputs[0])) events.next(event);
     events.complete();
 
-    await vi.waitFor(() => expect(promptButtons(fixture).some((button) => button.disabled)).toBe(false));
+    await vi.waitFor(() =>
+      expect(promptButtons(fixture).some((button) => button.disabled)).toBe(false),
+    );
     expect(agent.inputs).toHaveLength(1);
   });
 
@@ -421,7 +464,9 @@ describe('ChatPage with the scripted agent', () => {
     clickPrompt(fixture, 1);
 
     await vi.waitFor(() => expect(agent.inputs).toHaveLength(2));
-    const catalog = agent.inputs[0].context.find((entry) => entry.description === 'A2UI Custom Catalog');
+    const catalog = agent.inputs[0].context.find(
+      (entry) => entry.description === 'A2UI Custom Catalog',
+    );
     const announced = JSON.parse(catalog?.value ?? '{}') as {
       components: Record<string, unknown>;
       functions: Record<string, unknown>;
@@ -515,7 +560,9 @@ describe('ChatPage with the scripted agent', () => {
     clickPrompt(fixture, 0);
 
     await vi.waitFor(() =>
-      expect(host(fixture).querySelector('copilot-chat app-message-widget strong')?.textContent).toBe('next'),
+      expect(
+        host(fixture).querySelector('copilot-chat app-message-widget strong')?.textContent,
+      ).toBe('next'),
     );
     // messageWidget ends the turn: no follow-up run.
     expect(agent.inputs).toHaveLength(1);

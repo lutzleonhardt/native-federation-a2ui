@@ -1,7 +1,38 @@
-import { ChangeDetectionStrategy, Component, Injector, computed, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DOCUMENT,
+  DestroyRef,
+  ElementRef,
+  Injector,
+  ViewEncapsulation,
+  afterNextRender,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import type { BoundProperty } from '@a2ui/angular/v0_9';
 import type { Action } from '@a2ui/web_core/v0_9';
+import {
+  type GeoJSONSource,
+  LngLatBounds,
+  MapLibreMap,
+  type Marker,
+  setWorkerUrl,
+} from 'maplibre-gl';
 import { dispatchSurfaceAction } from '../../../../shared/capabilities/surface-action';
+import {
+  createCenterMarker,
+  createPointMarker,
+  labelCollection,
+  pixelOffsets,
+} from './map-markers';
+import { MAP_RESOURCES } from './map-resources';
+import { DOT_BOX_IMAGE, LABELS_SOURCE, bareStyle, dotBoxImage, labelLayers } from './map-style';
 
 /**
  * `label` is optional at runtime: path-bound points bypass schema validation,
@@ -29,75 +60,18 @@ export interface MapProps {
   readonly action?: BoundProperty<Action | undefined>;
 }
 
-interface MapMarker {
-  readonly point: MapPoint;
-  readonly x: number;
-  readonly y: number;
-}
-
-interface GridLine {
-  readonly deg: number;
-  readonly pos: number;
-}
-
-interface MapView {
-  readonly markers: readonly MapMarker[];
-  readonly center?: { readonly x: number; readonly y: number; readonly city?: string };
-  readonly latLines: readonly GridLine[];
-  readonly lonLines: readonly GridLine[];
-}
-
-const VIEW_W = 400;
-const VIEW_H = 260;
-const PAD = 24;
-/** Grid steps in degrees; the first that yields at most this many lines wins. */
-const GRID_STEPS = [0.5, 1, 2, 5, 10, 20];
-const MAX_GRID_LINES = 8;
-
-const EMPTY_VIEW: MapView = { markers: [], latLines: [], lonLines: [] };
+/** Room for the labels around the outermost dots; one city never zooms down to streets. */
+const FIT_OPTIONS = { padding: 40, maxZoom: 9, duration: 0 } as const;
 
 @Component({
   selector: 'app-map',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './map.component.html',
-  styles: `
-    /* Explicit width: a viewBox-only svg has no intrinsic size and would
-       collapse to 0x0 inside the renderer's flex rows. */
-    :host {
-      display: block;
-      width: 100%;
-      min-width: 20rem;
-    }
-    svg {
-      display: block;
-      width: 100%;
-      background: #f4f7fa;
-    }
-    .cf-grid {
-      stroke: #dde4ea;
-    }
-    .cf-marker {
-      cursor: pointer;
-    }
-    .cf-dot {
-      fill: #3f51b5;
-    }
-    .cf-selected .cf-dot {
-      fill: #ff9800;
-      r: 7px;
-    }
-    .cf-label {
-      font-size: 8px;
-    }
-    .cf-selected .cf-label {
-      font-weight: 700;
-    }
-    .cf-center-mark {
-      stroke: #d32f2f;
-      stroke-width: 2;
-      fill: none;
-    }
-  `,
+  styleUrl: './map.component.css',
+  // MapLibre builds its own DOM (canvas, controls, markers), which emulated encapsulation cannot
+  // style; every rule of the stylesheet is scoped under `.cf-map` instead.
+  encapsulation: ViewEncapsulation.None,
+  host: { class: 'cf-map' },
 })
 export class MapComponent {
   /**
@@ -109,46 +83,125 @@ export class MapComponent {
   readonly componentId = input.required<string>();
   readonly dataContextPath = input<string>('/');
 
-  protected readonly viewW = VIEW_W;
-  protected readonly viewH = VIEW_H;
-
+  private readonly canvas = viewChild.required<ElementRef<HTMLDivElement>>('canvas');
   private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
+  private readonly resources = inject(MAP_RESOURCES);
 
-  protected readonly selectedId = computed(
+  /** Set once the style is in place and the label layers exist; the effects wait for it. */
+  private readonly map = signal<MapLibreMap | undefined>(undefined);
+  /** The instance from the moment it exists, so an early teardown still removes it. */
+  private instance?: MapLibreMap;
+  private destroyed = false;
+  private markers: Marker[] = [];
+  private bounds?: LngLatBounds;
+  /** What the markers currently show; the labels are rebuilt from it on every selection. */
+  private shown: { points: readonly MapPoint[]; center: MapCenter | undefined } = {
+    points: [],
+    center: undefined,
+  };
+
+  private readonly selectedId = computed(
     () => (this.props().selected?.value() as { id?: unknown } | undefined)?.id,
   );
 
-  protected readonly view = computed<MapView>(() => {
-    const points = this.props().points.value() ?? [];
-    const center = this.props().center?.value();
-    const coords: readonly { lat: number; lon: number }[] =
-      center === undefined ? points : [...points, center];
-    if (coords.length === 0) return EMPTY_VIEW;
-
-    const project = createProjection(coords);
-    return {
-      markers: declutter(points.map((point) => ({ point, ...project(point) }))),
-      center: center === undefined ? undefined : { ...project(center), city: center.city },
-      latLines: gridLines(coords.map((c) => c.lat)).map((deg) => ({
-        deg,
-        pos: project({ lat: deg, lon: coords[0].lon }).y,
-      })),
-      lonLines: gridLines(coords.map((c) => c.lon)).map((deg) => ({
-        deg,
-        pos: project({ lat: coords[0].lat, lon: deg }).x,
-      })),
-    };
-  });
-
-  protected labelOf(point: MapPoint): string {
-    return String(point.label ?? point['name'] ?? point.id);
+  constructor() {
+    afterNextRender(() => void this.createMap());
+    effect(() => {
+      const map = this.map();
+      if (map === undefined) return;
+      this.shown = {
+        points: this.props().points.value() ?? [],
+        center: this.props().center?.value(),
+      };
+      this.showMarkers(map);
+      untracked(() => this.showSelection(map, this.selectedId()));
+    });
+    effect(() => {
+      const map = this.map();
+      if (map === undefined) return;
+      this.showSelection(map, this.selectedId());
+    });
+    inject(DestroyRef).onDestroy(() => {
+      this.destroyed = true;
+      this.instance?.remove();
+    });
   }
 
-  protected crossPath(x: number, y: number): string {
-    return `M ${x - 6} ${y} L ${x + 6} ${y} M ${x} ${y - 6} L ${x} ${y + 6}`;
+  private async createMap(): Promise<void> {
+    setWorkerUrl(this.resources.workerUrl);
+    const style = await this.resources.loadStyle().catch((error: unknown) => {
+      console.warn('[maps] basemap style unavailable, showing markers only', error);
+      return bareStyle();
+    });
+    if (this.destroyed) return;
+    const map = new MapLibreMap({
+      container: this.canvas().nativeElement,
+      style,
+      // The map sits in a scrolling transcript: the wheel scrolls the page, Ctrl + wheel zooms.
+      cooperativeGestures: true,
+      dragRotate: false,
+      pitchWithRotate: false,
+      touchPitch: false,
+    });
+    this.instance = map;
+    map.once('style.load', () => {
+      if (this.destroyed) return;
+      map.addImage(DOT_BOX_IMAGE, dotBoxImage());
+      map.addSource(LABELS_SOURCE, {
+        type: 'geojson',
+        data: labelCollection([], undefined, undefined),
+      });
+      for (const layer of labelLayers()) map.addLayer(layer);
+      this.map.set(map);
+    });
+    // MapLibre tracks the container's size itself; a new size needs a new fit.
+    map.on('resize', () => this.fit(map));
   }
 
-  protected pick(point: MapPoint): void {
+  private showMarkers(map: MapLibreMap): void {
+    const { points, center } = this.shown;
+    for (const marker of this.markers) marker.remove();
+    // The location shares the spread: a conference in the user's city stays visible beside it.
+    const offsets = pixelOffsets(center === undefined ? points : [...points, center]);
+    this.markers = points.map((point, index) =>
+      createPointMarker(this.document, point, offsets[index], () => this.pick(point)).addTo(map),
+    );
+    if (center !== undefined) {
+      this.markers.push(
+        createCenterMarker(this.document, center, offsets[points.length]).addTo(map),
+      );
+    }
+    this.bounds = boundsOf(points, center);
+    this.fit(map);
+  }
+
+  /**
+   * The selected dot gets the ink ring; its label turns bold and is placed first. A selection
+   * made elsewhere (the timeline) must be in view: if the user has panned away, the map returns
+   * to the overview. A click on the map itself never moves it, its point is in view already.
+   */
+  private showSelection(map: MapLibreMap, selectedId: unknown): void {
+    for (const marker of this.markers) {
+      const element = marker.getElement();
+      const id = element.dataset['id'];
+      element.classList.toggle('cf-selected', id !== undefined && id === selectedId);
+    }
+    const { points, center } = this.shown;
+    map
+      .getSource<GeoJSONSource>(LABELS_SOURCE)
+      ?.setData(labelCollection(points, center, selectedId));
+    const selected = points.find((point) => point.id === selectedId);
+    if (selected !== undefined && !map.getBounds().contains([selected.lon, selected.lat])) {
+      this.fit(map);
+    }
+  }
+
+  private fit(map: MapLibreMap): void {
+    if (this.bounds !== undefined) map.fitBounds(this.bounds, FIT_OPTIONS);
+  }
+
+  private pick(point: MapPoint): void {
     this.props().selected?.onUpdate(point);
     const action = this.props().action?.value();
     if (action !== undefined) {
@@ -163,75 +216,14 @@ export class MapComponent {
   }
 }
 
-/**
- * Equirectangular projection over the bounding box of the given coordinates:
- * x is longitude scaled by cos(mid latitude), y is latitude flipped. One
- * uniform scale keeps the aspect ratio; the content is centered with padding.
- */
-function createProjection(
-  coords: readonly { lat: number; lon: number }[],
-): (coord: { lat: number; lon: number }) => { x: number; y: number } {
-  const lats = coords.map((c) => c.lat);
-  const lons = coords.map((c) => c.lon);
-  const latMax = Math.max(...lats);
-  const latMin = Math.min(...lats);
-  const lonMin = Math.min(...lons);
-  const cosMid = Math.cos((((latMax + latMin) / 2) * Math.PI) / 180);
-
-  // A minimum span keeps a single point (or one city) from dividing by zero.
-  const spanX = Math.max((Math.max(...lons) - lonMin) * cosMid, 0.5);
-  const spanY = Math.max(latMax - latMin, 0.5);
-  const scale = Math.min((VIEW_W - 2 * PAD) / spanX, (VIEW_H - 2 * PAD) / spanY);
-  const offsetX = (VIEW_W - spanX * scale) / 2;
-  const offsetY = (VIEW_H - spanY * scale) / 2;
-
-  return ({ lat, lon }) => ({
-    x: offsetX + (lon - lonMin) * cosMid * scale,
-    y: offsetY + (latMax - lat) * scale,
-  });
-}
-
-/** Cell size for detecting colliding markers; roughly two marker diameters. */
-const DECLUTTER_CELL = 12;
-const DECLUTTER_RADIUS = 9;
-
-/**
- * Markers whose projected positions coincide (same city → identical
- * coordinates) get a small deterministic radial spread — otherwise only the
- * top-most marker of a stack would ever receive the click.
- */
-function declutter(markers: readonly MapMarker[]): MapMarker[] {
-  const groups = new Map<string, MapMarker[]>();
-  for (const marker of markers) {
-    const key = `${Math.round(marker.x / DECLUTTER_CELL)}:${Math.round(marker.y / DECLUTTER_CELL)}`;
-    const group = groups.get(key);
-    if (group === undefined) {
-      groups.set(key, [marker]);
-    } else {
-      group.push(marker);
-    }
-  }
-  return [...groups.values()].flatMap((group) =>
-    group.length === 1
-      ? group
-      : group.map((marker, index) => ({
-          ...marker,
-          x: marker.x + DECLUTTER_RADIUS * Math.cos((2 * Math.PI * index) / group.length),
-          y: marker.y + DECLUTTER_RADIUS * Math.sin((2 * Math.PI * index) / group.length),
-        })),
-  );
-}
-
-function gridLines(values: readonly number[]): number[] {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const step =
-    GRID_STEPS.find((candidate) => (max - min) / candidate <= MAX_GRID_LINES) ??
-    GRID_STEPS[GRID_STEPS.length - 1];
-
-  const lines: number[] = [];
-  for (let deg = Math.ceil(min / step) * step; deg <= max; deg += step) {
-    lines.push(Number(deg.toFixed(4)));
-  }
-  return lines;
+function boundsOf(
+  points: readonly MapPoint[],
+  center: MapCenter | undefined,
+): LngLatBounds | undefined {
+  const coords: readonly { lat: number; lon: number }[] =
+    center === undefined ? points : [...points, center];
+  if (coords.length === 0) return undefined;
+  const bounds = new LngLatBounds();
+  for (const { lat, lon } of coords) bounds.extend([lon, lat]);
+  return bounds;
 }

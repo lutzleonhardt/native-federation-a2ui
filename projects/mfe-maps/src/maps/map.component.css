@@ -1,0 +1,93 @@
+/* MapLibre's own DOM (canvas, controls, markers) lies outside emulated encapsulation, so
+   the component renders with ViewEncapsulation.None: MapLibre's stylesheet comes along, every
+   rule of ours is scoped under `.cf-map`. The theme arrives as --cf-* from the shell; the
+   fallbacks carry the same values for the remote's standalone page. */
+/* A relative path on purpose: the dev server marks every package external, and an external
+   `@import 'maplibre-gl/…'` would be left for the browser to fetch as a 404. */
+@import '../../../../node_modules/maplibre-gl/dist/maplibre-gl.css';
+
+.cf-map {
+  --_ink: var(--cf-ink, #10222f);
+  --_rail: var(--cf-rail, #2b5fa8);
+  --_surface: var(--cf-surface, #ffffff);
+  --_line: var(--cf-line, #c8d3db);
+  --_muted: var(--cf-muted, #4e5f6b);
+  --_sub: var(--cf-sub, #e3e9ee);
+  --_font-ui: var(--cf-font-ui, 'Archivo Variable', system-ui, sans-serif);
+  --_font-data: var(--cf-font-data, 'IBM Plex Mono', ui-monospace, monospace);
+  --_r-sm: var(--cf-r-sm, 3px);
+
+  /* Explicit size: inside the renderer's flex rows a height-less container collapses. */
+  display: block;
+  width: 100%;
+  min-width: 20rem;
+}
+
+.cf-map-canvas {
+  height: 300px;
+  border: 1px solid var(--_line);
+  border-radius: var(--_r-sm);
+  background: var(--_sub);
+}
+
+/* Point: a rail-blue dot with a surface rim; the selection adds the ink ring. */
+.cf-map .cf-marker {
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--_surface);
+  border-radius: 50%;
+  background: var(--_rail);
+  box-shadow: 0 0 0 1px var(--_line);
+  cursor: pointer;
+}
+
+.cf-map .cf-marker.cf-selected {
+  box-shadow: 0 0 0 2px var(--_ink);
+  z-index: 1;
+}
+
+.cf-map .cf-marker:focus-visible {
+  outline: 2px solid var(--_ink);
+  outline-offset: 2px;
+}
+
+/* User location: a ringed ink dot, the city in data type beside it. Never a hit target: a
+   conference dot underneath must receive the click. */
+.cf-map .cf-center {
+  pointer-events: none;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--_ink);
+  box-shadow:
+    0 0 0 2px var(--_surface),
+    0 0 0 4px var(--_ink);
+}
+
+.cf-map .cf-center-label {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  font-family: var(--_font-data);
+  font-size: 11px;
+  color: var(--_ink);
+  white-space: nowrap;
+  text-shadow:
+    0 0 2px var(--_surface),
+    0 0 2px var(--_surface);
+}
+
+/* Attribution in the kit's quiet type; the links stay readable. */
+.cf-map .maplibregl-ctrl-attrib {
+  font-family: var(--_font-ui);
+  font-size: 10px;
+  color: var(--_muted);
+  background: color-mix(in srgb, var(--_surface) 80%, transparent);
+}
+
+.cf-map .maplibregl-ctrl-attrib a {
+  color: var(--_muted);
+}
