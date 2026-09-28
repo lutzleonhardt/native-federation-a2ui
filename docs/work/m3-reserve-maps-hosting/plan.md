@@ -571,6 +571,19 @@ The remotes' standalone pages must be reachable under `charts/` and `maps/` of t
 > totals mount; deferred, see the plan's decisions); the Distance-0 entry notes the Task 3.5 patch.
 > The example "how many per month, as a chart" was struck from the list above: no chart for it
 > exists.
+>
+> **Amendment (2026-09-28, from Task 3.5):** the ownership rule across the federation boundary
+> (register entry "Document who owns what"). `docs/architecture.md` "Layers and ownership" gets
+> the table: remotes render (components) and compute (functions); reacting (handlers) is
+> shell-only today, because the reserve effect lands in data another owner mounted and in the
+> shell's store; remotes could ship handlers as a third contract half once a narrow host API for
+> writing into surfaces exists, the event and its context are announced in the vocabulary, and
+> the effect stays in the team's own backend. `docs/how-it-works.md` answers the reader's question
+> after "What happens on a click": what can a team ship, and where does a button's backend call
+> go — the slider as interaction without a handler, reserving as the shell-owned effect. Names
+> and mechanics from Task 3.5 to carry: the function is `filterWithinKm` (not `withinKm`) inside
+> maps; the announced schemas are written without `$ref`; `patches/` with `postinstall` running
+> `patch-package` is an install step until an `@a2ui/angular` release carries a2ui#2604.
 
 ### Instructions
 
