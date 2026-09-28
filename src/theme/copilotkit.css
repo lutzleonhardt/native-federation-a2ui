@@ -169,6 +169,12 @@ copilot-chat-view-disclaimer > div {
   padding: var(--cf-s-2) var(--cf-s-4) 0;
 }
 
+/* "AI can make mistakes" promises a model; replay runs none. The chat page
+   marks the mode on its host (chat.page.ts). */
+app-chat-page[data-agent-mode='replay'] copilot-chat-view-disclaimer {
+  display: none;
+}
+
 @media (max-width: 640px) {
   copilot-chat-view-input-container > div {
     padding: 10px 0 6px;

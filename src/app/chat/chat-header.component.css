@@ -8,7 +8,8 @@ header {
   grid-template-columns: 1fr auto;
   grid-template-areas:
     'band caps'
-    'prompts prompts';
+    'prompts prompts'
+    'replay replay';
   column-gap: var(--cf-s-5);
   background: var(--cf-ink);
   color: var(--cf-surface);
@@ -88,13 +89,61 @@ app-capability-panel {
   color: var(--cf-muted);
   cursor: default;
 }
+/* The replay notice: a second ink stripe between the prompt band and the chat, so the
+   mode reads as chrome of the app rather than a message; the dot repeats the chips'
+   state marker, and "How it works" is a button that reads as a link. */
+.cf-replay {
+  grid-area: replay;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--cf-s-2);
+  box-sizing: border-box;
+  min-height: 32px;
+  margin: 0;
+  padding: var(--cf-s-1) var(--cf-s-6);
+  background: var(--cf-ink);
+  color: var(--cf-surface);
+  font-family: var(--cf-font-data);
+  font-size: var(--cf-t-2);
+}
+.cf-replay strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cf-replay strong::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cf-rail-on-ink);
+}
+.cf-replay button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cf-rail-on-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.cf-replay button:hover {
+  color: var(--cf-surface);
+}
 @media (max-width: 640px) {
   header {
     grid-template-columns: 1fr;
     grid-template-areas:
       'band'
       'prompts'
-      'caps';
+      'caps'
+      'replay';
+  }
+  .cf-replay {
+    padding: var(--cf-s-1) var(--cf-s-4);
   }
   .cf-band {
     gap: var(--cf-s-3);

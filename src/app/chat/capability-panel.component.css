@@ -181,6 +181,20 @@ dt {
 dd {
   margin: 0;
 }
+.cf-panel-head + .cf-panel-head,
+ul + .cf-panel-head {
+  border-top: 1px solid var(--cf-line);
+}
+.cf-agent {
+  padding: var(--cf-s-3) var(--cf-s-4);
+}
+.cf-agent p {
+  margin: var(--cf-s-2) 0 0;
+}
+.cf-agent code {
+  font-family: var(--cf-font-data);
+  font-size: var(--cf-t-2);
+}
 
 /* Phone: the strip below the prompts, and the panel expands in place under it.
    Chips wrap instead of scrolling so every state stays readable without a swipe. */

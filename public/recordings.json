@@ -1,0 +1,91 @@
+{
+  "format": 1,
+  "a2ui": "v0.9",
+  "capturedAt": "2026-09-28",
+  "recordings": {
+    "charts,maps": {
+      "Which Angular conferences are coming up in the next few months?": [
+        [{ "name": "findConferences", "args": { "topic": "angular" } }],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "upcoming",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "upcoming",
+                    "components": [
+                      { "id": "root", "component": "Column", "children": ["timeline", "name"] },
+                      {
+                        "id": "timeline",
+                        "component": "Timeline",
+                        "items": { "path": "/filteredConfs" },
+                        "selected": { "path": "/selectedConf" }
+                      },
+                      {
+                        "id": "name",
+                        "component": "Text",
+                        "text": { "path": "/selectedConf/name" }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ]
+    },
+    "charts": {
+      "Which Angular conferences are coming up in the next few months?": [
+        [{ "name": "findConferences", "args": { "topic": "angular" } }],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "upcoming",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "upcoming",
+                    "components": [
+                      { "id": "root", "component": "Column", "children": ["timeline", "name"] },
+                      {
+                        "id": "timeline",
+                        "component": "Timeline",
+                        "items": { "path": "/filteredConfs" },
+                        "selected": { "path": "/selectedConf" }
+                      },
+                      {
+                        "id": "name",
+                        "component": "Text",
+                        "text": { "path": "/selectedConf/name" }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ]
+    },
+    "maps": {},
+    "": {}
+  }
+}

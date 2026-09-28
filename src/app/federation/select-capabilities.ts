@@ -19,7 +19,13 @@ export function selectCapabilities(
   return Object.fromEntries(Object.entries(manifest).filter(([name]) => names.has(name)));
 }
 
-/** The search string that selects exactly `names` — the inverse of `selectCapabilities`. */
-export function toCapabilitiesQuery(names: readonly string[]): string {
-  return `?${QUERY_PARAM}=${names.join(',')}`;
+/**
+ * The search string that selects exactly `names` and keeps every other parameter of `search`
+ * (the agent mode rides along on a toggle) — the inverse of `selectCapabilities`.
+ */
+export function toCapabilitiesQuery(names: readonly string[], search: string): string {
+  const others = new URLSearchParams(search);
+  others.delete(QUERY_PARAM);
+  const rest = others.toString();
+  return `?${QUERY_PARAM}=${names.join(',')}${rest === '' ? '' : `&${rest}`}`;
 }

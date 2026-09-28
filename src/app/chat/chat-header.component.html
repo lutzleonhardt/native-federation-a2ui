@@ -13,4 +13,11 @@
     }
   </nav>
   <app-capability-panel />
+  @if (mode === 'replay') {
+    <p class="cf-replay">
+      <strong>Replay mode</strong> · Recorded answers play back in your browser — no model, no
+      server. Each prompt answers on its own.
+      <button type="button" (click)="explainAgent()">How it works →</button>
+    </p>
+  }
 </header>

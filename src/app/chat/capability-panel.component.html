@@ -1,4 +1,4 @@
-<details>
+<details #details>
   <summary>
     <img class="cf-mark" src="nf-mark.png" alt="Native Federation" width="18" height="18" />
     <span class="cf-chips">
@@ -38,5 +38,33 @@
         </li>
       }
     </ul>
+    <div class="cf-panel-head">
+      <h2>Agent</h2>
+    </div>
+    <section class="cf-agent">
+      <dl>
+        <dt>mode</dt>
+        <dd class="cf-mode">
+          @if (mode === 'replay') {
+            replay — recorded answers
+          } @else {
+            local — agent server on localhost:{{ agentPort }}
+          }
+        </dd>
+      </dl>
+      <p>
+        Replay plays each example prompt from a recording made with this capability set. The
+        transcript's history is ignored, so every prompt answers on its own; free text has no
+        recording.
+      </p>
+      <p>
+        Live: clone the <a [href]="repositoryUrl">repository</a>, add one provider key to
+        <code>.env</code>, <code>npm start</code>.
+      </p>
+      <p>
+        Inspect remotes, import map and shared packages with the
+        <a [href]="devtoolsUrl">Native Federation DevTools</a>.
+      </p>
+    </section>
   </div>
 </details>

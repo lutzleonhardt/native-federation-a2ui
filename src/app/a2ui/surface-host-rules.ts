@@ -150,11 +150,19 @@ export function segmentsOf(path: string | undefined): string[] {
   return (path ?? '').split('/').filter((segment) => segment.length > 0);
 }
 
+/** The message forms, each keyed by the surface it addresses. */
+export const SURFACE_MESSAGE_KEYS = [
+  'createSurface',
+  'updateComponents',
+  'updateDataModel',
+  'deleteSurface',
+] as const;
+
 /** The surface a message addresses, whichever message form it is. */
 export function surfaceIdOf(message: unknown): string | undefined {
   const body = record(message);
   if (body === undefined) return undefined;
-  for (const key of ['createSurface', 'updateComponents', 'updateDataModel', 'deleteSurface']) {
+  for (const key of SURFACE_MESSAGE_KEYS) {
     const id = record(body[key])?.['surfaceId'];
     if (typeof id === 'string') return id;
   }

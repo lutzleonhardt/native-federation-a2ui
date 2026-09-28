@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
+import { AGENT_MODE } from '../agent/assistant-agent.token';
 import { CapabilityPanelComponent } from './capability-panel.component';
 import { LocationPickerComponent } from './location-picker.component';
 
@@ -15,4 +23,12 @@ export class ChatHeaderComponent {
   /** Disables the prompts while the agent answers; the page owns the run state. */
   readonly running = input.required<boolean>();
   readonly send = output<string>();
+
+  protected readonly mode = inject(AGENT_MODE);
+  private readonly panel = viewChild.required(CapabilityPanelComponent);
+
+  /** The replay notice's "How it works" opens the panel, where the Agent section explains it. */
+  protected explainAgent(): void {
+    this.panel().open();
+  }
 }

@@ -32,6 +32,9 @@
             "development": {
               "target": "shell:esbuild:development",
               "dev": true
+            },
+            "deploy": {
+              "target": "shell:esbuild:deploy"
             }
           },
           "defaultConfiguration": "production"
@@ -97,6 +100,27 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "deploy": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "5MB",
+                  "maximumError": "6MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.deploy.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

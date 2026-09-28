@@ -1,8 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
+import { AGENT_MODE } from '../agent/assistant-agent.token';
+import type { AgentMode } from '../agent/agent-mode';
 import type { CapabilityStatus } from '../federation/capability-status';
 import { provideCapabilityStatus } from '../federation/capability-status.token';
+import { PAGE_SEARCH } from '../federation/page-search.token';
 import { CapabilityPanelComponent } from './capability-panel.component';
 
 /** Three manifest entries, one per state; `tables` stands in for a remote that only the manifest knows. */
@@ -17,8 +20,18 @@ const STATUSES: readonly CapabilityStatus[] = [
   { name: 'tables', state: 'unselected' },
 ];
 
-async function render(statuses: readonly CapabilityStatus[] = STATUSES): Promise<HTMLElement> {
-  TestBed.configureTestingModule({ providers: [provideCapabilityStatus(statuses)] });
+async function render(
+  statuses: readonly CapabilityStatus[] = STATUSES,
+  mode: AgentMode = 'local',
+  search = '',
+): Promise<HTMLElement> {
+  TestBed.configureTestingModule({
+    providers: [
+      provideCapabilityStatus(statuses),
+      { provide: AGENT_MODE, useValue: mode },
+      { provide: PAGE_SEARCH, useValue: search },
+    ],
+  });
   const fixture = TestBed.createComponent(CapabilityPanelComponent);
   await fixture.whenStable();
   return fixture.nativeElement as HTMLElement;
@@ -74,6 +87,19 @@ describe('CapabilityPanelComponent', () => {
     ]);
   });
 
+  it('T3-AC-04 / T5-AC-02: a toggle keeps the agent mode of the current URL in both directions', async () => {
+    const replay = await render(STATUSES, 'replay', '?agent=replay');
+    expect(rows(replay).map((row) => toggleOf(row).href)).toEqual([
+      '?capabilities=maps&agent=replay',
+      '?capabilities=charts&agent=replay',
+      '?capabilities=charts,maps,tables&agent=replay',
+    ]);
+
+    TestBed.resetTestingModule();
+    const local = await render(STATUSES, 'local', '?capabilities=charts,maps&agent=local');
+    expect(toggleOf(rows(local)[0]).href).toBe('?capabilities=maps&agent=local');
+  });
+
   it('T5-AC-02: switching the last selected remote off selects none explicitly', async () => {
     const host = await render([{ name: 'charts', state: 'unreachable' }]);
 
@@ -107,5 +133,38 @@ describe('CapabilityPanelComponent', () => {
     const host = await render([]);
 
     expect(host.querySelector('summary')?.textContent).toContain('No remotes in the manifest.');
+  });
+
+  it('T3-AC-05 the Agent section names the mode, the live alternative and the DevTools in either mode', async () => {
+    const local = await render(STATUSES, 'local');
+    expect(local.querySelector('.cf-mode')?.textContent?.trim()).toBe(
+      'local — agent server on localhost:3001',
+    );
+
+    TestBed.resetTestingModule();
+    const replay = await render(STATUSES, 'replay');
+    const agent = replay.querySelector('.cf-agent') as HTMLElement;
+    expect(replay.querySelector('.cf-mode')?.textContent?.trim()).toBe('replay — recorded answers');
+    expect(agent.textContent).toContain('every prompt answers on its own');
+    expect(agent.textContent).toContain('npm start');
+    const links = [...agent.querySelectorAll('a')].map((a) => a.getAttribute('href'));
+    expect(links).toEqual([
+      'https://github.com/lutzleonhardt/conference-finder#readme',
+      'https://native-federation.com/docs/v4/devtools/',
+    ]);
+  });
+
+  it('open() shows the panel, as the replay notice asks it to', async () => {
+    await render();
+    const fixture = TestBed.createComponent(CapabilityPanelComponent);
+    await fixture.whenStable();
+    const details = (fixture.nativeElement as HTMLElement).querySelector(
+      'details',
+    ) as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+
+    fixture.componentInstance.open();
+
+    expect(details.open).toBe(true);
   });
 });

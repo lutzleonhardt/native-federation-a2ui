@@ -1,5 +1,6 @@
 import type { FederationManifest } from '@angular-architects/native-federation-v4';
 import { describe, expect, it } from 'vitest';
+import { resolveAgentMode } from '../agent/agent-mode';
 import { selectCapabilities, toCapabilitiesQuery } from './select-capabilities';
 
 const MANIFEST: FederationManifest = {
@@ -32,15 +33,26 @@ describe('selectCapabilities (T3-AC-03)', () => {
 
 describe('toCapabilitiesQuery (T5-AC-02)', () => {
   it('writes what selectCapabilities reads back', () => {
-    expect(toCapabilitiesQuery(['maps'])).toBe('?capabilities=maps');
-    expect(selectCapabilities(MANIFEST, toCapabilitiesQuery(['maps']))).toEqual({
+    expect(toCapabilitiesQuery(['maps'], '')).toBe('?capabilities=maps');
+    expect(selectCapabilities(MANIFEST, toCapabilitiesQuery(['maps'], ''))).toEqual({
       maps: MANIFEST['maps'],
     });
-    expect(selectCapabilities(MANIFEST, toCapabilitiesQuery(['charts', 'maps']))).toEqual(MANIFEST);
+    expect(selectCapabilities(MANIFEST, toCapabilitiesQuery(['charts', 'maps'], ''))).toEqual(
+      MANIFEST,
+    );
   });
 
   it('an empty selection reads back as none, not as all', () => {
-    expect(toCapabilitiesQuery([])).toBe('?capabilities=');
-    expect(selectCapabilities(MANIFEST, toCapabilitiesQuery([]))).toEqual({});
+    expect(toCapabilitiesQuery([], '')).toBe('?capabilities=');
+    expect(selectCapabilities(MANIFEST, toCapabilitiesQuery([], ''))).toEqual({});
+  });
+
+  it('T3-AC-04 keeps every other parameter of the current search, so a toggle keeps the agent mode', () => {
+    const query = toCapabilitiesQuery(['maps'], '?agent=replay&capabilities=charts,maps');
+
+    expect(query).toBe('?capabilities=maps&agent=replay');
+    expect(selectCapabilities(MANIFEST, query)).toEqual({ maps: MANIFEST['maps'] });
+    expect(resolveAgentMode(query, 'local')).toBe('replay');
+    expect(toCapabilitiesQuery(['charts'], '?capabilities=')).toBe('?capabilities=charts');
   });
 });

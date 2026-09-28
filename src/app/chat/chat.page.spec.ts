@@ -17,7 +17,12 @@ import { provideOfflineMap } from '../../../projects/mfe-maps/src/testing/offlin
 import { LocationStore } from '../domain/location.store';
 import type { CapabilityStatus } from '../federation/capability-status';
 import { provideCapabilityStatus } from '../federation/capability-status.token';
-import { emptyRun, MockAgent, toolCallRun, toolCallsRun } from '../testing/mock-agent';
+import { PAGE_SEARCH } from '../federation/page-search.token';
+import type { ReplayPace } from '../replay/paced-run';
+import { NOT_RECORDED_TEXT, ReplayAgent } from '../replay/replay-agent';
+import type { Recordings } from '../replay/recordings';
+import { emptyRun, toolCallRun, toolCallsRun } from '../replay/scripted-run';
+import { MockAgent } from '../testing/mock-agent';
 import { ChatPage } from './chat.page';
 
 /** The demo requests; the spec pins the literal texts, not the constant. */
@@ -53,10 +58,42 @@ async function renderChat(
     providers: [
       provideAgentCapabilities(capabilities),
       provideCapabilityStatus(REMOTES),
-      provideAssistantAgent(),
+      provideAssistantAgent({ mode: 'local' }),
       provideReserveHandler(),
       provideOfflineMap(),
+      { provide: PAGE_SEARCH, useValue: '' },
       { provide: ASSISTANT_AGENT, useValue: agent },
+    ],
+  });
+  const fixture = TestBed.createComponent(ChatPage);
+  await fixture.whenStable();
+  return fixture;
+}
+
+/** No pauses, one chunk per call — for the cases that look at what is played, not how it arrives. */
+const INSTANT: ReplayPace = { thinkMs: 0, chunkMs: 0, chunkChars: Number.MAX_SAFE_INTEGER };
+
+/** The real replay agent behind the real chat, as the deploy build wires it; `pace` replaces the live pacing. */
+async function renderReplayChat(
+  recordings: Recordings,
+  pace?: ReplayPace,
+): Promise<ComponentFixture<ChatPage>> {
+  TestBed.configureTestingModule({
+    providers: [
+      provideAgentCapabilities(LOCAL),
+      provideCapabilityStatus(REMOTES),
+      provideAssistantAgent({ mode: 'replay', recordings }),
+      provideReserveHandler(),
+      provideOfflineMap(),
+      { provide: PAGE_SEARCH, useValue: '' },
+      ...(pace === undefined
+        ? []
+        : [
+            {
+              provide: ASSISTANT_AGENT,
+              useFactory: () => new ReplayAgent(recordings, 'charts,maps', pace),
+            },
+          ]),
     ],
   });
   const fixture = TestBed.createComponent(ChatPage);
@@ -176,6 +213,38 @@ function forbiddenWriteSurface(surfaceId: string): unknown[] {
     { version: 'v0.9', updateDataModel: { surfaceId, path: '/me', value: { city: 'Atlantis' } } },
   ];
 }
+
+function timelineSurface(surfaceId: string): unknown[] {
+  return [
+    { version: 'v0.9', createSurface: { surfaceId, catalogId: ASSISTANT_CATALOG_ID } },
+    {
+      version: 'v0.9',
+      updateComponents: {
+        surfaceId,
+        components: [
+          { id: 'root', component: 'Column', children: ['timeline', 'name'] },
+          {
+            id: 'timeline',
+            component: 'Timeline',
+            items: { path: '/filteredConfs' },
+            selected: { path: '/selectedConf' },
+          },
+          { id: 'name', component: 'Text', text: { path: '/selectedConf/name' } },
+        ],
+      },
+    },
+  ];
+}
+
+/** Prompt 1 recorded for both remotes: the search, then the timeline — as `public/recordings.json` will hold it. */
+const RECORDED_PROMPT_ONE: Recordings = {
+  'charts,maps': {
+    [PROMPTS[0]]: [
+      [{ name: 'findConferences', args: { topic: 'angular' } }],
+      [{ name: 'renderSurface', args: { messages: timelineSurface('upcoming') } }],
+    ],
+  },
+};
 
 function mapSurface(surfaceId: string): unknown[] {
   return [
@@ -566,5 +635,133 @@ describe('ChatPage with the scripted agent', () => {
     );
     // messageWidget ends the turn: no follow-up run.
     expect(agent.inputs).toHaveLength(1);
+  });
+});
+
+describe('ChatPage in replay mode', () => {
+  /** The replay agent delays every run like a model would; two runs per answer need the room. */
+  function waitForReplay(check: () => void): Promise<void> {
+    return vi.waitFor(check, { timeout: 10000 });
+  }
+
+  function timelineMarkers(fixture: ComponentFixture<ChatPage>): HTMLElement[] {
+    return [
+      ...host(fixture).querySelectorAll<HTMLElement>('a2ui-v09-surface app-timeline .cf-marker'),
+    ];
+  }
+
+  function surfaces(fixture: ComponentFixture<ChatPage>): number {
+    return host(fixture).querySelectorAll('a2ui-v09-surface').length;
+  }
+
+  function widgetText(fixture: ComponentFixture<ChatPage>): string {
+    return host(fixture).querySelector('copilot-chat app-message-widget')?.textContent ?? '';
+  }
+
+  it('T3-AC-01 a click plays the recorded surface over the client data and no request leaves the browser', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const fixture = await renderReplayChat(RECORDED_PROMPT_ONE);
+    expect(host(fixture).dataset['agentMode']).toBe('replay');
+
+    clickPrompt(fixture, 0);
+
+    // The live pace: a reasoning line first, then "Building surface …", then the surface.
+    await waitForReplay(() => expect(host(fixture).querySelector('.cf-thinking')).not.toBeNull());
+    expect(surfaces(fixture)).toBe(0);
+    await waitForReplay(() => expect(host(fixture).textContent).toContain('Building surface'));
+    await waitForReplay(() => expect(timelineMarkers(fixture).length).toBeGreaterThan(0));
+    expect(host(fixture).querySelectorAll('.cf-thinking')).toHaveLength(2);
+    const first = TestBed.inject(SurfaceDataStore).confs()[0];
+    await waitForReplay(() =>
+      expect(host(fixture).querySelector('a2ui-v09-surface a2ui-v09-text')?.textContent).toContain(
+        first.name,
+      ),
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(errors).not.toHaveBeenCalled();
+  });
+
+  it('T3-AC-02 the same prompt twice renders twice; the transcript grows and nothing is rejected', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warnings = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const fixture = await renderReplayChat(RECORDED_PROMPT_ONE, INSTANT);
+
+    clickPrompt(fixture, 0);
+    await waitForReplay(() => expect(surfaces(fixture)).toBe(1));
+    await waitForReplay(() => expect(promptButtons(fixture)[0].disabled).toBe(false));
+    clickPrompt(fixture, 0);
+    await waitForReplay(() => expect(surfaces(fixture)).toBe(2));
+
+    await waitForReplay(() => expect(timelineMarkers(fixture).length).toBeGreaterThan(1));
+    expect(errors).not.toHaveBeenCalled();
+    expect(warnings).not.toHaveBeenCalled();
+  });
+
+  it('T3-AC-02 prompts in any order: a one-run recording, a two-run recording and the first again all render', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warnings = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const recordings: Recordings = {
+      'charts,maps': {
+        ...RECORDED_PROMPT_ONE['charts,maps'],
+        [PROMPTS[1]]: [[{ name: 'renderSurface', args: { messages: mapSurface('on-a-map') } }]],
+      },
+    };
+    const fixture = await renderReplayChat(recordings, INSTANT);
+    const idle = () => waitForReplay(() => expect(promptButtons(fixture)[0].disabled).toBe(false));
+
+    clickPrompt(fixture, 1);
+    await waitForReplay(() => expect(surfaces(fixture)).toBe(1));
+    await idle();
+    clickPrompt(fixture, 0);
+    await waitForReplay(() => expect(surfaces(fixture)).toBe(2));
+    await idle();
+    clickPrompt(fixture, 1);
+    await waitForReplay(() => expect(surfaces(fixture)).toBe(3));
+
+    expect(host(fixture).querySelectorAll('a2ui-v09-surface app-map')).toHaveLength(2);
+    expect(host(fixture).querySelectorAll('a2ui-v09-surface app-timeline')).toHaveLength(1);
+    expect(errors).not.toHaveBeenCalled();
+    expect(warnings).not.toHaveBeenCalled();
+  });
+
+  it('T3-AC-03 free text answers with the not-recorded text and nothing else', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const fixture = await renderReplayChat(RECORDED_PROMPT_ONE, INSTANT);
+
+    fixture.componentInstance['send']('Any conferences in Lisbon?');
+
+    await waitForReplay(() => expect(widgetText(fixture)).toContain('no recorded answer'));
+    expect(widgetText(fixture)).toContain('npm start');
+    expect(NOT_RECORDED_TEXT).toContain('npm start');
+    await settle();
+    expect(surfaces(fixture)).toBe(0);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('T3-AC-05 the notice sits above the chat in replay mode only, and opens the panel; the DevTools link is there in both modes', async () => {
+    const replay = await renderReplayChat({});
+    const notice = host(replay).querySelector('header .cf-replay') as HTMLElement;
+    expect(notice.textContent).toContain('Replay mode');
+    expect(notice.textContent).toContain('no model, no server');
+    const details = host(replay).querySelector(
+      'app-capability-panel details',
+    ) as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    (notice.querySelector('button') as HTMLButtonElement).click();
+    expect(details.open).toBe(true);
+    expect(
+      host(replay).querySelector('a[href="https://native-federation.com/docs/v4/devtools/"]'),
+    ).not.toBeNull();
+    expect(host(replay).querySelector('.cf-mode')?.textContent).toContain('replay');
+
+    TestBed.resetTestingModule();
+    const local = await renderChat(new MockAgent((input) => emptyRun(input)));
+    expect(host(local).dataset['agentMode']).toBe('local');
+    expect(host(local).querySelector('header .cf-replay')).toBeNull();
+    expect(
+      host(local).querySelector('a[href="https://native-federation.com/docs/v4/devtools/"]'),
+    ).not.toBeNull();
+    expect(host(local).querySelector('.cf-mode')?.textContent).toContain('localhost:3001');
   });
 });
