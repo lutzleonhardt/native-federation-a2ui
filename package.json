@@ -8,7 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "postinstall": "playwright install chromium && npm --prefix agent install",
+    "postinstall": "patch-package && playwright install chromium && npm --prefix agent install",
     "ng": "ng",
     "start": "concurrently -n shell,charts,maps,agent -c cyan,green,yellow,magenta --kill-others-on-fail \"npm run start:shell\" \"npm run start:charts\" \"npm run start:maps\" \"npm --prefix agent run start\"",
     "start:shell": "ng serve shell --port 4200",
@@ -65,6 +65,7 @@
     "angular-eslint": "21.4.0",
     "concurrently": "~10.0.5",
     "eslint": "^10.3.0",
+    "patch-package": "^8.0.1",
     "playwright": "^1.58.0",
     "prettier": "^3.8.1",
     "supports-color": "^7.2.0",

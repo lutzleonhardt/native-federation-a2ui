@@ -13,6 +13,7 @@ import { findConferences } from '../domain/find-conferences';
 
 const SURFACE_ID = 'playground';
 const BENCH_ID = 'playground-bench';
+const FILTER_ID = 'playground-filter';
 const BERLIN = { city: 'Berlin', lat: 52.52, lon: 13.405 };
 
 /**
@@ -89,6 +90,73 @@ function playgroundMessages(): A2uiMessage[] {
     {
       version: 'v0.9',
       updateDataModel: { surfaceId: SURFACE_ID, path: '/selectedConf', value: confs[0] },
+    },
+  ];
+}
+
+/**
+ * The slider filter of demo request 2: the Slider writes `/filter/maxKm`, the
+ * Map's `points` and the Timeline's `items` are the same `filterWithinKm` call
+ * over that path, so both follow the slider without a request. The nine Angular
+ * conferences lie 0 to about 670 km from Berlin, so they come one at a time.
+ * The Timeline's `range` is pinned to the full span, so its dots appear in place
+ * instead of the axis rescaling to whatever is left.
+ */
+function filterMessages(): A2uiMessage[] {
+  const today = new Date();
+  const { confs } = findConferences(
+    { topic: 'angular' },
+    { confs: loadConferences(today), me: BERLIN, today },
+  );
+  const withinSlider = {
+    call: 'filterWithinKm',
+    args: {
+      points: { path: '/filteredConfs' },
+      center: { path: '/me' },
+      maxKm: { path: '/filter/maxKm' },
+    },
+    returnType: 'array',
+  };
+
+  return [
+    { version: 'v0.9', createSurface: { surfaceId: FILTER_ID, catalogId: ASSISTANT_CATALOG_ID } },
+    {
+      version: 'v0.9',
+      updateComponents: {
+        surfaceId: FILTER_ID,
+        components: [
+          {
+            id: 'root',
+            component: 'Column',
+            children: ['range', 'range-value', 'timeline', 'map'],
+          },
+          {
+            id: 'range',
+            component: 'Slider',
+            label: 'Within km',
+            min: 0,
+            max: 800,
+            value: { path: '/filter/maxKm' },
+          },
+          { id: 'range-value', component: 'Text', text: { path: '/filter/maxKm' } },
+          {
+            id: 'timeline',
+            component: 'Timeline',
+            items: withinSlider,
+            range: { from: isoFromToday(0), to: confs[confs.length - 1].date },
+          },
+          { id: 'map', component: 'Map', points: withinSlider, center: { path: '/me' } },
+        ],
+      },
+    },
+    {
+      version: 'v0.9',
+      updateDataModel: { surfaceId: FILTER_ID, path: '/filteredConfs', value: [...confs] },
+    },
+    { version: 'v0.9', updateDataModel: { surfaceId: FILTER_ID, path: '/me', value: BERLIN } },
+    {
+      version: 'v0.9',
+      updateDataModel: { surfaceId: FILTER_ID, path: '/filter/maxKm', value: 300 },
     },
   ];
 }
@@ -213,6 +281,7 @@ function benchMessages(): A2uiMessage[] {
 export class Playground {
   protected readonly surfaceId = SURFACE_ID;
   protected readonly benchId = BENCH_ID;
+  protected readonly filterId = FILTER_ID;
   protected readonly actions = signal<readonly string[]>([]);
   protected readonly messageCall: AngularToolCall<MessageWidgetArgs> = {
     args: {
@@ -238,7 +307,11 @@ export class Playground {
   };
 
   constructor() {
-    inject(A2uiRendererService).processMessages([...playgroundMessages(), ...benchMessages()]);
+    inject(A2uiRendererService).processMessages([
+      ...playgroundMessages(),
+      ...filterMessages(),
+      ...benchMessages(),
+    ]);
     const unsubscribe = inject(A2uiActionBus).subscribe((action) => this.log(action));
     inject(DestroyRef).onDestroy(unsubscribe);
   }

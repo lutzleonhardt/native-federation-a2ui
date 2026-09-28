@@ -19,6 +19,17 @@
   }
 </section>
 <section>
+  <h2>Distance filter</h2>
+  <p>
+    The slider writes <code>/filter/maxKm</code>; the timeline's items and the map's points are the
+    same <code>filterWithinKm</code> call over the nine Angular conferences, Berlin and that path,
+    so both follow the slider without a request. The timeline's axis is pinned by
+    <code>range</code>, so its dots appear in place. Pull the slider to 0 and the value still reads
+    0.
+  </p>
+  <a2ui-v09-surface [surfaceId]="filterId" />
+</section>
+<section>
   <h2>Bench</h2>
   <p>
     The primitives every visual task is checked on: a card with grouped and flat caption/value

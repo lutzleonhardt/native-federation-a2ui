@@ -172,8 +172,11 @@ export class MapComponent {
         createCenterMarker(this.document, center, offsets[points.length]).addTo(map),
       );
     }
+    // A slider may change the set on every step: the view follows only when a marker would
+    // fall outside it, so dragging never snaps the zoom. The first set always fits.
+    const first = this.bounds === undefined;
     this.bounds = boundsOf(points, center);
-    this.fit(map);
+    if (first || !inView(map, this.bounds)) this.fit(map);
   }
 
   /**
@@ -214,6 +217,12 @@ export class MapComponent {
       );
     }
   }
+}
+
+function inView(map: MapLibreMap, bounds: LngLatBounds | undefined): boolean {
+  if (bounds === undefined) return true;
+  const view = map.getBounds();
+  return view.contains(bounds.getNorthEast()) && view.contains(bounds.getSouthWest());
 }
 
 function boundsOf(

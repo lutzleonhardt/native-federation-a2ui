@@ -198,6 +198,30 @@ describe('MapComponent', () => {
     expect(map.getCenter().toArray()).toEqual(before);
   });
 
+  it('T3.5-AC-01 a shrinking set keeps the viewport; a set that leaves it re-fits', async () => {
+    const points = boundProperty<readonly MapPoint[]>(POINTS);
+    const fixture = await renderMap({ points });
+    const map = fixture.componentInstance['map']()!;
+    const canvas = fixture.nativeElement.querySelector('.cf-map-canvas')!;
+    const inView = (marker: HTMLElement): boolean => {
+      const r = marker.getBoundingClientRect();
+      const c = canvas.getBoundingClientRect();
+      return r.left >= c.left && r.right <= c.right && r.top >= c.top && r.bottom <= c.bottom;
+    };
+    const view = () => [map.getZoom(), ...map.getCenter().toArray()];
+    const overview = view();
+
+    points.value.set([POINTS[0]]);
+    await vi.waitFor(() => expect(markersOf(fixture)).toHaveLength(1));
+    expect(view()).toEqual(overview);
+
+    const lisbon = { id: 'lis-conf', label: 'Lisbon', lat: 38.7223, lon: -9.1393 };
+    points.value.set([...POINTS, lisbon]);
+    await vi.waitFor(() => expect(markersOf(fixture)).toHaveLength(4));
+    expect(markersOf(fixture).map(inView)).toEqual([true, true, true, true]);
+    expect(view()).not.toEqual(overview);
+  });
+
   it('removes a map whose style has not loaded yet when the component is destroyed early', async () => {
     let releaseStyle!: (style: StyleSpecification) => void;
     TestBed.overrideProvider(MAP_RESOURCES, {

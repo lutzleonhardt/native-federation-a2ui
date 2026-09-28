@@ -59,9 +59,16 @@ function uniqueByName<T extends { readonly name: string }>(
   });
 }
 
-/** The cast re-crosses the zod-universe bridge (see `createCustomComponent`). */
+/**
+ * Every alternative is written out: the default `$ref` strategy points a
+ * repeated `path`/`call` shape at `#/properties/<first prop>/…`, a pointer
+ * that dangles once the schema is nested into the payload. The cast
+ * re-crosses the zod-universe bridge (see `createCustomComponent`).
+ */
 function toJsonSchema(schema: unknown): object {
-  const jsonSchema = zodToJsonSchema(schema as Parameters<typeof zodToJsonSchema>[0]);
+  const jsonSchema = zodToJsonSchema(schema as Parameters<typeof zodToJsonSchema>[0], {
+    $refStrategy: 'none',
+  });
   delete jsonSchema.$schema;
   return jsonSchema;
 }

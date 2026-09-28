@@ -495,6 +495,40 @@ describe('renderSurfaceTool', () => {
     });
   });
 
+  it('T3.5-AC-02 accepts a filterWithinKm call on Map.points and still rejects a malformed prop', async () => {
+    seedStore();
+    const sliderMap = componentsMsg([
+      { id: 'root', component: 'Column', children: ['range', 'map'] },
+      { id: 'range', component: 'Slider', min: 0, max: 800, value: { path: '/filter/maxKm' } },
+      {
+        id: 'map',
+        component: 'Map',
+        center: { path: '/me' },
+        points: {
+          call: 'filterWithinKm',
+          args: {
+            points: { path: '/filteredConfs' },
+            center: { path: '/me' },
+            maxKm: { path: '/filter/maxKm' },
+          },
+          returnType: 'array',
+        },
+      },
+    ]);
+
+    const accepted = await runTool([createMsg(), sliderMap, dataMsg('/filter/maxKm', 300)]);
+    expect(accepted).toMatchObject({ ok: true, surfaceId: SURFACE_ID });
+
+    const other = 'chat-surface-2';
+    const malformed = await runTool([
+      createMsg(other),
+      componentsMsg([{ id: 'root', component: 'Map', points: { ref: '/filteredConfs' } }], other),
+    ]);
+    expect(malformed).toMatchObject({ ok: false, code: 'catalog' });
+    expect(String(malformed.result)).toContain('points');
+    expect(surfaceOf(other)).toBeUndefined();
+  });
+
   it('rejects a reused surfaceId and leaves the first surface untouched', async () => {
     seedStore();
 

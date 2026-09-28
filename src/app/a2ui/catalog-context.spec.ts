@@ -62,6 +62,29 @@ describe('catalogToContextEntry', () => {
     expect(payload.functions['distance'].returnType).toBe('number');
     expect(payload.components['Gauge'].schema).not.toHaveProperty('$schema');
   });
+
+  it('T3.5-AC-02 announces path and call as alternatives on every bound custom prop', () => {
+    // Every prop declared through `binding()`, per component.
+    const BOUND: Record<string, readonly string[]> = {
+      Gauge: ['value', 'max', 'label'],
+      Timeline: ['items', 'range', 'selected'],
+      Map: ['points', 'center', 'selected'],
+    };
+    const alternativesOf = (prop: unknown) =>
+      (prop as { anyOf?: { properties?: Record<string, unknown> }[] }).anyOf?.map((alternative) =>
+        Object.keys(alternative.properties ?? {}).sort(),
+      );
+
+    for (const [component, props] of Object.entries(BOUND)) {
+      for (const name of props) {
+        const prop = payload.components[component].schema.properties?.[name];
+        expect(alternativesOf(prop), `${component}.${name}`).toEqual(
+          expect.arrayContaining([['path'], ['args', 'call', 'returnType']]),
+        );
+      }
+    }
+    expect(payload.functions['filterWithinKm'].returnType).toBe('array');
+  });
 });
 
 // XC-04: the serializer lists the vocabulary framework-free so Node can import

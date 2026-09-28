@@ -1,0 +1,32 @@
+# @a2ui/angular 0.10.5, v0_9 TextComponent: `props.text.value() || ''` drops a bound 0
+# ("0 km" in the user's own city, `daysUntil` on the event day). Upstream fixed it on main
+# after 0.10.7 with `?.toString() ?? ''` (a2ui-project/a2ui#2604, commit c7b6dfc); this is
+# that line, in both bundles that carry the component (`@a2ui/angular/v0_9` resolves to
+# `a2ui-angular-v0_9.mjs`, `@a2ui/angular/src/v0_9` to `a2ui-angular-src-v0_9.mjs`).
+# Drop the patch once a release carries it.
+diff --git a/node_modules/@a2ui/angular/fesm2022/a2ui-angular-src-v0_9.mjs b/node_modules/@a2ui/angular/fesm2022/a2ui-angular-src-v0_9.mjs
+index f9a0099..6c69367 100644
+--- a/node_modules/@a2ui/angular/fesm2022/a2ui-angular-src-v0_9.mjs
++++ b/node_modules/@a2ui/angular/fesm2022/a2ui-angular-src-v0_9.mjs
+@@ -820,7 +820,7 @@ class TextComponent extends BasicCatalogComponent {
+         'caption',
+     ]);
+     variant = computed(() => this.props()['variant']?.value() || 'body', ...(ngDevMode ? [{ debugName: "variant" }] : /* istanbul ignore next */ []));
+-    text = computed(() => this.props()['text']?.value() || '', ...(ngDevMode ? [{ debugName: "text" }] : /* istanbul ignore next */ []));
++    text = computed(() => this.props()['text']?.value()?.toString() ?? '', ...(ngDevMode ? [{ debugName: "text" }] : /* istanbul ignore next */ []));
+     isNonMarkdownVariant = computed(() => {
+         return TextComponent.NON_MARKDOWN_VARIANTS.has(this.variant());
+     }, ...(ngDevMode ? [{ debugName: "isNonMarkdownVariant" }] : /* istanbul ignore next */ []));
+diff --git a/node_modules/@a2ui/angular/fesm2022/a2ui-angular-v0_9.mjs b/node_modules/@a2ui/angular/fesm2022/a2ui-angular-v0_9.mjs
+index e9d21bd..cff240d 100644
+--- a/node_modules/@a2ui/angular/fesm2022/a2ui-angular-v0_9.mjs
++++ b/node_modules/@a2ui/angular/fesm2022/a2ui-angular-v0_9.mjs
+@@ -820,7 +820,7 @@ class TextComponent extends BasicCatalogComponent {
+         'caption',
+     ]);
+     variant = computed(() => this.props()['variant']?.value() || 'body', ...(ngDevMode ? [{ debugName: "variant" }] : /* istanbul ignore next */ []));
+-    text = computed(() => this.props()['text']?.value() || '', ...(ngDevMode ? [{ debugName: "text" }] : /* istanbul ignore next */ []));
++    text = computed(() => this.props()['text']?.value()?.toString() ?? '', ...(ngDevMode ? [{ debugName: "text" }] : /* istanbul ignore next */ []));
+     isNonMarkdownVariant = computed(() => {
+         return TextComponent.NON_MARKDOWN_VARIANTS.has(this.variant());
+     }, ...(ngDevMode ? [{ debugName: "isNonMarkdownVariant" }] : /* istanbul ignore next */ []));

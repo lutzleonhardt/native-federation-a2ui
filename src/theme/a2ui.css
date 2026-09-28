@@ -41,6 +41,8 @@
   --a2ui-button-font-weight: 500;
   --a2ui-button-margin: 0;
   --a2ui-button-padding: var(--cf-s-2) var(--cf-s-4);
+  --a2ui-slider-thumb-color: var(--cf-rail);
+  --a2ui-slider-track-color: var(--cf-line);
 }
 
 /* A2UI's Text renders <span class="a2ui-text caption"><em>…</em></span> under

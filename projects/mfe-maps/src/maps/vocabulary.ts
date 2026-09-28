@@ -1,5 +1,6 @@
 import type { CapabilityVocabulary } from '../../../../shared/capabilities/agent-capability';
 import { distanceFn } from './distance.fn';
+import { filterWithinKmFn } from './filter-within-km.fn';
 import { MAP_META } from './map.schema';
 
 /** The components maps announces; `capability.ts` implements exactly this set. */
@@ -11,5 +12,5 @@ export type MapsComponentName = 'Map';
  */
 export const mapsVocabulary = {
   components: { Map: MAP_META },
-  functions: [distanceFn],
+  functions: [distanceFn, filterWithinKmFn],
 } satisfies CapabilityVocabulary<MapsComponentName>;

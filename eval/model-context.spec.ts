@@ -23,7 +23,7 @@ describe('model context under Node', () => {
 
     expect(entry.description).toBe(CATALOG_CONTEXT_DESCRIPTION);
     expect(Object.keys(payload.components)).toEqual(['Gauge', 'Timeline', 'Map']);
-    expect(Object.keys(payload.functions)).toEqual(['daysUntil', 'distance']);
+    expect(Object.keys(payload.functions)).toEqual(['daysUntil', 'distance', 'filterWithinKm']);
   });
 
   it('T2-AC-01: a charts-only list announces neither Map nor distance', () => {
