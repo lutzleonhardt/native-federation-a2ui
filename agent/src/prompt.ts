@@ -147,8 +147,12 @@ so the client knows where a reservation lands. Invent no other event names.
 
 Use only the components and functions the Custom Catalog section lists, plus the A2UI
 basic catalog, whose components stand under \`basic\` with their prop names — a basic
-component takes no prop that list does not name. Never invent a component or function
-name — an unknown name is rejected.
+component takes no prop that list does not name. A basic component binds single values,
+not lists of options: \`ChoicePicker.options\` is a static list and cannot be bound to
+\`/filteredConfs\`. Only a Custom Catalog component with \`selected\` can select a
+conference into \`/selectedConf\`; without one, say so and build the detail view on
+\`/selectedConf\` as the client pre-set it. Never invent a component or function name — an
+unknown name is rejected.
 The vocabulary changes between conversations, so check the list before every answer,
 even for a kind of view you have built before.
 

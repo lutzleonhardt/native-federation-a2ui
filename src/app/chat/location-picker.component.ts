@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CITIES } from '../domain/cities';
 import { LocationStore } from '../domain/location.store';
 
-/** Lives in the ink band and takes its colours; the select's option list stays native. */
+/**
+ * Lives in the ink band and takes its colours; the select's option list stays native.
+ * Pinned (replay), it only names the recordings' city.
+ */
 @Component({
   selector: 'app-location-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -14,8 +17,11 @@ export class LocationPickerComponent {
 
   protected readonly cities = CITIES;
   protected readonly me = this.location.me;
+  protected readonly pinned = this.location.pinned;
   private readonly changing = signal(false);
-  protected readonly picking = computed(() => this.me() === undefined || this.changing());
+  protected readonly picking = computed(
+    () => !this.pinned && (this.me() === undefined || this.changing()),
+  );
 
   protected pick(event: Event): void {
     const id = (event.target as HTMLSelectElement).value;

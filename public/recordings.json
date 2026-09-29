@@ -1,11 +1,206 @@
 {
   "format": 1,
   "a2ui": "v0.9",
-  "capturedAt": "2026-09-28",
+  "capturedAt": "2026-09-29",
+  "city": "dresden",
+  "note": "Captured in the browser with ?record. Re-record after any change to a prompt text, a component or function description, the agent prompt or the manifest remotes.",
   "recordings": {
-    "charts,maps": {
-      "Which Angular conferences are coming up in the next six months?": [
-        [{ "name": "findConferences", "args": { "topic": "angular" } }],
+    "": {
+      "Where and when is the next Angular conference near me? When I click one, I want details and a way to reserve a seat.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "nearKm": 1000,
+              "limit": 5
+            }
+          }
+        ],
+        [
+          {
+            "name": "messageWidget",
+            "args": {
+              "text": "I found the nearest upcoming Angular conference for you — **ng-atlas Munich** — shown below with full details and a reserve button. Note: this catalog doesn't include a selectable list/card component, so I can't offer a clickable list to switch between conferences; the detail view below is bound to the closest upcoming match."
+            }
+          },
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-conf-detail",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-conf-detail",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Card",
+                        "child": "body"
+                      },
+                      {
+                        "id": "body",
+                        "component": "Column",
+                        "children": ["name", "facts", "divider", "reserve"]
+                      },
+                      {
+                        "id": "name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "facts",
+                        "component": "Row",
+                        "children": [
+                          "city-fact",
+                          "date-fact",
+                          "dist-fact",
+                          "remaining-fact",
+                          "price-fact"
+                        ]
+                      },
+                      {
+                        "id": "city-fact",
+                        "component": "Column",
+                        "children": ["city-label", "city"]
+                      },
+                      {
+                        "id": "city-label",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "city",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/city"
+                        }
+                      },
+                      {
+                        "id": "date-fact",
+                        "component": "Column",
+                        "children": ["date-label", "date"]
+                      },
+                      {
+                        "id": "date-label",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "date",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/date"
+                        }
+                      },
+                      {
+                        "id": "dist-fact",
+                        "component": "Column",
+                        "children": ["dist-label", "dist"]
+                      },
+                      {
+                        "id": "dist-label",
+                        "component": "Text",
+                        "text": "Distance from you (km)",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "dist",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/distanceKm"
+                        }
+                      },
+                      {
+                        "id": "remaining-fact",
+                        "component": "Column",
+                        "children": ["remaining-label", "remaining"]
+                      },
+                      {
+                        "id": "remaining-label",
+                        "component": "Text",
+                        "text": "Tickets left",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "remaining",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/remaining"
+                        }
+                      },
+                      {
+                        "id": "price-fact",
+                        "component": "Column",
+                        "children": ["price-label", "price"]
+                      },
+                      {
+                        "id": "price-label",
+                        "component": "Text",
+                        "text": "Price",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "price",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/price"
+                        }
+                      },
+                      {
+                        "id": "divider",
+                        "component": "Divider"
+                      },
+                      {
+                        "id": "reserve-label",
+                        "component": "Text",
+                        "text": "Reserve a seat"
+                      },
+                      {
+                        "id": "reserve",
+                        "component": "Button",
+                        "child": "reserve-label",
+                        "action": {
+                          "event": {
+                            "name": "reserve",
+                            "context": {
+                              "id": {
+                                "path": "/selectedConf/id"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Compare the next three Angular conferences: date, city, ticket price and tickets left.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "limit": 3
+            }
+          }
+        ],
         [
           {
             "name": "renderSurface",
@@ -14,26 +209,819 @@
                 {
                   "version": "v0.9",
                   "createSurface": {
-                    "surfaceId": "upcoming",
+                    "surfaceId": "ng-compare",
                     "catalogId": "https://conference-finder.dev/catalogs/assistant"
                   }
                 },
                 {
                   "version": "v0.9",
                   "updateComponents": {
-                    "surfaceId": "upcoming",
+                    "surfaceId": "ng-compare",
                     "components": [
-                      { "id": "root", "component": "Column", "children": ["timeline", "name"] },
                       {
-                        "id": "timeline",
-                        "component": "Timeline",
-                        "items": { "path": "/filteredConfs" },
-                        "selected": { "path": "/selectedConf" }
+                        "id": "root",
+                        "component": "Row",
+                        "children": ["card0", "card1", "card2"]
                       },
                       {
-                        "id": "name",
+                        "id": "card0",
+                        "component": "Card",
+                        "child": "body0"
+                      },
+                      {
+                        "id": "body0",
+                        "component": "Column",
+                        "children": ["name0", "date0", "city0", "price0", "left0"]
+                      },
+                      {
+                        "id": "name0",
                         "component": "Text",
-                        "text": { "path": "/selectedConf/name" }
+                        "text": {
+                          "path": "/filteredConfs/0/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/date"
+                        }
+                      },
+                      {
+                        "id": "city0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/city"
+                        }
+                      },
+                      {
+                        "id": "price0",
+                        "component": "Text",
+                        "text": {
+                          "call": "formatCurrency",
+                          "args": {
+                            "value": {
+                              "path": "/filteredConfs/0/price"
+                            },
+                            "currency": "EUR"
+                          },
+                          "returnType": "string"
+                        }
+                      },
+                      {
+                        "id": "left0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/remaining"
+                        }
+                      },
+                      {
+                        "id": "card1",
+                        "component": "Card",
+                        "child": "body1"
+                      },
+                      {
+                        "id": "body1",
+                        "component": "Column",
+                        "children": ["name1", "date1", "city1", "price1", "left1"]
+                      },
+                      {
+                        "id": "name1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/date"
+                        }
+                      },
+                      {
+                        "id": "city1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/city"
+                        }
+                      },
+                      {
+                        "id": "price1",
+                        "component": "Text",
+                        "text": {
+                          "call": "formatCurrency",
+                          "args": {
+                            "value": {
+                              "path": "/filteredConfs/1/price"
+                            },
+                            "currency": "EUR"
+                          },
+                          "returnType": "string"
+                        }
+                      },
+                      {
+                        "id": "left1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/remaining"
+                        }
+                      },
+                      {
+                        "id": "card2",
+                        "component": "Card",
+                        "child": "body2"
+                      },
+                      {
+                        "id": "body2",
+                        "component": "Column",
+                        "children": ["name2", "date2", "city2", "price2", "left2"]
+                      },
+                      {
+                        "id": "name2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/date"
+                        }
+                      },
+                      {
+                        "id": "city2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/city"
+                        }
+                      },
+                      {
+                        "id": "price2",
+                        "component": "Text",
+                        "text": {
+                          "call": "formatCurrency",
+                          "args": {
+                            "value": {
+                              "path": "/filteredConfs/2/price"
+                            },
+                            "currency": "EUR"
+                          },
+                          "returnType": "string"
+                        }
+                      },
+                      {
+                        "id": "left2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/remaining"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Where are the Angular conferences around me? Let me narrow them down by distance with a slider.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "nearKm": 1000
+            }
+          }
+        ],
+        [
+          {
+            "name": "messageWidget",
+            "args": {
+              "text": "I don't have a map component in this catalog, so I can't plot the conferences on a map — here's the closest alternative: a list of the Angular conferences near you with city, country and distance.\n\nI also can't wire up a distance slider: there's no filtering function available to make the slider actually narrow down the list, so I've left that control out rather than show one that wouldn't do anything."
+            }
+          },
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-conf-locations",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-conf-locations",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["title", "list"]
+                      },
+                      {
+                        "id": "title",
+                        "component": "Text",
+                        "text": "Angular conferences near you",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "list",
+                        "component": "List",
+                        "direction": "vertical",
+                        "children": [
+                          "card-0",
+                          "card-1",
+                          "card-2",
+                          "card-3",
+                          "card-4",
+                          "card-5",
+                          "card-6",
+                          "card-7",
+                          "card-8"
+                        ]
+                      },
+                      {
+                        "id": "card-0",
+                        "component": "Card",
+                        "child": "body-0"
+                      },
+                      {
+                        "id": "body-0",
+                        "component": "Column",
+                        "children": ["name-0", "loc-0", "dist-0"]
+                      },
+                      {
+                        "id": "name-0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "loc-0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/city"
+                        }
+                      },
+                      {
+                        "id": "dist-0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "card-1",
+                        "component": "Card",
+                        "child": "body-1"
+                      },
+                      {
+                        "id": "body-1",
+                        "component": "Column",
+                        "children": ["name-1", "loc-1", "dist-1"]
+                      },
+                      {
+                        "id": "name-1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "loc-1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/city"
+                        }
+                      },
+                      {
+                        "id": "dist-1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "card-2",
+                        "component": "Card",
+                        "child": "body-2"
+                      },
+                      {
+                        "id": "body-2",
+                        "component": "Column",
+                        "children": ["name-2", "loc-2", "dist-2"]
+                      },
+                      {
+                        "id": "name-2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "loc-2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/city"
+                        }
+                      },
+                      {
+                        "id": "dist-2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "card-3",
+                        "component": "Card",
+                        "child": "body-3"
+                      },
+                      {
+                        "id": "body-3",
+                        "component": "Column",
+                        "children": ["name-3", "loc-3", "dist-3"]
+                      },
+                      {
+                        "id": "name-3",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "loc-3",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/city"
+                        }
+                      },
+                      {
+                        "id": "dist-3",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "card-4",
+                        "component": "Card",
+                        "child": "body-4"
+                      },
+                      {
+                        "id": "body-4",
+                        "component": "Column",
+                        "children": ["name-4", "loc-4", "dist-4"]
+                      },
+                      {
+                        "id": "name-4",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "loc-4",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/city"
+                        }
+                      },
+                      {
+                        "id": "dist-4",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "card-5",
+                        "component": "Card",
+                        "child": "body-5"
+                      },
+                      {
+                        "id": "body-5",
+                        "component": "Column",
+                        "children": ["name-5", "loc-5", "dist-5"]
+                      },
+                      {
+                        "id": "name-5",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "loc-5",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/city"
+                        }
+                      },
+                      {
+                        "id": "dist-5",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "card-6",
+                        "component": "Card",
+                        "child": "body-6"
+                      },
+                      {
+                        "id": "body-6",
+                        "component": "Column",
+                        "children": ["name-6", "loc-6", "dist-6"]
+                      },
+                      {
+                        "id": "name-6",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/6/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "loc-6",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/6/city"
+                        }
+                      },
+                      {
+                        "id": "dist-6",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/6/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "card-7",
+                        "component": "Card",
+                        "child": "body-7"
+                      },
+                      {
+                        "id": "body-7",
+                        "component": "Column",
+                        "children": ["name-7", "loc-7", "dist-7"]
+                      },
+                      {
+                        "id": "name-7",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/7/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "loc-7",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/7/city"
+                        }
+                      },
+                      {
+                        "id": "dist-7",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/7/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "card-8",
+                        "component": "Card",
+                        "child": "body-8"
+                      },
+                      {
+                        "id": "body-8",
+                        "component": "Column",
+                        "children": ["name-8", "loc-8", "dist-8"]
+                      },
+                      {
+                        "id": "name-8",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/8/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "loc-8",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/8/city"
+                        }
+                      },
+                      {
+                        "id": "dist-8",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/8/distanceKm"
+                        },
+                        "variant": "caption"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Which Angular conferences are coming up in the next six months?": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "withinDays": 180
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-upcoming",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-upcoming",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["title", "list"]
+                      },
+                      {
+                        "id": "title",
+                        "component": "Text",
+                        "text": "Angular conferences in the next 6 months",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "list",
+                        "component": "List",
+                        "direction": "vertical",
+                        "children": ["c0", "c1", "c2", "c3", "c4", "c5", "c6"]
+                      },
+                      {
+                        "id": "c0",
+                        "component": "Card",
+                        "child": "b0"
+                      },
+                      {
+                        "id": "b0",
+                        "component": "Row",
+                        "children": ["n0", "d0", "city0"]
+                      },
+                      {
+                        "id": "n0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "d0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/date"
+                        }
+                      },
+                      {
+                        "id": "city0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/city"
+                        }
+                      },
+                      {
+                        "id": "c1",
+                        "component": "Card",
+                        "child": "b1"
+                      },
+                      {
+                        "id": "b1",
+                        "component": "Row",
+                        "children": ["n1", "d1", "city1"]
+                      },
+                      {
+                        "id": "n1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "d1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/date"
+                        }
+                      },
+                      {
+                        "id": "city1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/city"
+                        }
+                      },
+                      {
+                        "id": "c2",
+                        "component": "Card",
+                        "child": "b2"
+                      },
+                      {
+                        "id": "b2",
+                        "component": "Row",
+                        "children": ["n2", "d2", "city2"]
+                      },
+                      {
+                        "id": "n2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "d2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/date"
+                        }
+                      },
+                      {
+                        "id": "city2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/city"
+                        }
+                      },
+                      {
+                        "id": "c3",
+                        "component": "Card",
+                        "child": "b3"
+                      },
+                      {
+                        "id": "b3",
+                        "component": "Row",
+                        "children": ["n3", "d3", "city3"]
+                      },
+                      {
+                        "id": "n3",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "d3",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/date"
+                        }
+                      },
+                      {
+                        "id": "city3",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/city"
+                        }
+                      },
+                      {
+                        "id": "c4",
+                        "component": "Card",
+                        "child": "b4"
+                      },
+                      {
+                        "id": "b4",
+                        "component": "Row",
+                        "children": ["n4", "d4", "city4"]
+                      },
+                      {
+                        "id": "n4",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "d4",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/date"
+                        }
+                      },
+                      {
+                        "id": "city4",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/city"
+                        }
+                      },
+                      {
+                        "id": "c5",
+                        "component": "Card",
+                        "child": "b5"
+                      },
+                      {
+                        "id": "b5",
+                        "component": "Row",
+                        "children": ["n5", "d5", "city5"]
+                      },
+                      {
+                        "id": "n5",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "d5",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/date"
+                        }
+                      },
+                      {
+                        "id": "city5",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/city"
+                        }
+                      },
+                      {
+                        "id": "c6",
+                        "component": "Card",
+                        "child": "b6"
+                      },
+                      {
+                        "id": "b6",
+                        "component": "Row",
+                        "children": ["n6", "d6", "city6"]
+                      },
+                      {
+                        "id": "n6",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/6/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "d6",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/6/date"
+                        }
+                      },
+                      {
+                        "id": "city6",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/6/city"
+                        }
                       }
                     ]
                   }
@@ -46,7 +1034,15 @@
     },
     "charts": {
       "Which Angular conferences are coming up in the next six months?": [
-        [{ "name": "findConferences", "args": { "topic": "angular" } }],
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "withinDays": 183
+            }
+          }
+        ],
         [
           {
             "name": "renderSurface",
@@ -55,26 +1051,752 @@
                 {
                   "version": "v0.9",
                   "createSurface": {
-                    "surfaceId": "upcoming",
+                    "surfaceId": "angular-upcoming-timeline",
                     "catalogId": "https://conference-finder.dev/catalogs/assistant"
                   }
                 },
                 {
                   "version": "v0.9",
                   "updateComponents": {
-                    "surfaceId": "upcoming",
+                    "surfaceId": "angular-upcoming-timeline",
                     "components": [
-                      { "id": "root", "component": "Column", "children": ["timeline", "name"] },
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["title", "timeline", "detail"]
+                      },
+                      {
+                        "id": "title",
+                        "component": "Text",
+                        "text": "Angular conferences in the next 6 months",
+                        "variant": "h3"
+                      },
                       {
                         "id": "timeline",
                         "component": "Timeline",
-                        "items": { "path": "/filteredConfs" },
-                        "selected": { "path": "/selectedConf" }
+                        "items": {
+                          "path": "/filteredConfs"
+                        },
+                        "selected": {
+                          "path": "/selectedConf"
+                        }
+                      },
+                      {
+                        "id": "detail",
+                        "component": "Card",
+                        "child": "detail-body"
+                      },
+                      {
+                        "id": "detail-body",
+                        "component": "Column",
+                        "children": ["detail-name", "detail-facts"]
+                      },
+                      {
+                        "id": "detail-name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "detail-facts",
+                        "component": "Row",
+                        "children": ["detail-city", "detail-date"]
+                      },
+                      {
+                        "id": "detail-city",
+                        "component": "Column",
+                        "children": ["detail-city-label", "detail-city-value"]
+                      },
+                      {
+                        "id": "detail-city-label",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "detail-city-value",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/city"
+                        }
+                      },
+                      {
+                        "id": "detail-date",
+                        "component": "Column",
+                        "children": ["detail-date-label", "detail-date-value"]
+                      },
+                      {
+                        "id": "detail-date-label",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "detail-date-value",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/date"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Where are the Angular conferences around me? Let me narrow them down by distance with a slider.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "nearKm": 500
+            }
+          }
+        ],
+        [
+          {
+            "name": "messageWidget",
+            "args": {
+              "text": "I can list the Angular conferences near you, but I can't wire a distance slider to them — none of the available functions filter the list by a `maxKm` value, so a slider wouldn't actually narrow anything down. Here's the list with each conference's city and distance instead."
+            }
+          },
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-near-me",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-near-me",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["title", "list"]
+                      },
+                      {
+                        "id": "title",
+                        "component": "Text",
+                        "text": "Angular conferences near you",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "list",
+                        "component": "List",
+                        "direction": "vertical",
+                        "children": ["item0", "item1", "item2", "item3", "item4", "item5"]
+                      },
+                      {
+                        "id": "item0",
+                        "component": "Row",
+                        "children": ["name0", "city0", "dist0"]
+                      },
+                      {
+                        "id": "name0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/name"
+                        }
+                      },
+                      {
+                        "id": "city0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/city"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "dist0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "item1",
+                        "component": "Row",
+                        "children": ["name1", "city1", "dist1"]
+                      },
+                      {
+                        "id": "name1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/name"
+                        }
+                      },
+                      {
+                        "id": "city1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/city"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "dist1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "item2",
+                        "component": "Row",
+                        "children": ["name2", "city2", "dist2"]
+                      },
+                      {
+                        "id": "name2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/name"
+                        }
+                      },
+                      {
+                        "id": "city2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/city"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "dist2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "item3",
+                        "component": "Row",
+                        "children": ["name3", "city3", "dist3"]
+                      },
+                      {
+                        "id": "name3",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/name"
+                        }
+                      },
+                      {
+                        "id": "city3",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/city"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "dist3",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "item4",
+                        "component": "Row",
+                        "children": ["name4", "city4", "dist4"]
+                      },
+                      {
+                        "id": "name4",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/name"
+                        }
+                      },
+                      {
+                        "id": "city4",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/city"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "dist4",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/distanceKm"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "item5",
+                        "component": "Row",
+                        "children": ["name5", "city5", "dist5"]
+                      },
+                      {
+                        "id": "name5",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/name"
+                        }
+                      },
+                      {
+                        "id": "city5",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/city"
+                        },
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "dist5",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/distanceKm"
+                        },
+                        "variant": "caption"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Compare the next three Angular conferences: date, city, ticket price and tickets left.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "limit": 3
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "angular-compare-1",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "angular-compare-1",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Row",
+                        "children": ["card0", "card1", "card2"]
+                      },
+                      {
+                        "id": "card0",
+                        "component": "Card",
+                        "child": "body0"
+                      },
+                      {
+                        "id": "body0",
+                        "component": "Column",
+                        "children": ["name0", "date0", "city0", "price0", "tickets0"]
+                      },
+                      {
+                        "id": "name0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/date"
+                        }
+                      },
+                      {
+                        "id": "city0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/city"
+                        }
+                      },
+                      {
+                        "id": "price0",
+                        "component": "Text",
+                        "text": {
+                          "call": "formatCurrency",
+                          "args": {
+                            "value": {
+                              "path": "/filteredConfs/0/price"
+                            },
+                            "currency": "EUR"
+                          },
+                          "returnType": "string"
+                        }
+                      },
+                      {
+                        "id": "tickets0",
+                        "component": "Gauge",
+                        "value": {
+                          "path": "/filteredConfs/0/remaining"
+                        },
+                        "max": {
+                          "path": "/filteredConfs/0/capacity"
+                        },
+                        "label": "Tickets left"
+                      },
+                      {
+                        "id": "card1",
+                        "component": "Card",
+                        "child": "body1"
+                      },
+                      {
+                        "id": "body1",
+                        "component": "Column",
+                        "children": ["name1", "date1", "city1", "price1", "tickets1"]
+                      },
+                      {
+                        "id": "name1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/date"
+                        }
+                      },
+                      {
+                        "id": "city1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/city"
+                        }
+                      },
+                      {
+                        "id": "price1",
+                        "component": "Text",
+                        "text": {
+                          "call": "formatCurrency",
+                          "args": {
+                            "value": {
+                              "path": "/filteredConfs/1/price"
+                            },
+                            "currency": "EUR"
+                          },
+                          "returnType": "string"
+                        }
+                      },
+                      {
+                        "id": "tickets1",
+                        "component": "Gauge",
+                        "value": {
+                          "path": "/filteredConfs/1/remaining"
+                        },
+                        "max": {
+                          "path": "/filteredConfs/1/capacity"
+                        },
+                        "label": "Tickets left"
+                      },
+                      {
+                        "id": "card2",
+                        "component": "Card",
+                        "child": "body2"
+                      },
+                      {
+                        "id": "body2",
+                        "component": "Column",
+                        "children": ["name2", "date2", "city2", "price2", "tickets2"]
+                      },
+                      {
+                        "id": "name2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/date"
+                        }
+                      },
+                      {
+                        "id": "city2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/city"
+                        }
+                      },
+                      {
+                        "id": "price2",
+                        "component": "Text",
+                        "text": {
+                          "call": "formatCurrency",
+                          "args": {
+                            "value": {
+                              "path": "/filteredConfs/2/price"
+                            },
+                            "currency": "EUR"
+                          },
+                          "returnType": "string"
+                        }
+                      },
+                      {
+                        "id": "tickets2",
+                        "component": "Gauge",
+                        "value": {
+                          "path": "/filteredConfs/2/remaining"
+                        },
+                        "max": {
+                          "path": "/filteredConfs/2/capacity"
+                        },
+                        "label": "Tickets left"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Where and when is the next Angular conference near me? When I click one, I want details and a way to reserve a seat.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "nearKm": 2000,
+              "limit": 10
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-conf-finder",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-conf-finder",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["heading", "timeline", "divider0", "detail-card"]
+                      },
+                      {
+                        "id": "heading",
+                        "component": "Text",
+                        "text": "Angular conferences near you",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "timeline",
+                        "component": "Timeline",
+                        "items": {
+                          "path": "/filteredConfs"
+                        },
+                        "selected": {
+                          "path": "/selectedConf"
+                        }
+                      },
+                      {
+                        "id": "divider0",
+                        "component": "Divider"
+                      },
+                      {
+                        "id": "detail-card",
+                        "component": "Card",
+                        "child": "detail-body"
+                      },
+                      {
+                        "id": "detail-body",
+                        "component": "Column",
+                        "children": ["name", "facts-row", "gauge", "divider1", "reserve"]
                       },
                       {
                         "id": "name",
                         "component": "Text",
-                        "text": { "path": "/selectedConf/name" }
+                        "text": {
+                          "path": "/selectedConf/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "facts-row",
+                        "component": "Row",
+                        "children": [
+                          "city-fact",
+                          "date-fact",
+                          "days-fact",
+                          "distance-fact",
+                          "price-fact"
+                        ]
+                      },
+                      {
+                        "id": "city-fact",
+                        "component": "Column",
+                        "children": ["city-label", "city-value"]
+                      },
+                      {
+                        "id": "city-label",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "city-value",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/city"
+                        }
+                      },
+                      {
+                        "id": "date-fact",
+                        "component": "Column",
+                        "children": ["date-label", "date-value"]
+                      },
+                      {
+                        "id": "date-label",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "date-value",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/date"
+                        }
+                      },
+                      {
+                        "id": "days-fact",
+                        "component": "Column",
+                        "children": ["days-label", "days-value"]
+                      },
+                      {
+                        "id": "days-label",
+                        "component": "Text",
+                        "text": "Days until",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "days-value",
+                        "component": "Text",
+                        "text": {
+                          "call": "daysUntil",
+                          "args": {
+                            "date": {
+                              "path": "/selectedConf/date"
+                            }
+                          },
+                          "returnType": "number"
+                        }
+                      },
+                      {
+                        "id": "distance-fact",
+                        "component": "Column",
+                        "children": ["distance-label", "distance-value"]
+                      },
+                      {
+                        "id": "distance-label",
+                        "component": "Text",
+                        "text": "Distance (km)",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "distance-value",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/distanceKm"
+                        }
+                      },
+                      {
+                        "id": "price-fact",
+                        "component": "Column",
+                        "children": ["price-label", "price-value"]
+                      },
+                      {
+                        "id": "price-label",
+                        "component": "Text",
+                        "text": "Price",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "price-value",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/price"
+                        }
+                      },
+                      {
+                        "id": "gauge",
+                        "component": "Gauge",
+                        "value": {
+                          "path": "/selectedConf/remaining"
+                        },
+                        "max": {
+                          "path": "/selectedConf/capacity"
+                        },
+                        "label": "Tickets left"
+                      },
+                      {
+                        "id": "divider1",
+                        "component": "Divider"
+                      },
+                      {
+                        "id": "reserve-label",
+                        "component": "Text",
+                        "text": "Reserve a seat"
+                      },
+                      {
+                        "id": "reserve",
+                        "component": "Button",
+                        "child": "reserve-label",
+                        "action": {
+                          "event": {
+                            "name": "reserve",
+                            "context": {
+                              "id": {
+                                "path": "/selectedConf/id"
+                              }
+                            }
+                          }
+                        }
                       }
                     ]
                   }
@@ -85,7 +1807,1604 @@
         ]
       ]
     },
-    "maps": {},
-    "": {}
+    "maps": {
+      "Which Angular conferences are coming up in the next six months?": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "withinDays": 183,
+              "groupBy": "month",
+              "limit": 10
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-upcoming",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-upcoming",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["title", "list"]
+                      },
+                      {
+                        "id": "title",
+                        "component": "Text",
+                        "text": "Angular conferences in the next 6 months",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "list",
+                        "component": "List",
+                        "direction": "vertical",
+                        "children": ["c0", "c1", "c2", "c3", "c4", "c5", "c6"]
+                      },
+                      {
+                        "id": "c0",
+                        "component": "Card",
+                        "child": "c0-col"
+                      },
+                      {
+                        "id": "c0-col",
+                        "component": "Column",
+                        "children": ["c0-name", "c0-facts"]
+                      },
+                      {
+                        "id": "c0-name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "c0-facts",
+                        "component": "Row",
+                        "children": ["c0-date", "c0-city"]
+                      },
+                      {
+                        "id": "c0-date",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/date"
+                        }
+                      },
+                      {
+                        "id": "c0-city",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/city"
+                        }
+                      },
+                      {
+                        "id": "c1",
+                        "component": "Card",
+                        "child": "c1-col"
+                      },
+                      {
+                        "id": "c1-col",
+                        "component": "Column",
+                        "children": ["c1-name", "c1-facts"]
+                      },
+                      {
+                        "id": "c1-name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "c1-facts",
+                        "component": "Row",
+                        "children": ["c1-date", "c1-city"]
+                      },
+                      {
+                        "id": "c1-date",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/date"
+                        }
+                      },
+                      {
+                        "id": "c1-city",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/city"
+                        }
+                      },
+                      {
+                        "id": "c2",
+                        "component": "Card",
+                        "child": "c2-col"
+                      },
+                      {
+                        "id": "c2-col",
+                        "component": "Column",
+                        "children": ["c2-name", "c2-facts"]
+                      },
+                      {
+                        "id": "c2-name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "c2-facts",
+                        "component": "Row",
+                        "children": ["c2-date", "c2-city"]
+                      },
+                      {
+                        "id": "c2-date",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/date"
+                        }
+                      },
+                      {
+                        "id": "c2-city",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/city"
+                        }
+                      },
+                      {
+                        "id": "c3",
+                        "component": "Card",
+                        "child": "c3-col"
+                      },
+                      {
+                        "id": "c3-col",
+                        "component": "Column",
+                        "children": ["c3-name", "c3-facts"]
+                      },
+                      {
+                        "id": "c3-name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "c3-facts",
+                        "component": "Row",
+                        "children": ["c3-date", "c3-city"]
+                      },
+                      {
+                        "id": "c3-date",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/date"
+                        }
+                      },
+                      {
+                        "id": "c3-city",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/3/city"
+                        }
+                      },
+                      {
+                        "id": "c4",
+                        "component": "Card",
+                        "child": "c4-col"
+                      },
+                      {
+                        "id": "c4-col",
+                        "component": "Column",
+                        "children": ["c4-name", "c4-facts"]
+                      },
+                      {
+                        "id": "c4-name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "c4-facts",
+                        "component": "Row",
+                        "children": ["c4-date", "c4-city"]
+                      },
+                      {
+                        "id": "c4-date",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/date"
+                        }
+                      },
+                      {
+                        "id": "c4-city",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/4/city"
+                        }
+                      },
+                      {
+                        "id": "c5",
+                        "component": "Card",
+                        "child": "c5-col"
+                      },
+                      {
+                        "id": "c5-col",
+                        "component": "Column",
+                        "children": ["c5-name", "c5-facts"]
+                      },
+                      {
+                        "id": "c5-name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "c5-facts",
+                        "component": "Row",
+                        "children": ["c5-date", "c5-city"]
+                      },
+                      {
+                        "id": "c5-date",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/date"
+                        }
+                      },
+                      {
+                        "id": "c5-city",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/5/city"
+                        }
+                      },
+                      {
+                        "id": "c6",
+                        "component": "Card",
+                        "child": "c6-col"
+                      },
+                      {
+                        "id": "c6-col",
+                        "component": "Column",
+                        "children": ["c6-name", "c6-facts"]
+                      },
+                      {
+                        "id": "c6-name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/6/name"
+                        },
+                        "variant": "h4"
+                      },
+                      {
+                        "id": "c6-facts",
+                        "component": "Row",
+                        "children": ["c6-date", "c6-city"]
+                      },
+                      {
+                        "id": "c6-date",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/6/date"
+                        }
+                      },
+                      {
+                        "id": "c6-city",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/6/city"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Where are the Angular conferences around me? Let me narrow them down by distance with a slider.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "nearKm": 2000,
+              "limit": 50
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-map-slider",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-map-slider",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["title", "slider-row", "map"]
+                      },
+                      {
+                        "id": "title",
+                        "component": "Text",
+                        "text": "Angular conferences near you",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "slider-row",
+                        "component": "Column",
+                        "children": ["slider-label", "slider"]
+                      },
+                      {
+                        "id": "slider-label",
+                        "component": "Text",
+                        "text": "Max distance (km)",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "slider",
+                        "component": "Slider",
+                        "label": "Max distance (km)",
+                        "min": 0,
+                        "max": 2000,
+                        "value": {
+                          "path": "/filter/maxKm"
+                        }
+                      },
+                      {
+                        "id": "map",
+                        "component": "Map",
+                        "points": {
+                          "call": "filterWithinKm",
+                          "args": {
+                            "points": {
+                              "path": "/filteredConfs"
+                            },
+                            "center": {
+                              "path": "/me"
+                            },
+                            "maxKm": {
+                              "path": "/filter/maxKm"
+                            }
+                          },
+                          "returnType": "array"
+                        },
+                        "center": {
+                          "path": "/me"
+                        },
+                        "selected": {
+                          "path": "/selectedConf"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateDataModel": {
+                    "surfaceId": "ng-map-slider",
+                    "path": "/filter/maxKm",
+                    "value": 2000
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Compare the next three Angular conferences: date, city, ticket price and tickets left.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "limit": 3
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "angular-compare",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "angular-compare",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Row",
+                        "children": ["card0", "card1", "card2"]
+                      },
+                      {
+                        "id": "card0",
+                        "component": "Card",
+                        "child": "body0"
+                      },
+                      {
+                        "id": "body0",
+                        "component": "Column",
+                        "children": [
+                          "name0",
+                          "date-fact0",
+                          "city-fact0",
+                          "price-fact0",
+                          "left-fact0"
+                        ]
+                      },
+                      {
+                        "id": "name0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date-fact0",
+                        "component": "Column",
+                        "children": ["date-label0", "date0"]
+                      },
+                      {
+                        "id": "date-label0",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "date0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/date"
+                        }
+                      },
+                      {
+                        "id": "city-fact0",
+                        "component": "Column",
+                        "children": ["city-label0", "city0"]
+                      },
+                      {
+                        "id": "city-label0",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "city0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/city"
+                        }
+                      },
+                      {
+                        "id": "price-fact0",
+                        "component": "Column",
+                        "children": ["price-label0", "price0"]
+                      },
+                      {
+                        "id": "price-label0",
+                        "component": "Text",
+                        "text": "Ticket price",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "price0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/price"
+                        }
+                      },
+                      {
+                        "id": "left-fact0",
+                        "component": "Column",
+                        "children": ["left-label0", "left0"]
+                      },
+                      {
+                        "id": "left-label0",
+                        "component": "Text",
+                        "text": "Tickets left",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "left0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/remaining"
+                        }
+                      },
+                      {
+                        "id": "card1",
+                        "component": "Card",
+                        "child": "body1"
+                      },
+                      {
+                        "id": "body1",
+                        "component": "Column",
+                        "children": [
+                          "name1",
+                          "date-fact1",
+                          "city-fact1",
+                          "price-fact1",
+                          "left-fact1"
+                        ]
+                      },
+                      {
+                        "id": "name1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date-fact1",
+                        "component": "Column",
+                        "children": ["date-label1", "date1"]
+                      },
+                      {
+                        "id": "date-label1",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "date1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/date"
+                        }
+                      },
+                      {
+                        "id": "city-fact1",
+                        "component": "Column",
+                        "children": ["city-label1", "city1"]
+                      },
+                      {
+                        "id": "city-label1",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "city1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/city"
+                        }
+                      },
+                      {
+                        "id": "price-fact1",
+                        "component": "Column",
+                        "children": ["price-label1", "price1"]
+                      },
+                      {
+                        "id": "price-label1",
+                        "component": "Text",
+                        "text": "Ticket price",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "price1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/price"
+                        }
+                      },
+                      {
+                        "id": "left-fact1",
+                        "component": "Column",
+                        "children": ["left-label1", "left1"]
+                      },
+                      {
+                        "id": "left-label1",
+                        "component": "Text",
+                        "text": "Tickets left",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "left1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/remaining"
+                        }
+                      },
+                      {
+                        "id": "card2",
+                        "component": "Card",
+                        "child": "body2"
+                      },
+                      {
+                        "id": "body2",
+                        "component": "Column",
+                        "children": [
+                          "name2",
+                          "date-fact2",
+                          "city-fact2",
+                          "price-fact2",
+                          "left-fact2"
+                        ]
+                      },
+                      {
+                        "id": "name2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date-fact2",
+                        "component": "Column",
+                        "children": ["date-label2", "date2"]
+                      },
+                      {
+                        "id": "date-label2",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "date2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/date"
+                        }
+                      },
+                      {
+                        "id": "city-fact2",
+                        "component": "Column",
+                        "children": ["city-label2", "city2"]
+                      },
+                      {
+                        "id": "city-label2",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "city2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/city"
+                        }
+                      },
+                      {
+                        "id": "price-fact2",
+                        "component": "Column",
+                        "children": ["price-label2", "price2"]
+                      },
+                      {
+                        "id": "price-label2",
+                        "component": "Text",
+                        "text": "Ticket price",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "price2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/price"
+                        }
+                      },
+                      {
+                        "id": "left-fact2",
+                        "component": "Column",
+                        "children": ["left-label2", "left2"]
+                      },
+                      {
+                        "id": "left-label2",
+                        "component": "Text",
+                        "text": "Tickets left",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "left2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/remaining"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Where and when is the next Angular conference near me? When I click one, I want details and a way to reserve a seat.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "nearKm": 800,
+              "limit": 10
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-near-me",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-near-me",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["heading", "map", "divider-top", "detail"]
+                      },
+                      {
+                        "id": "heading",
+                        "component": "Text",
+                        "text": "Angular conferences near you",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "map",
+                        "component": "Map",
+                        "points": {
+                          "path": "/filteredConfs"
+                        },
+                        "center": {
+                          "path": "/me"
+                        },
+                        "selected": {
+                          "path": "/selectedConf"
+                        }
+                      },
+                      {
+                        "id": "divider-top",
+                        "component": "Divider"
+                      },
+                      {
+                        "id": "detail",
+                        "component": "Card",
+                        "child": "detail-body"
+                      },
+                      {
+                        "id": "detail-body",
+                        "component": "Column",
+                        "children": ["name", "facts-row", "divider", "reserve"]
+                      },
+                      {
+                        "id": "name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "facts-row",
+                        "component": "Row",
+                        "children": ["city-fact", "date-fact", "tickets-fact", "distance-fact"]
+                      },
+                      {
+                        "id": "city-fact",
+                        "component": "Column",
+                        "children": ["city-label", "city-value"]
+                      },
+                      {
+                        "id": "city-label",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "city-value",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/city"
+                        }
+                      },
+                      {
+                        "id": "date-fact",
+                        "component": "Column",
+                        "children": ["date-label", "date-value"]
+                      },
+                      {
+                        "id": "date-label",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "date-value",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/date"
+                        }
+                      },
+                      {
+                        "id": "tickets-fact",
+                        "component": "Column",
+                        "children": ["tickets-label", "tickets-value"]
+                      },
+                      {
+                        "id": "tickets-label",
+                        "component": "Text",
+                        "text": "Tickets left",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "tickets-value",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/remaining"
+                        }
+                      },
+                      {
+                        "id": "distance-fact",
+                        "component": "Column",
+                        "children": ["distance-label", "distance-value"]
+                      },
+                      {
+                        "id": "distance-label",
+                        "component": "Text",
+                        "text": "Distance",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "distance-value",
+                        "component": "Text",
+                        "text": {
+                          "call": "distance",
+                          "args": {
+                            "a": {
+                              "path": "/me"
+                            },
+                            "b": {
+                              "path": "/selectedConf"
+                            }
+                          },
+                          "returnType": "number"
+                        }
+                      },
+                      {
+                        "id": "divider",
+                        "component": "Divider"
+                      },
+                      {
+                        "id": "reserve-label",
+                        "component": "Text",
+                        "text": "Reserve a seat"
+                      },
+                      {
+                        "id": "reserve",
+                        "component": "Button",
+                        "child": "reserve-label",
+                        "variant": "primary",
+                        "action": {
+                          "event": {
+                            "name": "reserve",
+                            "context": {
+                              "id": {
+                                "path": "/selectedConf/id"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ]
+    },
+    "charts,maps": {
+      "Which Angular conferences are coming up in the next six months?": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "withinDays": 180
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "angular-timeline",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "angular-timeline",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["title", "timeline", "hint"]
+                      },
+                      {
+                        "id": "title",
+                        "component": "Text",
+                        "text": "Angular conferences in the next 6 months",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "timeline",
+                        "component": "Timeline",
+                        "items": {
+                          "path": "/filteredConfs"
+                        },
+                        "selected": {
+                          "path": "/selectedConf"
+                        }
+                      },
+                      {
+                        "id": "hint",
+                        "component": "Text",
+                        "text": "Click a marker to see it selected.",
+                        "variant": "caption"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Where are the Angular conferences around me? Let me narrow them down by distance with a slider.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "nearKm": 3000
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-map-slider",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-map-slider",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["title", "slider-row", "map"]
+                      },
+                      {
+                        "id": "title",
+                        "component": "Text",
+                        "text": "Angular conferences near you",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "slider-row",
+                        "component": "Column",
+                        "children": ["slider-label", "slider"]
+                      },
+                      {
+                        "id": "slider-label",
+                        "component": "Text",
+                        "text": "Max distance (km)",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "slider",
+                        "component": "Slider",
+                        "min": 0,
+                        "max": 3000,
+                        "value": {
+                          "path": "/filter/maxKm"
+                        }
+                      },
+                      {
+                        "id": "map",
+                        "component": "Map",
+                        "points": {
+                          "call": "filterWithinKm",
+                          "args": {
+                            "points": {
+                              "path": "/filteredConfs"
+                            },
+                            "center": {
+                              "path": "/me"
+                            },
+                            "maxKm": {
+                              "path": "/filter/maxKm"
+                            }
+                          },
+                          "returnType": "array"
+                        },
+                        "center": {
+                          "path": "/me"
+                        },
+                        "selected": {
+                          "path": "/selectedConf"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateDataModel": {
+                    "surfaceId": "ng-map-slider",
+                    "path": "/filter/maxKm",
+                    "value": 3000
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Compare the next three Angular conferences: date, city, ticket price and tickets left.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "limit": 3
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "angular-compare-1",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "angular-compare-1",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Row",
+                        "children": ["card0", "card1", "card2"]
+                      },
+                      {
+                        "id": "card0",
+                        "component": "Card",
+                        "child": "body0"
+                      },
+                      {
+                        "id": "body0",
+                        "component": "Column",
+                        "children": ["name0", "date-row0", "price-row0", "tickets0"]
+                      },
+                      {
+                        "id": "name0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date-row0",
+                        "component": "Column",
+                        "children": ["date-label0", "date0"]
+                      },
+                      {
+                        "id": "date-label0",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "date0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/date"
+                        }
+                      },
+                      {
+                        "id": "city-row0",
+                        "component": "Column",
+                        "children": ["city-label0", "city0"]
+                      },
+                      {
+                        "id": "city-label0",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "city0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/city"
+                        }
+                      },
+                      {
+                        "id": "price-row0",
+                        "component": "Row",
+                        "children": ["city-row0", "price-col0"]
+                      },
+                      {
+                        "id": "price-col0",
+                        "component": "Column",
+                        "children": ["price-label0", "price0"]
+                      },
+                      {
+                        "id": "price-label0",
+                        "component": "Text",
+                        "text": "Ticket price",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "price0",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/0/price"
+                        }
+                      },
+                      {
+                        "id": "tickets0",
+                        "component": "Gauge",
+                        "value": {
+                          "path": "/filteredConfs/0/remaining"
+                        },
+                        "max": {
+                          "path": "/filteredConfs/0/capacity"
+                        },
+                        "label": "Tickets left"
+                      },
+                      {
+                        "id": "card1",
+                        "component": "Card",
+                        "child": "body1"
+                      },
+                      {
+                        "id": "body1",
+                        "component": "Column",
+                        "children": ["name1", "date-row1", "price-row1", "tickets1"]
+                      },
+                      {
+                        "id": "name1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date-row1",
+                        "component": "Column",
+                        "children": ["date-label1", "date1"]
+                      },
+                      {
+                        "id": "date-label1",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "date1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/date"
+                        }
+                      },
+                      {
+                        "id": "city-row1",
+                        "component": "Column",
+                        "children": ["city-label1", "city1"]
+                      },
+                      {
+                        "id": "city-label1",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "city1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/city"
+                        }
+                      },
+                      {
+                        "id": "price-row1",
+                        "component": "Row",
+                        "children": ["city-row1", "price-col1"]
+                      },
+                      {
+                        "id": "price-col1",
+                        "component": "Column",
+                        "children": ["price-label1", "price1"]
+                      },
+                      {
+                        "id": "price-label1",
+                        "component": "Text",
+                        "text": "Ticket price",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "price1",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/1/price"
+                        }
+                      },
+                      {
+                        "id": "tickets1",
+                        "component": "Gauge",
+                        "value": {
+                          "path": "/filteredConfs/1/remaining"
+                        },
+                        "max": {
+                          "path": "/filteredConfs/1/capacity"
+                        },
+                        "label": "Tickets left"
+                      },
+                      {
+                        "id": "card2",
+                        "component": "Card",
+                        "child": "body2"
+                      },
+                      {
+                        "id": "body2",
+                        "component": "Column",
+                        "children": ["name2", "date-row2", "price-row2", "tickets2"]
+                      },
+                      {
+                        "id": "name2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "date-row2",
+                        "component": "Column",
+                        "children": ["date-label2", "date2"]
+                      },
+                      {
+                        "id": "date-label2",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "date2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/date"
+                        }
+                      },
+                      {
+                        "id": "city-row2",
+                        "component": "Column",
+                        "children": ["city-label2", "city2"]
+                      },
+                      {
+                        "id": "city-label2",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "city2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/city"
+                        }
+                      },
+                      {
+                        "id": "price-row2",
+                        "component": "Row",
+                        "children": ["city-row2", "price-col2"]
+                      },
+                      {
+                        "id": "price-col2",
+                        "component": "Column",
+                        "children": ["price-label2", "price2"]
+                      },
+                      {
+                        "id": "price-label2",
+                        "component": "Text",
+                        "text": "Ticket price",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "price2",
+                        "component": "Text",
+                        "text": {
+                          "path": "/filteredConfs/2/price"
+                        }
+                      },
+                      {
+                        "id": "tickets2",
+                        "component": "Gauge",
+                        "value": {
+                          "path": "/filteredConfs/2/remaining"
+                        },
+                        "max": {
+                          "path": "/filteredConfs/2/capacity"
+                        },
+                        "label": "Tickets left"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "Where and when is the next Angular conference near me? When I click one, I want details and a way to reserve a seat.": [
+        [
+          {
+            "name": "findConferences",
+            "args": {
+              "topic": "angular",
+              "nearKm": 800,
+              "limit": 10
+            }
+          }
+        ],
+        [
+          {
+            "name": "renderSurface",
+            "args": {
+              "messages": [
+                {
+                  "version": "v0.9",
+                  "createSurface": {
+                    "surfaceId": "ng-near-me",
+                    "catalogId": "https://conference-finder.dev/catalogs/assistant"
+                  }
+                },
+                {
+                  "version": "v0.9",
+                  "updateComponents": {
+                    "surfaceId": "ng-near-me",
+                    "components": [
+                      {
+                        "id": "root",
+                        "component": "Column",
+                        "children": ["title", "map", "timeline", "divider", "detailsCard"]
+                      },
+                      {
+                        "id": "title",
+                        "component": "Text",
+                        "text": "Angular conferences near you",
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "map",
+                        "component": "Map",
+                        "points": {
+                          "path": "/filteredConfs"
+                        },
+                        "center": {
+                          "path": "/me"
+                        },
+                        "selected": {
+                          "path": "/selectedConf"
+                        }
+                      },
+                      {
+                        "id": "timeline",
+                        "component": "Timeline",
+                        "items": {
+                          "path": "/filteredConfs"
+                        },
+                        "selected": {
+                          "path": "/selectedConf"
+                        }
+                      },
+                      {
+                        "id": "divider",
+                        "component": "Divider"
+                      },
+                      {
+                        "id": "detailsCard",
+                        "component": "Card",
+                        "child": "detailsBody"
+                      },
+                      {
+                        "id": "detailsBody",
+                        "component": "Column",
+                        "children": ["name", "factsRow", "gauge", "divider2", "reserve"]
+                      },
+                      {
+                        "id": "name",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/name"
+                        },
+                        "variant": "h3"
+                      },
+                      {
+                        "id": "factsRow",
+                        "component": "Row",
+                        "children": ["cityCol", "dateCol", "distanceCol"]
+                      },
+                      {
+                        "id": "cityCol",
+                        "component": "Column",
+                        "children": ["cityLabel", "cityValue"]
+                      },
+                      {
+                        "id": "cityLabel",
+                        "component": "Text",
+                        "text": "City",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "cityValue",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/city"
+                        }
+                      },
+                      {
+                        "id": "dateCol",
+                        "component": "Column",
+                        "children": ["dateLabel", "dateValue"]
+                      },
+                      {
+                        "id": "dateLabel",
+                        "component": "Text",
+                        "text": "Date",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "dateValue",
+                        "component": "Text",
+                        "text": {
+                          "path": "/selectedConf/date"
+                        }
+                      },
+                      {
+                        "id": "distanceCol",
+                        "component": "Column",
+                        "children": ["distLabel", "distValue"]
+                      },
+                      {
+                        "id": "distLabel",
+                        "component": "Text",
+                        "text": "Distance",
+                        "variant": "caption"
+                      },
+                      {
+                        "id": "distValue",
+                        "component": "Text",
+                        "text": {
+                          "call": "distance",
+                          "args": {
+                            "a": {
+                              "path": "/me"
+                            },
+                            "b": {
+                              "path": "/selectedConf"
+                            }
+                          },
+                          "returnType": "number"
+                        }
+                      },
+                      {
+                        "id": "gauge",
+                        "component": "Gauge",
+                        "value": {
+                          "path": "/selectedConf/remaining"
+                        },
+                        "max": {
+                          "path": "/selectedConf/capacity"
+                        },
+                        "label": "Tickets left"
+                      },
+                      {
+                        "id": "divider2",
+                        "component": "Divider"
+                      },
+                      {
+                        "id": "reserveLabel",
+                        "component": "Text",
+                        "text": "Reserve a seat"
+                      },
+                      {
+                        "id": "reserve",
+                        "component": "Button",
+                        "child": "reserveLabel",
+                        "action": {
+                          "event": {
+                            "name": "reserve",
+                            "context": {
+                              "id": {
+                                "path": "/selectedConf/id"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      ]
+    }
   }
 }

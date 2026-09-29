@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import type { Context } from '@ag-ui/core';
 import { type AgentStore, connectAgentContext, CopilotKit, injectAgentStore } from '@copilotkit/angular';
+import { RUN_RECORDER } from '../replay/recorder';
 import { createAgentStoreHelper } from './agent-store-helper';
 import { type AnyFrontendToolSpec, createFrontendTool } from './create-frontend-tool';
 import { correctRenderFailures } from './render-failure-correction';
@@ -22,7 +23,8 @@ export interface InitAgentStoreOptions {
 
 /**
  * Wires one agent into CopilotKit for the lifetime of the calling injection
- * context: tools, context entries and the render-failure correction channel.
+ * context: tools, context entries, the render-failure correction channel and,
+ * when provided, the recorder of the live agent's answers.
  */
 export function initAgentStore(options: InitAgentStoreOptions): Signal<AgentStore> {
   const store = injectAgentStore(options.agentId);
@@ -38,6 +40,7 @@ export function initAgentStore(options: InitAgentStoreOptions): Signal<AgentStor
     inject(EnvironmentInjector),
   );
   destroyRef.onDestroy(() => toolInjector.destroy());
+  inject(RUN_RECORDER)?.(store().agent, destroyRef);
 
   runInInjectionContext(toolInjector, () => {
     for (const tool of options.frontendTools) {

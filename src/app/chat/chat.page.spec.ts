@@ -1,29 +1,33 @@
-import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { HttpAgent, type AbstractAgent } from '@ag-ui/client';
+import { TestBed } from '@angular/core/testing';
+import { HttpAgent } from '@ag-ui/client';
 import type { BaseEvent, Context, RunAgentInput, ToolMessage } from '@ag-ui/core';
 import { Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { ASSISTANT_AGENT_ID } from '../../../shared/agent-contract';
-import type { AgentCapability } from '../../../shared/capabilities/agent-capability';
-import { provideAgentCapabilities } from '../a2ui/agent-capabilities.token';
 import { ASSISTANT_CATALOG_ID } from '../a2ui/assistant-catalog';
-import { provideReserveHandler } from '../a2ui/reserve-handler';
-import { ASSISTANT_AGENT, provideAssistantAgent } from '../agent/assistant-agent.token';
 import { MAX_CORRECTIONS_PER_TURN } from '../agent/render-failure-correction';
 import { SurfaceDataStore } from '../agent/surface-data.store';
-import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
-import { capability as mapsCapability } from '../../../projects/mfe-maps/src/capability';
-import { provideOfflineMap } from '../../../projects/mfe-maps/src/testing/offline-map';
 import { LocationStore } from '../domain/location.store';
-import type { CapabilityStatus } from '../federation/capability-status';
-import { provideCapabilityStatus } from '../federation/capability-status.token';
-import { PAGE_SEARCH } from '../federation/page-search.token';
-import type { ReplayPace } from '../replay/paced-run';
-import { NOT_RECORDED_TEXT, ReplayAgent } from '../replay/replay-agent';
-import type { Recordings } from '../replay/recordings';
+import { RECORDINGS_STORAGE_KEY, type RecordingsFile } from '../replay/recorder';
+import { parseRecordings, type Recordings } from '../replay/recordings';
+import { NOT_RECORDED_TEXT } from '../replay/replay-agent';
 import { emptyRun, toolCallRun, toolCallsRun } from '../replay/scripted-run';
 import { MockAgent } from '../testing/mock-agent';
-import { ChatPage } from './chat.page';
+import {
+  clickPrompt,
+  gaugeValues,
+  host,
+  INSTANT,
+  markersOf,
+  promptButtons,
+  renderChat,
+  renderReplayChat,
+  reserveButtons,
+  settle,
+  surfaces,
+  timelineMarkers,
+  widgetText,
+} from './testing/chat-page-harness';
 
 /** The demo requests; the spec pins the literal texts, not the constant. */
 const PROMPTS = [
@@ -32,107 +36,6 @@ const PROMPTS = [
   'Compare the next three Angular conferences: date, city, ticket price and tickets left.',
   'Where and when is the next Angular conference near me? When I click one, I want details and a way to reserve a seat.',
 ];
-
-const LOCAL: readonly AgentCapability[] = [chartsCapability, mapsCapability];
-/** What the federation bootstrap reports with both remotes up. */
-const REMOTES: readonly CapabilityStatus[] = [
-  {
-    name: 'charts',
-    state: 'loaded',
-    origin: 'http://localhost:4201/',
-    capability: chartsCapability,
-  },
-  {
-    name: 'maps',
-    state: 'loaded',
-    origin: 'http://localhost:4202/',
-    capability: mapsCapability,
-  },
-];
-
-async function renderChat(
-  agent: AbstractAgent,
-  capabilities: readonly AgentCapability[] = LOCAL,
-): Promise<ComponentFixture<ChatPage>> {
-  TestBed.configureTestingModule({
-    providers: [
-      provideAgentCapabilities(capabilities),
-      provideCapabilityStatus(REMOTES),
-      provideAssistantAgent({ mode: 'local' }),
-      provideReserveHandler(),
-      provideOfflineMap(),
-      { provide: PAGE_SEARCH, useValue: '' },
-      { provide: ASSISTANT_AGENT, useValue: agent },
-    ],
-  });
-  const fixture = TestBed.createComponent(ChatPage);
-  await fixture.whenStable();
-  return fixture;
-}
-
-/** No pauses, one chunk per call — for the cases that look at what is played, not how it arrives. */
-const INSTANT: ReplayPace = { thinkMs: 0, chunkMs: 0, chunkChars: Number.MAX_SAFE_INTEGER };
-
-/** The real replay agent behind the real chat, as the deploy build wires it; `pace` replaces the live pacing. */
-async function renderReplayChat(
-  recordings: Recordings,
-  pace?: ReplayPace,
-): Promise<ComponentFixture<ChatPage>> {
-  TestBed.configureTestingModule({
-    providers: [
-      provideAgentCapabilities(LOCAL),
-      provideCapabilityStatus(REMOTES),
-      provideAssistantAgent({ mode: 'replay', recordings }),
-      provideReserveHandler(),
-      provideOfflineMap(),
-      { provide: PAGE_SEARCH, useValue: '' },
-      ...(pace === undefined
-        ? []
-        : [
-            {
-              provide: ASSISTANT_AGENT,
-              useFactory: () => new ReplayAgent(recordings, 'charts,maps', pace),
-            },
-          ]),
-    ],
-  });
-  const fixture = TestBed.createComponent(ChatPage);
-  await fixture.whenStable();
-  return fixture;
-}
-
-function host(fixture: ComponentFixture<ChatPage>): HTMLElement {
-  return fixture.nativeElement as HTMLElement;
-}
-
-function promptButtons(fixture: ComponentFixture<ChatPage>): HTMLButtonElement[] {
-  return [...host(fixture).querySelectorAll<HTMLButtonElement>('.cf-prompts button')];
-}
-
-function clickPrompt(fixture: ComponentFixture<ChatPage>, index: number): void {
-  promptButtons(fixture)[index].click();
-}
-
-function markersOf(fixture: ComponentFixture<ChatPage>): HTMLElement[] {
-  return [...host(fixture).querySelectorAll<HTMLElement>('a2ui-v09-surface app-map .cf-marker')];
-}
-
-/** The gauge readings of every surface in the transcript, in message order. */
-function gaugeValues(fixture: ComponentFixture<ChatPage>): string[] {
-  return [...host(fixture).querySelectorAll('a2ui-v09-surface .cf-gauge-value')].map(
-    (el) => el.textContent?.trim() ?? '',
-  );
-}
-
-function reserveButtons(fixture: ComponentFixture<ChatPage>): HTMLButtonElement[] {
-  return [
-    ...host(fixture).querySelectorAll<HTMLButtonElement>('a2ui-v09-surface a2ui-v09-button button'),
-  ];
-}
-
-function settle(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 50));
-}
 
 /** Render failures log on purpose; the loop tests would otherwise flood the output. */
 function silenceRenderFailureLogs(): { errors: MockInstance } {
@@ -528,7 +431,7 @@ describe('ChatPage with the scripted agent', () => {
         ? toolCallRun(input, 'renderSurface', { messages: mapSurface('request-map') }, 'call-map')
         : emptyRun(input),
     );
-    const fixture = await renderChat(agent, [chartsCapability]);
+    const fixture = await renderChat(agent, { loaded: ['charts'] });
 
     clickPrompt(fixture, 1);
 
@@ -644,20 +547,6 @@ describe('ChatPage in replay mode', () => {
     return vi.waitFor(check, { timeout: 10000 });
   }
 
-  function timelineMarkers(fixture: ComponentFixture<ChatPage>): HTMLElement[] {
-    return [
-      ...host(fixture).querySelectorAll<HTMLElement>('a2ui-v09-surface app-timeline .cf-marker'),
-    ];
-  }
-
-  function surfaces(fixture: ComponentFixture<ChatPage>): number {
-    return host(fixture).querySelectorAll('a2ui-v09-surface').length;
-  }
-
-  function widgetText(fixture: ComponentFixture<ChatPage>): string {
-    return host(fixture).querySelector('copilot-chat app-message-widget')?.textContent ?? '';
-  }
-
   it('T3-AC-01 a click plays the recorded surface over the client data and no request leaves the browser', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -685,7 +574,7 @@ describe('ChatPage in replay mode', () => {
   it('T3-AC-02 the same prompt twice renders twice; the transcript grows and nothing is rejected', async () => {
     const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const warnings = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const fixture = await renderReplayChat(RECORDED_PROMPT_ONE, INSTANT);
+    const fixture = await renderReplayChat(RECORDED_PROMPT_ONE, { pace: INSTANT });
 
     clickPrompt(fixture, 0);
     await waitForReplay(() => expect(surfaces(fixture)).toBe(1));
@@ -707,7 +596,7 @@ describe('ChatPage in replay mode', () => {
         [PROMPTS[1]]: [[{ name: 'renderSurface', args: { messages: mapSurface('on-a-map') } }]],
       },
     };
-    const fixture = await renderReplayChat(recordings, INSTANT);
+    const fixture = await renderReplayChat(recordings, { pace: INSTANT });
     const idle = () => waitForReplay(() => expect(promptButtons(fixture)[0].disabled).toBe(false));
 
     clickPrompt(fixture, 1);
@@ -727,7 +616,7 @@ describe('ChatPage in replay mode', () => {
 
   it('T3-AC-03 free text answers with the not-recorded text and nothing else', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    const fixture = await renderReplayChat(RECORDED_PROMPT_ONE, INSTANT);
+    const fixture = await renderReplayChat(RECORDED_PROMPT_ONE, { pace: INSTANT });
 
     fixture.componentInstance['send']('Any conferences in Lisbon?');
 
@@ -763,5 +652,142 @@ describe('ChatPage in replay mode', () => {
       host(local).querySelector('a[href="https://native-federation.com/docs/v4/devtools/"]'),
     ).not.toBeNull();
     expect(host(local).querySelector('.cf-mode')?.textContent).toContain('localhost:3001');
+  });
+});
+
+describe('ChatPage with the recorder', () => {
+  /** A live turn with a correction, then a plain answer to the next prompt. */
+  function correctedThenPlain(): MockAgent {
+    return new MockAgent((input, run) => {
+      if (run === 0) return toolCallRun(input, 'findConferences', { topic: 'angular' });
+      if (run === 1)
+        return toolCallRun(input, 'renderSurface', { messages: forbiddenWriteSurface('refused') });
+      if (run === 2)
+        return toolCallRun(input, 'renderSurface', { messages: requestThreeSurface('accepted') });
+      if (run === 3) return toolCallRun(input, 'messageWidget', { text: 'Plain.' });
+      return emptyRun(input);
+    });
+  }
+
+  /** One plain answer, then nothing — a turn the recorder would write. */
+  function plainAnswer(): MockAgent {
+    return new MockAgent((input, run) =>
+      run === 0 ? toolCallRun(input, 'messageWidget', { text: 'Plain.' }) : emptyRun(input),
+    );
+  }
+
+  function storedFile(): RecordingsFile {
+    return JSON.parse(localStorage.getItem(RECORDINGS_STORAGE_KEY) ?? 'null') as RecordingsFile;
+  }
+
+  function recorderWarnings(warnings: MockInstance): string[] {
+    return warnings.mock.calls.flatMap(([first]) =>
+      typeof first === 'string' && first.startsWith('[recorder]') ? [first] : [],
+    );
+  }
+
+  /** The files the recorder logged; the renderer logs other things on its own. */
+  function loggedFiles(logs: MockInstance): string[] {
+    return logs.mock.calls.flatMap(([first]) =>
+      typeof first === 'string' && first.includes('"recordings"') ? [first] : [],
+    );
+  }
+
+  it('T4.5-AC-04 with ?record in local mode the turn lands in localStorage and the console, without the refused run, in the shape parseRecordings accepts', async () => {
+    silenceRenderFailureLogs();
+    const logs = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const fixture = await renderChat(correctedThenPlain(), { record: true });
+    TestBed.inject(LocationStore).setCity('dresden');
+
+    clickPrompt(fixture, 3);
+    await vi.waitFor(() => expect(gaugeValues(fixture)).toHaveLength(1));
+    await vi.waitFor(() =>
+      expect(localStorage.getItem(RECORDINGS_STORAGE_KEY)).toContain('accepted'),
+    );
+
+    const file = storedFile();
+    expect(file).toMatchObject({ format: 1, a2ui: 'v0.9', city: 'dresden' });
+    expect(file.capturedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(file.note).toContain('Re-record');
+    expect(parseRecordings(file)).toEqual({
+      'charts,maps': {
+        [PROMPTS[3]]: [
+          [{ name: 'findConferences', args: { topic: 'angular' } }],
+          [{ name: 'renderSurface', args: { messages: requestThreeSurface('accepted') } }],
+        ],
+      },
+    });
+    expect(loggedFiles(logs).at(-1)).toBe(localStorage.getItem(RECORDINGS_STORAGE_KEY));
+
+    // The next prompt adds its own cell; the first stays as recorded.
+    await vi.waitFor(() =>
+      expect(promptButtons(fixture).some((button) => button.disabled)).toBe(false),
+    );
+    clickPrompt(fixture, 0);
+    await vi.waitFor(() => expect(widgetText(fixture)).toContain('Plain.'));
+    await vi.waitFor(() =>
+      expect(localStorage.getItem(RECORDINGS_STORAGE_KEY)).toContain('Plain.'),
+    );
+    const recordings = parseRecordings(storedFile());
+    expect(Object.keys(recordings['charts,maps'])).toEqual([PROMPTS[3], PROMPTS[0]]);
+    expect(recordings['charts,maps'][PROMPTS[0]]).toEqual([
+      [{ name: 'messageWidget', args: { text: 'Plain.' } }],
+    ]);
+  });
+
+  it('T4.5-AC-05 without a city picked the turn is not written and the console says so', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const warnings = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const fixture = await renderChat(plainAnswer(), { record: true });
+
+    clickPrompt(fixture, 0);
+    await vi.waitFor(() => expect(widgetText(fixture)).toContain('Plain.'));
+    await settle();
+
+    expect(localStorage.getItem(RECORDINGS_STORAGE_KEY)).toBeNull();
+    expect(recorderWarnings(warnings).at(-1)).toContain('no city picked');
+  });
+
+  it('T4.5-AC-05 a stored file from another city is left alone and the console names both cities', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const warnings = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const berlinFile = JSON.stringify({
+      format: 1,
+      a2ui: 'v0.9',
+      capturedAt: '2026-09-29',
+      city: 'berlin',
+      note: '',
+      recordings: {},
+    });
+    localStorage.setItem(RECORDINGS_STORAGE_KEY, berlinFile);
+    const fixture = await renderChat(plainAnswer(), { record: true });
+    TestBed.inject(LocationStore).setCity('dresden');
+
+    clickPrompt(fixture, 0);
+    await vi.waitFor(() => expect(widgetText(fixture)).toContain('Plain.'));
+    await settle();
+
+    expect(localStorage.getItem(RECORDINGS_STORAGE_KEY)).toBe(berlinFile);
+    expect(recorderWarnings(warnings).at(-1)).toContain(
+      'captured in "berlin", this page is in "dresden"',
+    );
+  });
+
+  it('T4.5-AC-04 without ?record, and in replay mode, nothing is stored or logged', async () => {
+    const logs = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const local = await renderChat(plainAnswer());
+    clickPrompt(local, 0);
+    await vi.waitFor(() => expect(widgetText(local)).toContain('Plain.'));
+    await settle();
+    expect(localStorage.getItem(RECORDINGS_STORAGE_KEY)).toBeNull();
+    expect(loggedFiles(logs)).toEqual([]);
+
+    TestBed.resetTestingModule();
+    const replay = await renderReplayChat(RECORDED_PROMPT_ONE, { pace: INSTANT });
+    clickPrompt(replay, 0);
+    await vi.waitFor(() => expect(surfaces(replay)).toBe(1), { timeout: 10000 });
+    await settle();
+    expect(localStorage.getItem(RECORDINGS_STORAGE_KEY)).toBeNull();
+    expect(loggedFiles(logs)).toEqual([]);
   });
 });

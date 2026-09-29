@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAgentMode } from './agent-mode';
+import { recordRequested, resolveAgentMode } from './agent-mode';
 
 describe('resolveAgentMode', () => {
   it('T3-AC-04 ?agent= overrides the build default in both directions', () => {
@@ -12,5 +12,14 @@ describe('resolveAgentMode', () => {
     expect(resolveAgentMode('?capabilities=maps', 'replay')).toBe('replay');
     expect(resolveAgentMode('?agent=cloud', 'local')).toBe('local');
     expect(resolveAgentMode('?agent=', 'replay')).toBe('replay');
+  });
+});
+
+describe('recordRequested', () => {
+  it('T4.5-AC-04 ?record asks for the recorder, with or without a value; nothing else does', () => {
+    expect(recordRequested('?record')).toBe(true);
+    expect(recordRequested('?capabilities=charts&record=1')).toBe(true);
+    expect(recordRequested('')).toBe(false);
+    expect(recordRequested('?agent=local&capabilities=maps')).toBe(false);
   });
 });

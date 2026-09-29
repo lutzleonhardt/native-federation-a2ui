@@ -98,4 +98,12 @@ describe('buildInstructions', () => {
     expect(prompt).toContain('`Slider`');
     expect(prompt).toContain('under `basic`');
   });
+
+  it('states that ChoicePicker options are static and only a `selected` component selects a conference', () => {
+    const prompt = buildInstructions([catalogEntry, locationEntry]);
+
+    expect(prompt).toContain('`ChoicePicker.options` is a static list');
+    expect(prompt).toContain('Only a Custom Catalog component with `selected`');
+    expect(prompt).toContain('as the client pre-set it');
+  });
 });

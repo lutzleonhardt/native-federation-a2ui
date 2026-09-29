@@ -496,6 +496,16 @@ and record it; the badge-2 fallback (the plain map question) is Task 4.5's, deci
 > clicks the sixteen cells and judges the form by eye against Task 4's Badges section.
 > `eval/capture.ts`, `npm run capture`, `eval/drive.ts` and the matrix are dropped; T4.5-AC-01 and
 > T4.5-AC-04 are reworded.
+>
+> **Amendment (2026-09-29, after the capture):** the location is part of a recording (user
+> observation). The search runs again at replay, so 13 of 16 cells give the same result from every
+> picker city — but a radius the model chose for Dresden empties `charts` badge 2 from Warsaw, and
+> a visitor without a city has no model to say so while the `/me` bindings hit nothing. The file
+> therefore names the city of its capture (`city`, a picker id — a pin like `format` and `a2ui`),
+> the recorder writes the page's city and refuses a turn without one or in another city than the
+> stored file, and replay pins the location to the file's city: no geolocation, the picker names
+> it read-only. The sixteen cells were captured in Dresden and got the key by hand. T4.5-AC-05
+> added; the Key Discoveries line on the visitor's city reversed.
 
 Depends on Task 4 (the final badge texts and prompt, the gate held) and Task 3 (`ReplayAgent`,
 `parseRecordings`). Assumes Task 1's reserve handler for the last check.
@@ -542,6 +552,7 @@ and button queries); move them into a shared test harness module rather than cop
 - **T4.5-AC-02** — *(from T4-AC-03)* Every recording is self-contained: played as the first message of a fresh conversation it renders, because it fetches its own data.
 - **T4.5-AC-03** — *(from T4-AC-04, amended 2026-09-28)* With the captured file, replay mode plays badges 1–4 with both remotes — a timeline alone, a map whose markers follow the slider, three comparison cards, the detail view with map and gauge whose reserve Button's click lowers the gauge — and names the missing map, without a slider, with charts only; no network request in any of these.
 - **T4.5-AC-04** — *(amended 2026-09-28, second)* The recorder records only in local agent mode when `?record` is set, drops a run with a refused call, and logs the file in the shape `parseRecordings` accepts; a spec pins the three.
+- **T4.5-AC-05** — *(added 2026-09-29)* `public/recordings.json` names the picker city of its capture and a file without one is refused; the recorder writes the page's city and writes nothing without a city or when the stored file was captured elsewhere, saying why; in replay the location is the file's city for the page's lifetime — no geolocation request, the picker names it without a Change button. A spec pins each.
 - Contributes to XC-01, XC-04, XC-05.
 
 ### Quick functional check
@@ -552,13 +563,14 @@ and button queries); move them into a shared test harness module rather than cop
 
 - `src/app/replay/recorder.ts` (new) and its spec, `src/app/agent/init-agent-store.ts` (where `correctRenderFailures` is bound — the recorder hooks in beside it), `src/app/agent/agent-mode.ts` (`resolveAgentMode`, the `?record` flag), `src/main.ts`.
 - `public/federation.manifest.json` (the set names), `public/recordings.json` (pasted from the console).
-- `src/app/replay/recordings.ts` (`parseRecordings`, `RECORDINGS_FORMAT`, `RECORDINGS_A2UI`, `capabilitySetKey`), `src/app/replay/replay-agent.ts` (Task 3).
+- `src/app/replay/recordings.ts` (`parseRecordings`, `capturedCity`, `RECORDINGS_FORMAT`, `RECORDINGS_A2UI`, `capabilitySetKey`), `src/app/replay/replay-agent.ts` (Task 3).
+- `src/app/domain/location.store.ts` (`PINNED_CITY`, `pinned`, `cityId`), `src/app/chat/location-picker.component.{ts,html}` (read-only when pinned), `src/app/agent/assistant-agent.token.ts` (provides `PINNED_CITY` in replay).
 - `src/app/chat/chat.page.spec.ts` (`renderReplayChat`, `clickPrompt`, `markersOf`, `gaugeValues`, `reserveButtons` — to share), a new chat-page spec over the captured file.
 
 ### Key Discoveries
 
 - The agent reads the repository-root `.env`; `tsx watch` has stopped reloading `prompt.ts` after a checkout before — check the agent log before the paid clicks.
-- Recordings never contain `me`: the client mounts the visitor's own city at replay; capture with a city picked.
+- Recordings never contain `me`, but they assume one: the radius the model chose and a conference it named hold for the city of the capture, so the file names that city and replay pins the location to it (amendment above).
 - Recorded surfaces carry the ids the model chose; Task 3 re-ids them per playback.
 - The register's line 21 spoke of ≈ 8 recordings keyed by conversation path; this task replaces that with set × button.
 - Cost: sixteen clicks, each one or two model calls, plus re-clicks.

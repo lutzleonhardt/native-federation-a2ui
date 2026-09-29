@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   capabilitySetKey,
+  capturedCity,
   findRecording,
   NO_RECORDINGS,
   parseRecordings,
@@ -14,6 +15,7 @@ function recordingsJson(overrides: Record<string, unknown> = {}): Record<string,
     format: 1,
     a2ui: 'v0.9',
     capturedAt: '2026-09-26',
+    city: 'dresden',
     recordings: {
       'charts,maps': {
         [PROMPT]: [
@@ -68,6 +70,23 @@ describe('recordings', () => {
     expect(errors).toHaveBeenCalledTimes(2);
     expect(errors.mock.calls[0][0]).toContain('expected format 1 and a2ui v0.9');
     expect(errors.mock.calls[0][0]).toContain('format 2');
+  });
+
+  it('T4.5-AC-05 names the city of the capture and refuses a file whose city the picker does not offer', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    expect(capturedCity(recordingsJson())).toBe('dresden');
+    expect(capturedCity(recordingsJson({ city: 'atlantis' }))).toBeUndefined();
+    expect(capturedCity(recordingsJson({ city: undefined }))).toBeUndefined();
+    expect(capturedCity('not json')).toBeUndefined();
+
+    expect(parseRecordings(recordingsJson({ city: 'atlantis' }))).toBe(NO_RECORDINGS);
+    expect(parseRecordings(recordingsJson({ city: undefined }))).toBe(NO_RECORDINGS);
+
+    expect(errors).toHaveBeenCalledTimes(2);
+    expect(errors.mock.calls[0][0]).toContain(
+      '"city" is not a city the picker offers, got atlantis',
+    );
   });
 
   it('T3-AC-06 refuses a body that is not sets of prompts of runs of calls', () => {

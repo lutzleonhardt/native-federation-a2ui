@@ -1,9 +1,9 @@
 import { initFederation, type FederationManifest } from '@angular-architects/native-federation-v4';
-import { resolveAgentMode, type AgentSetup } from './app/agent/agent-mode';
+import { recordRequested, resolveAgentMode, type AgentSetup } from './app/agent/agent-mode';
 import { describeCapabilities } from './app/federation/capability-status';
 import { loadCapabilities } from './app/federation/load-capabilities';
 import { selectCapabilities } from './app/federation/select-capabilities';
-import { NO_RECORDINGS, parseRecordings } from './app/replay/recordings';
+import { capturedCity, NO_RECORDINGS, parseRecordings } from './app/replay/recordings';
 import { environment } from './environments/environment';
 
 const MANIFEST_URL = 'federation.manifest.json';
@@ -20,14 +20,13 @@ async function fetchJson(url: string): Promise<unknown> {
 /** Only replay needs the recordings; an unreachable file leaves it knowing no prompt. */
 async function setupAgent(search: string): Promise<AgentSetup> {
   const mode = resolveAgentMode(search, environment.agentMode);
-  if (mode === 'local') return { mode };
-  const recordings = await fetchJson(RECORDINGS_URL)
-    .then(parseRecordings)
-    .catch((err: unknown) => {
-      console.error('[shell] recordings unreachable, every prompt answers as not recorded', err);
-      return NO_RECORDINGS;
-    });
-  return { mode, recordings };
+  if (mode === 'local') return { mode, record: recordRequested(search) };
+  const json = await fetchJson(RECORDINGS_URL).catch((err: unknown) => {
+    console.error('[shell] recordings unreachable, every prompt answers as not recorded', err);
+    return undefined;
+  });
+  if (json === undefined) return { mode, recordings: NO_RECORDINGS };
+  return { mode, recordings: parseRecordings(json), city: capturedCity(json) };
 }
 
 /**
