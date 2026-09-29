@@ -88,4 +88,14 @@ describe('buildInstructions', () => {
     expect(prompt).toContain('reserve');
     expect(prompt).toContain('v0.9');
   });
+
+  it('T4-AC-05 fixes the selection path and states the form rules', () => {
+    const prompt = buildInstructions([catalogEntry, locationEntry]);
+
+    expect(prompt).toContain('"/selectedConf/id"');
+    expect(prompt).not.toContain('<the selection path>');
+    expect(prompt).toContain('# Answer the form asked');
+    expect(prompt).toContain('`Slider`');
+    expect(prompt).toContain('under `basic`');
+  });
 });

@@ -81,12 +81,27 @@ const WIRING_RULES = `# Wiring — local first
 
 When the user describes an interaction over data that is already there, wire it inside
 one surface instead of asking a follow-up question. A selection component writes the
-whole clicked object to the path bound to \`selected\`; every detail view then binds a
-sub-path of that same path. \`/selectedConf\` is pre-set by the client to the first
-result, so the surface is never empty.
+whole clicked object to the path bound to \`selected\` — always \`/selectedConf\` — and
+every detail view binds a sub-path of it. \`/selectedConf\` is pre-set by the client to
+the first result, so the surface is never empty.
 
 Only build a follow-up question when the interaction genuinely needs new data or a
 decision you have to make.
+
+# Answer the form asked
+
+An overview question gets its overview component and nothing else — a timeline for
+"when", a map for "where", each only if the Custom Catalog lists it. A comparison of
+several conferences gets one \`Card\` per conference, bound by index (\`/filteredConfs/0\`,
+\`/filteredConfs/1\`, …), and no reserve Button: the Button belongs to the selected
+conference at \`/selectedConf\` alone. The full detail view — a \`Card\` with tickets left,
+days until, distance and the reserve Button — only when the user asks for details of, or
+an action on, one conference. Never add a map or a timeline the user did not ask for.
+
+A control the user asks for must drive something. Bind a \`Slider\`'s \`value\` to a path
+such as \`/filter/maxKm\`, initialise that path with \`updateDataModel\` in the same
+surface, and feed it into a listed function that computes what a component shows. If no
+listed function consumes the value, say so with \`messageWidget\` and draw no control.
 
 # Bind, never copy
 
@@ -110,26 +125,30 @@ to a string. Put a unit or caption in its own \`Text\`, grouped with its value i
 
 # One conference's details
 
-Whenever a surface shows the details of a *single* conference:
+Whenever a surface shows the details of a *single* conference — the selected one at
+\`/selectedConf\`:
 
 - put its name, the facts and the reserve Button in a \`Card\`, as the detail example does;
 - show how many tickets are left and how far away it is (when the user's location is
   known) — with the Custom Catalog component or function whose description fits; if the
   catalog offers none, bind the plain value, and leave out what no listed function can
   compute;
-- give it a Button that dispatches \`reserve\`, with the selected conference's id as
-  context. Reserving a seat is the one thing the user can do without asking you again,
-  so add the Button even when the user did not ask for it.
+- give it a Button that dispatches \`reserve\`, with \`/selectedConf/id\` as context.
+  Reserving a seat is the one thing the user can do without asking you again, so add the
+  Button whenever one conference's details are shown, even unasked — and nowhere else.
 
 # Client events
 
 \`reserve\` is the only event name that exists. Its context is always
-\`{ "id": { "path": "<the selection path>/id" } }\`. Invent no other event names.
+\`{ "id": { "path": "/selectedConf/id" } }\` — the selection always binds \`/selectedConf\`,
+so the client knows where a reservation lands. Invent no other event names.
 
 # Vocabulary
 
 Use only the components and functions the Custom Catalog section lists, plus the A2UI
-basic catalog. Never invent a component or function name — an unknown name is rejected.
+basic catalog, whose components stand under \`basic\` with their prop names — a basic
+component takes no prop that list does not name. Never invent a component or function
+name — an unknown name is rejected.
 The vocabulary changes between conversations, so check the list before every answer,
 even for a kind of view you have built before.
 
@@ -166,7 +185,7 @@ function catalogSection(value: string | undefined): string {
   if (value === undefined) {
     return '# Custom Catalog\n\nNo custom vocabulary available — use the A2UI basic catalog only.';
   }
-  return `# Custom Catalog\n\nComponents and functions beyond the basic catalog, with their prop schemas:\n\n\`\`\`json\n${value}\n\`\`\``;
+  return `# Custom Catalog\n\nComponents and functions beyond the basic catalog with their prop schemas, and under \`basic\` every basic component with its prop names:\n\n\`\`\`json\n${value}\n\`\`\``;
 }
 
 function locationSection(value: string | undefined): string {

@@ -1,3 +1,4 @@
+import { BASIC_COMPONENTS } from '@a2ui/web_core/v0_9/basic_catalog';
 import { describe, expect, it } from 'vitest';
 import { toFragment, type AgentCapability } from '../../../shared/capabilities/agent-capability';
 import { capability as chartsCapability } from '../../../projects/mfe-charts/src/capability';
@@ -19,6 +20,7 @@ interface SerializedCatalog {
     string,
     { description: string; args: { properties?: Record<string, unknown> }; returnType: string }
   >;
+  basic: Record<string, string[]>;
 }
 
 const LOCAL: readonly AgentCapability[] = [chartsCapability, mapsCapability];
@@ -56,6 +58,18 @@ describe('catalogToContextEntry', () => {
     expect(daysUntil.returnType).toBe('number');
     expect(daysUntil.args.properties).toHaveProperty('date');
     expect(daysUntil.description.length).toBeGreaterThan(0);
+  });
+
+  // The model guessed `Slider.step` from HTML habits: the basic catalog reached it by name only.
+  it('lists every basic component with the prop names of its schema', () => {
+    expect(Object.keys(payload.basic).sort()).toEqual(names(BASIC_COMPONENTS));
+    for (const props of Object.values(payload.basic)) {
+      expect(props.length).toBeGreaterThan(0);
+    }
+    expect(payload.basic['Slider']).toEqual(
+      expect.arrayContaining(['label', 'min', 'max', 'value']),
+    );
+    expect(payload.basic['Slider']).not.toContain('step');
   });
 
   it('serializes distance and strips the $schema noise', () => {

@@ -2,9 +2,11 @@ import { BASIC_COMPONENTS, BASIC_FUNCTIONS } from '@a2ui/web_core/v0_9/basic_cat
 import {
   findForbiddenModelWrites,
   findFunctionCalls,
+  findSelectionPathViolations,
   findStructuralViolations,
   isRecord,
   record,
+  SELECTION_PATH,
 } from '../src/app/a2ui/surface-host-rules';
 
 /**
@@ -52,8 +54,8 @@ export interface Verdict {
 /** A date written into the data model freezes at recording time — the replay-freshness risk. */
 const DATE_LITERAL = /\d{4}-\d{2}-\d{2}/;
 
-/** A keyword, not a judgement: the harness prints the text so a human can read it. */
-const MAP_WORD = /map/i;
+/** A keyword, not a judgement — the honest text names the missing map or distance filter; the harness prints it for a human to read. */
+const MAP_WORD = /map|distance/i;
 
 const NOTHING_ANNOUNCED: AnnouncedNames = { components: [], functions: [] };
 
@@ -71,10 +73,12 @@ export function score(
   const surfaces = surfacesOf(calls, false);
   if (requirement === 'A2-without-maps') {
     // A refused attempt still shows what the model believed it could use.
-    const rejected = surfacesOf(calls, true).flatMap((messages) =>
-      vocabularyFailures(messages, announced),
-    );
-    return verdictOf([...withoutMapFailures(surfaces, widgetTexts(calls), announced), ...rejected]);
+    const rejected = surfacesOf(calls, true);
+    return verdictOf([
+      ...withoutMapFailures(surfaces, widgetTexts(calls), announced),
+      ...rejected.flatMap((messages) => vocabularyFailures(messages, announced)),
+      ...[...surfaces, ...rejected].flatMap(idleControlFailures),
+    ]);
   }
 
   if (surfaces.length !== 1) {
@@ -118,9 +122,20 @@ function withoutMapFailures(
     reasons.push(...hostRuleFailures(messages), ...vocabularyFailures(messages, announced));
   }
   if (!texts.some((text) => MAP_WORD.test(text))) {
-    reasons.push('no messageWidget text names the missing map');
+    reasons.push('no messageWidget text names the missing map or distance filter');
   }
   return reasons;
+}
+
+/**
+ * Spec §7's "no ineffective control": without a distance function nothing can consume a
+ * Slider, so one drawn anywhere — even in a refused attempt — is the wrong answer. (A Map
+ * fails the vocabulary check.)
+ */
+function idleControlFailures(messages: readonly unknown[]): string[] {
+  return byName(components(messages), 'Slider') === undefined
+    ? []
+    : ['a Slider drawn although no listed function can filter by distance'];
 }
 
 function componentNames(messages: readonly unknown[]): string[] {
@@ -154,6 +169,8 @@ function vocabularyFailures(messages: readonly unknown[], announced: AnnouncedNa
 /** Exactly what the shell's `renderSurface` boundary rejects. */
 function hostRuleFailures(messages: readonly unknown[]): string[] {
   const reasons = findStructuralViolations(messages).map((violation) => violation.message);
+  // The shell's rule, not a normalized comparison: absolute paths only, every `selected` at /selectedConf.
+  reasons.push(...findSelectionPathViolations(messages).map((violation) => violation.message));
   for (const path of findForbiddenModelWrites(messages)) {
     reasons.push(`wrote client-owned path ${path} instead of binding it`);
   }
@@ -202,17 +219,19 @@ function mapFailures(parts: readonly Component[]): string[] {
 }
 
 /**
- * The wiring proof: one selection path drives every detail view. `selected` names
- * that path, so the other checks are derived from it rather than hard-coded —
- * the model may pick a different name than `/selectedConf`.
+ * The wiring proof: one selection path drives every detail view. The path is the
+ * client's `SELECTION_PATH` — the shell rejects any other, its reserve handler reads
+ * the selection there.
  */
 function detailFailures(parts: readonly Component[], messages: readonly unknown[]): string[] {
   const map = byName(parts, 'Map');
   if (map === undefined) return ['no Map in the surface'];
 
-  const selection = pathOf(map['selected']);
-  if (selection === undefined) {
-    return [`Map selected is not bound to a path (${describe(map['selected'])}) — nothing is wired`];
+  const selection = SELECTION_PATH;
+  if (!boundTo(map['selected'], selection)) {
+    return [
+      `Map selected is not bound to ${selection} (${describe(map['selected'])}) — nothing is wired`,
+    ];
   }
 
   const reasons: string[] = [];

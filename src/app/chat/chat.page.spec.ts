@@ -27,10 +27,10 @@ import { ChatPage } from './chat.page';
 
 /** The demo requests; the spec pins the literal texts, not the constant. */
 const PROMPTS = [
-  'Which Angular conferences are coming up in the next few months?',
-  'Show them on a map',
-  'Where and when is the next one near me? When I click one, I want details.',
-  'Reserve a ticket for me',
+  'Which Angular conferences are coming up in the next six months?',
+  'Where are the Angular conferences around me? Let me narrow them down by distance with a slider.',
+  'Compare the next three Angular conferences: date, city, ticket price and tickets left.',
+  'Where and when is the next Angular conference near me? When I click one, I want details and a way to reserve a seat.',
 ];
 
 const LOCAL: readonly AgentCapability[] = [chartsCapability, mapsCapability];
@@ -343,7 +343,7 @@ describe('ChatPage run requests through the HttpAgent', () => {
 });
 
 describe('ChatPage with the scripted agent', () => {
-  it('T7-AC-03 example 3 builds the request-3 surface, the second marker selects its conference, and fetch stays untouched', async () => {
+  it('T7-AC-03 badge 4 builds the detail surface, the second marker selects its conference, and fetch stays untouched', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const agent = new MockAgent((input, run) => {
       if (run === 0) return toolCallRun(input, 'findConferences', { topic: 'angular' });
@@ -355,7 +355,7 @@ describe('ChatPage with the scripted agent', () => {
     TestBed.inject(LocationStore).setCity('berlin');
     await fixture.whenStable();
 
-    clickPrompt(fixture, 2);
+    clickPrompt(fixture, 3);
 
     await vi.waitFor(() => expect(markersOf(fixture).length).toBeGreaterThanOrEqual(2));
     const [first, second] = TestBed.inject(SurfaceDataStore).confs();
@@ -388,7 +388,7 @@ describe('ChatPage with the scripted agent', () => {
     TestBed.inject(LocationStore).setCity('berlin');
     await fixture.whenStable();
 
-    clickPrompt(fixture, 2);
+    clickPrompt(fixture, 3);
     await vi.waitFor(() => expect(gaugeValues(fixture)).toHaveLength(1));
     const [first] = TestBed.inject(SurfaceDataStore).confs();
     expect(gaugeValues(fixture)).toEqual([String(first.remaining)]);
@@ -400,7 +400,7 @@ describe('ChatPage with the scripted agent', () => {
     await vi.waitFor(() =>
       expect(promptButtons(fixture).some((button) => button.disabled)).toBe(false),
     );
-    clickPrompt(fixture, 2);
+    clickPrompt(fixture, 3);
     await vi.waitFor(() => expect(gaugeValues(fixture)).toHaveLength(2));
 
     expect(gaugeValues(fixture)).toEqual([

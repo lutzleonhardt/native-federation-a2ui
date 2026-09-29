@@ -217,7 +217,9 @@ What the model reads under `# Custom Catalog`, per shell URL:
 | `/?capabilities=` | — | an empty catalog: `components: {}`, `functions: {}` |
 
 The shell always sends a catalog entry, so the prompt's fallback text ("No custom
-vocabulary available …") appears only for a client that sends none.
+vocabulary available …") appears only for a client that sends none. Every entry also
+carries `basic`: the 18 basic components with the prop names of their schemas, so the
+model composes them without guessing a key.
 
 The static part of the prompt tells the model that the vocabulary changes
 between conversations and how to answer a request no listed component provides:
@@ -385,6 +387,16 @@ What the model may know, and where it learns it.
   names no custom component or function. Surfaces are built by the model and
   rendered in the browser via the `renderSurface` client tool; no server tool
   touches a surface.
+- **The basic catalog is announced by prop names only.** The custom components
+  travel with their full JSON schemas (about 14 000 characters for three); the 18
+  basic components travel as name plus prop names under `basic` (about 1 000
+  characters). The cut follows the cost of the two failure kinds: an unknown key
+  such as `Slider.step` costs a whole correction run, a wrong type inside a known
+  prop is corrected from the validation issue the tool result carries. The full
+  basic schemas would add about 82 000 characters to every request; a lookup tool
+  that returns one schema on demand would cost a model round per lookup. Which of
+  the three fits is a use-case decision — how many basic components the answers
+  need against how much context the model may carry.
 - **The browser owns the data, the model only binds to it.** The client mounts
   `/filteredConfs`, `/me` (and derived views) into the surface data model — the
   `renderSurface` handler does it with `updateDataModel` messages when the
@@ -533,11 +545,14 @@ definitions and the context serializer — it plays the browser's part in Node,
 which is why `catalog-context.ts` and `surface-host-rules.ts` must not reach
 `@a2ui/angular` and why it reads the remotes' `vocabulary.ts` files directly.
 
-Every run plays two conversations: `charts,maps` with the three demo requests,
-and `charts` with request 1 plus the map request that no announced component can
-serve. The second one passes only if the answer uses nothing outside the
-announced vocabulary and names the gap. It costs real model calls and is run by
-hand, never in CI; the README section "The model-behavior gate" has the commands.
+Every run plays four cells, each badge as the first message of a fresh session,
+as a replayed badge is: with `charts,maps` the timeline badge and the detail badge,
+with `charts` the timeline badge and the slider-map badge that no announced
+component can serve. The last one passes only if the answer uses nothing outside
+the announced vocabulary, names the gap and draws no slider. The slider form and
+the comparison badge are judged by eye when they are recorded, not by the gate. It
+costs real model calls and is run by hand, never in CI; the README section "The
+model-behavior gate" has the commands.
 
 ## Status and history
 

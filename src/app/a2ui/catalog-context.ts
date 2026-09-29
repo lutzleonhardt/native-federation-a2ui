@@ -38,8 +38,18 @@ export function catalogToContextEntry(
         { description: fn.description, args: toJsonSchema(fn.schema), returnType: fn.returnType },
       ]),
     ),
+    // Prop names only: the schemas would add ~82 000 characters; see architecture.md "Prompt and vocabulary".
+    basic: Object.fromEntries(
+      BASIC_COMPONENTS.map((component) => [component.name, propNames(component.schema)]),
+    ),
   };
   return { description: CATALOG_CONTEXT_DESCRIPTION, value: JSON.stringify(payload) };
+}
+
+/** A zod object's keys; every basic component schema is an object, any other shape lists nothing. */
+function propNames(schema: unknown): string[] {
+  const shape = (schema as { shape?: Record<string, unknown> }).shape;
+  return shape === undefined ? [] : Object.keys(shape);
 }
 
 /**

@@ -151,10 +151,13 @@ You are the ConferenceFinder assistant …
 # Custom Catalog
 { "components": { "Map":      { "description": "Shows items that have lat/lon …", "schema": { … } },
                   "Timeline": { … }, "Gauge": { … } },
-  "functions":  { "distance": { … }, "daysUntil": { … } } }
+  "functions":  { "distance": { … }, "daysUntil": { … } },
+  "basic":      { "Slider": ["label", "min", "max", "value", …], "Card": ["child", …], … } }
 ```
 
-This is how the LLM learns which components exist and what their props mean. It never
+This is how the LLM learns which components exist and what their props mean. The
+components that come with A2UI stand under `basic` with their prop names only: enough
+to compose them without guessing a key, without the cost of eighteen more schemas. It never
 sees an Angular class. The server does not know a single component of a remote by name.
 It is told per request.
 

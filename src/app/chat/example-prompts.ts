@@ -1,7 +1,7 @@
-/** Demo requests 1–4, sent verbatim as user messages; the eval harness replays 1–3 from this list. */
+/** The four badges, sent verbatim as user messages; each stands alone, so a recording of it needs no history. */
 export const EXAMPLE_PROMPTS: readonly string[] = [
-  'Which Angular conferences are coming up in the next few months?',
-  'Show them on a map',
-  'Where and when is the next one near me? When I click one, I want details.',
-  'Reserve a ticket for me',
+  'Which Angular conferences are coming up in the next six months?',
+  'Where are the Angular conferences around me? Let me narrow them down by distance with a slider.',
+  'Compare the next three Angular conferences: date, city, ticket price and tickets left.',
+  'Where and when is the next Angular conference near me? When I click one, I want details and a way to reserve a seat.',
 ];

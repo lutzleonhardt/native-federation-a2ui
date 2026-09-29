@@ -4,7 +4,7 @@
   "capturedAt": "2026-09-28",
   "recordings": {
     "charts,maps": {
-      "Which Angular conferences are coming up in the next few months?": [
+      "Which Angular conferences are coming up in the next six months?": [
         [{ "name": "findConferences", "args": { "topic": "angular" } }],
         [
           {
@@ -45,7 +45,7 @@
       ]
     },
     "charts": {
-      "Which Angular conferences are coming up in the next few months?": [
+      "Which Angular conferences are coming up in the next six months?": [
         [{ "name": "findConferences", "args": { "topic": "angular" } }],
         [
           {

@@ -14,33 +14,40 @@ export interface Scenario {
   readonly capabilities: string;
   /** The `vocabulary.ts` files, not the capabilities: their Angular half does not load under Node. */
   readonly vocabularies: readonly CapabilityVocabulary<string>[];
-  /** One conversation: every request continues the one before it. */
+  /** Each request is the first message of a fresh session, as a replayed badge is. */
   readonly requests: readonly ScoredRequest[];
 }
 
-/** The shell's demo requests 1–3, word for word — the harness never spells its own. */
-const [CONFERENCES_REQUEST, MAP_REQUEST, DETAILS_REQUEST] = EXAMPLE_PROMPTS;
+/** The shell's badges, word for word — the harness never spells its own. */
+const [WHEN_BADGE, WHERE_BADGE, , DETAILS_BADGE] = EXAMPLE_PROMPTS;
 
-/** Every eval run plays all of them; the second is the live moment before maps is switched on. */
+/**
+ * The badges the scorer's three requirements fit. The slider form (badge 2 with maps)
+ * and the comparison (badge 3) are judged by eye when they are recorded, not here.
+ */
 export const SCENARIOS: readonly Scenario[] = [
   {
     capabilities: 'charts,maps',
     vocabularies: [chartsVocabulary, mapsVocabulary],
     requests: [
-      { requirement: 'A1', prompt: CONFERENCES_REQUEST },
-      { requirement: 'A2', prompt: MAP_REQUEST },
-      { requirement: 'A3', prompt: DETAILS_REQUEST },
+      { requirement: 'A1', prompt: WHEN_BADGE },
+      { requirement: 'A3', prompt: DETAILS_BADGE },
     ],
   },
   {
     capabilities: 'charts',
     vocabularies: [chartsVocabulary],
     requests: [
-      { requirement: 'A1', prompt: CONFERENCES_REQUEST },
-      { requirement: 'A2-without-maps', prompt: MAP_REQUEST },
+      { requirement: 'A1', prompt: WHEN_BADGE },
+      { requirement: 'A2-without-maps', prompt: WHERE_BADGE },
     ],
   },
 ];
+
+/** The badge's number in the shell's row, for the report. */
+export function badgeOf(request: ScoredRequest): number {
+  return EXAMPLE_PROMPTS.indexOf(request.prompt) + 1;
+}
 
 /** The custom names a scenario announces — what the scorer accepts beyond the basic catalog. */
 export function announcedNames(

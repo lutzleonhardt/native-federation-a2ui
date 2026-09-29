@@ -93,8 +93,32 @@ describe('score', () => {
     expect(verdict.reasons).toContainEqual(expect.stringContaining('date literal'));
   });
 
-  it('follows the selection path the model chose rather than assuming /selectedConf', () => {
-    expect(score('A3', [wiredSurface(detailComponents('/pick'))]).passed).toBe(true);
+  it('T4-AC-05 requires the selection at /selectedConf, as the shell does', () => {
+    const verdict = score('A3', [wiredSurface(detailComponents('/pick'))]);
+
+    expect(verdict.passed).toBe(false);
+    expect(verdict.reasons[0]).toContain('/selectedConf');
+  });
+
+  // Review finding: `boundTo` normalizes, so a relative path passed the scorer while the shell refuses it.
+  it('T4-AC-05 fails a relative selection path and a second selection bound elsewhere, as the shell does', () => {
+    const relative = score('A3', [wiredSurface(detailComponents('selectedConf'))]);
+    const second = score('A3', [
+      wiredSurface([
+        ...detailComponents(),
+        {
+          id: 'when',
+          component: 'Timeline',
+          items: { path: '/filteredConfs' },
+          selected: { path: '/picked' },
+        },
+      ]),
+    ]);
+
+    expect(relative.passed).toBe(false);
+    expect(relative.reasons).toContainEqual(expect.stringContaining("not 'selectedConf'"));
+    expect(second.passed).toBe(false);
+    expect(second.reasons).toContainEqual(expect.stringContaining("not '/picked'"));
   });
 
   it('reports the missing pieces of a half-wired detail view', () => {
@@ -240,8 +264,36 @@ describe('score A2-without-maps', () => {
       CHARTS_ONLY,
     );
 
-    expect(silent.reasons).toEqual(['no messageWidget text names the missing map']);
-    expect(evasive.reasons).toEqual(['no messageWidget text names the missing map']);
+    expect(silent.reasons).toEqual([
+      'no messageWidget text names the missing map or distance filter',
+    ]);
+    expect(evasive.reasons).toEqual([
+      'no messageWidget text names the missing map or distance filter',
+    ]);
+  });
+
+  it('T4-AC-01 accepts a text that names the distance filter instead of the map', () => {
+    const text: RecordedText = {
+      tool: 'messageWidget',
+      text: 'No distance filter is available here.',
+    };
+
+    expect(score('A2-without-maps', [text, TIMELINE], CHARTS_ONLY).passed).toBe(true);
+  });
+
+  it('T4-AC-01 fails a Slider nothing can consume, even beside an honest text or in a refused attempt', () => {
+    const idle = wiredSurface([
+      { id: 'root', component: 'Column', children: ['km', 'when'] },
+      { id: 'km', component: 'Slider', min: 0, max: 800, value: { path: '/filter/maxKm' } },
+      { id: 'when', component: 'Timeline', items: { path: '/filteredConfs' } },
+    ]);
+
+    expect(score('A2-without-maps', [REFUSAL, idle], CHARTS_ONLY).reasons).toEqual([
+      'a Slider drawn although no listed function can filter by distance',
+    ]);
+    expect(
+      score('A2-without-maps', [REFUSAL, { ...idle, rejected: true }], CHARTS_ONLY).passed,
+    ).toBe(false);
   });
 
   it('applies the host rules to the optional surface', () => {

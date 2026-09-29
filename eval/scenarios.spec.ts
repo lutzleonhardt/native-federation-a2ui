@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { catalogToContextEntry } from '../src/app/a2ui/catalog-context';
 import { EXAMPLE_PROMPTS } from '../src/app/chat/example-prompts';
-import { announcedNames, SCENARIOS, type Scenario } from './scenarios';
+import { announcedNames, badgeOf, SCENARIOS, type Scenario } from './scenarios';
 
 interface SerializedCatalog {
   readonly components: Record<string, unknown>;
@@ -15,13 +15,13 @@ function contextOf({ vocabularies }: Scenario): SerializedCatalog {
 const [BOTH, CHARTS_ONLY] = SCENARIOS;
 
 describe('SCENARIOS', () => {
-  it('T7-AC-01: the default set announces both capabilities and asks the three M1 requests', () => {
+  it('T7-AC-01: the default set announces both capabilities and plays the timeline and the detail badge', () => {
     expect(BOTH.capabilities).toBe('charts,maps');
     expect(Object.keys(contextOf(BOTH).components)).toEqual(['Gauge', 'Timeline', 'Map']);
-    expect(BOTH.requests.map((request) => request.requirement)).toEqual(['A1', 'A2', 'A3']);
+    expect(BOTH.requests.map((request) => request.requirement)).toEqual(['A1', 'A3']);
   });
 
-  it('T7-AC-01: the charts set announces charts alone and asks for the map anyway', () => {
+  it('T7-AC-01: the charts set announces charts alone and asks for the slider map anyway', () => {
     const context = contextOf(CHARTS_ONLY);
 
     expect(CHARTS_ONLY.capabilities).toBe('charts');
@@ -31,14 +31,14 @@ describe('SCENARIOS', () => {
       'A1',
       'A2-without-maps',
     ]);
-    expect(CHARTS_ONLY.requests[1].prompt).toBe(BOTH.requests[1].prompt);
   });
 
-  it('T9-AC-02: every scored request is one of the shell\'s demo prompts, in the shell\'s order', () => {
-    expect(BOTH.requests.map((request) => request.prompt)).toEqual(EXAMPLE_PROMPTS.slice(0, 3));
-    expect(CHARTS_ONLY.requests.map((request) => request.prompt)).toEqual(
-      EXAMPLE_PROMPTS.slice(0, 2),
-    );
+  it("T4-AC-01: every scored request is one of the shell's badges, verbatim", () => {
+    expect(BOTH.requests.map(badgeOf)).toEqual([1, 4]);
+    expect(CHARTS_ONLY.requests.map(badgeOf)).toEqual([1, 2]);
+    for (const request of [...BOTH.requests, ...CHARTS_ONLY.requests]) {
+      expect(EXAMPLE_PROMPTS).toContain(request.prompt);
+    }
   });
 
   // The scorer accepts these names, the model reads the context entry: both must be one list.

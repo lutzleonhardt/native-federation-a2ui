@@ -18,7 +18,7 @@ import { renderSurfaceDefinition } from '../src/app/agent/tools/render-surface.d
 import { loadConferences } from '../src/app/domain/conference';
 import { findConferences, type ConferenceResult } from '../src/app/domain/find-conferences';
 import type { Me } from '../src/app/domain/location.store';
-import { announcedNames, SCENARIOS, type Scenario } from './scenarios';
+import { announcedNames, badgeOf, SCENARIOS, type Scenario } from './scenarios';
 import { score, type RecordedCall } from './score';
 
 /**
@@ -113,11 +113,13 @@ async function runScenario(scenario: Scenario, tools: readonly Tool[]): Promise<
   const records: RunRecord[][] = scenario.requests.map(() => []);
 
   for (let run = 0; run < RUNS_PER_REQUEST; run += 1) {
-    const agent = new HttpAgent({ url: AGENT_URL, agentId: ASSISTANT_AGENT_ID });
-    const session = newSession();
     for (const [index, request] of scenario.requests.entries()) {
-      process.stdout.write(`run ${run + 1}/${RUNS_PER_REQUEST} · ${request.requirement} … `);
-      const record = await driveRequest(agent, tools, context, request.prompt, session);
+      // A fresh agent per request: each badge is the first message of a fresh session, as a replayed badge is.
+      const agent = new HttpAgent({ url: AGENT_URL, agentId: ASSISTANT_AGENT_ID });
+      process.stdout.write(
+        `run ${run + 1}/${RUNS_PER_REQUEST} · badge ${badgeOf(request)} (${request.requirement}) … `,
+      );
+      const record = await driveRequest(agent, tools, context, request.prompt, newSession());
       records[index].push(record);
       const verdict = score(request.requirement, record.calls, announced);
       console.log(verdict.passed ? `ok (${record.durationMs} ms)` : `fail: ${verdict.reasons.join('; ')}`);
@@ -149,7 +151,7 @@ function report(scenario: Scenario, records: readonly RunRecord[][]): boolean {
     const gate = verdicts.length > 0 && passes >= Math.ceil(verdicts.length * PASS_RATIO);
     failed ||= !gate;
     console.log(
-      `Request ${index + 1} (${request.requirement}): ${passes}/${records[index].length}${gate ? '' : '  ← below gate'}`,
+      `Badge ${badgeOf(request)} (${request.requirement}): ${passes}/${records[index].length}${gate ? '' : '  ← below gate'}`,
     );
     for (const [run, verdict] of verdicts.entries()) {
       if (!verdict.passed) console.log(`    run ${run + 1}: ${verdict.reasons.join('; ')}`);
