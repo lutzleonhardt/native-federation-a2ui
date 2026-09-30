@@ -181,6 +181,11 @@ dt {
 dd {
   margin: 0;
 }
+.cf-standalone {
+  display: inline-flex;
+  margin-left: var(--cf-s-1);
+  vertical-align: middle;
+}
 .cf-panel-head + .cf-panel-head,
 ul + .cf-panel-head {
   border-top: 1px solid var(--cf-line);

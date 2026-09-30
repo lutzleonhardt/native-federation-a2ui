@@ -106,6 +106,27 @@ describe('CapabilityPanelComponent', () => {
     expect(toggleOf(rows(host)[0])).toEqual({ href: '?capabilities=', label: 'Switch off' });
   });
 
+  it('a loaded remote links to its own page in a new tab; one that did not load has no such link', async () => {
+    const host = await render();
+    const [charts, maps, tables] = rows(host);
+    const link = charts.querySelector('a.cf-standalone') as HTMLAnchorElement;
+
+    expect(link.getAttribute('href')).toBe('http://localhost:4201/');
+    expect(link.target).toBe('_blank');
+    expect(link.title).toBe('Open the remote on its own');
+    expect(link.getAttribute('aria-label')).toBe('Open the remote on its own');
+    expect(maps.querySelector('a.cf-standalone')).toBeNull();
+    expect(tables.querySelector('a.cf-standalone')).toBeNull();
+  });
+
+  it('keeps a relative origin relative, so the link follows the base href of a deployment', async () => {
+    const host = await render([
+      { name: 'charts', state: 'loaded', origin: './charts/', capability: chartsCapability },
+    ]);
+
+    expect(rows(host)[0].querySelector('a.cf-standalone')?.getAttribute('href')).toBe('./charts/');
+  });
+
   it('starts collapsed with a chip per remote that names its state; the details open on demand', async () => {
     const host = await render();
     const details = host.querySelector('details') as HTMLDetailsElement;

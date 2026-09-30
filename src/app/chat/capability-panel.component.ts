@@ -13,6 +13,8 @@ interface PanelEntry {
   /** The state as the chip reads it: `unselected` is "off" to the user. */
   readonly stateLabel: 'loaded' | 'unreachable' | 'off';
   readonly origin: string;
+  /** A loaded remote's own page: its scope URL serves the remote as a standalone app. */
+  readonly standaloneHref: string | undefined;
   readonly components: string;
   readonly functions: string;
   readonly toggleHref: string;
@@ -59,6 +61,7 @@ function toPanelEntries(statuses: readonly CapabilityStatus[], search: string): 
       state: status.state,
       stateLabel: status.state === 'unselected' ? 'off' : status.state,
       origin: loaded?.origin ?? NONE,
+      standaloneHref: loaded?.origin,
       components: names(
         loaded === undefined ? [] : Object.keys(loaded.capability.vocabulary.components),
       ),

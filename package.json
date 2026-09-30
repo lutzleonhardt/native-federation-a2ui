@@ -16,6 +16,7 @@
     "start:maps": "ng serve mfe-maps --port 4202",
     "start:agent": "npm --prefix agent run dev",
     "build": "ng build shell",
+    "build:deploy": "node scripts/build-deploy.mjs",
     "clean": "rm -rf dist .angular/cache node_modules/.cache/native-federation",
     "test": "npm run test:shell && npm run test:charts && npm run test:maps && npm run test:agent && npm run test:eval",
     "test:shell": "ng test shell",
