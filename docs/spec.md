@@ -1,7 +1,7 @@
 # Spec: ConferenceFinder — föderiertes A2UI-Vokabular mit Native Federation
 
 Status: Entwurf v3.5, 2026-09-30 (M3 umgesetzt: vier Badges, Distanzfilter als Funktion in `mfe-maps`, MapLibre, eigener Key = lokaler Agent-Server; v3.4: 2026-09-25, Veröffentlichung als eigener Schritt nach M3; v3.3: 2026-09-09, Entschlackung: 2 Remotes, Anfragen 1–4, Replay verpflichtend; v3.2: 2026-08-27). Projekt: **ConferenceFinder**. Eigene App ohne Flights-Bezug.
-Hintergrundwissen: `docs/book-learnings.md`. Taskzuschnitt folgt später per `/plan` je Meilenstein. Diese Spec wandert als `docs/spec.md` ins Projekt-Repo, sobald es existiert.
+Taskzuschnitt folgt später per `/plan` je Meilenstein. Diese Spec wandert als `docs/spec.md` ins Projekt-Repo, sobald es existiert.
 
 ## 0. Leitgedanke (Anker für README, Post und Talk)
 

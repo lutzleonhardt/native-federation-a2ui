@@ -724,6 +724,24 @@ What keeps a remote loadable, replaceable and movable.
   measured distance. What the single workspace simplifies
   compared with that real shape is argued once, in
   [`how-it-works.md`](./how-it-works.md#the-monorepo-is-a-simplification).
+- **Distances are great-circle distances.** Both `haversineKm` copies compute
+  the arc on a sphere of 6371 km radius: arc length is radius times the angle
+  between the two points as seen from the centre. The name is nautical, not a
+  person's — *half versed sine*, `hav(θ) = (1 − cos θ) / 2 = sin²(θ/2)` — so
+  every `Math.sin(x / 2) ** 2` in the code is that function, and
+  `hav(Δlat) + cos(lat₁)·cos(lat₂)·hav(Δlon)` reads like Pythagoras: a
+  north–south part plus an east–west part that the cosines shrink towards the
+  pole. Pythagoras on plain degrees is no harmless approximation, because its
+  error depends on the direction: at 52° N a degree of longitude is about
+  68 km, a degree of latitude 111 km. Measured from the 11 fallback cities to
+  the 30 conferences, `hypot(Δlat, Δlon)` is off by up to 64 %, inverts 375 of
+  4785 pairwise orderings and changes 22 memberships of a 300 km radius: from
+  Berlin, Munich (504 km) and Warsaw (517 km) are equally far, and Warsaw comes
+  out 1.6 times as far. The planar form with `Δlon · cos(lat)` stays within
+  0.2 % and inverts nothing; haversine is kept because the name is the standard
+  one and needs no such explanation. It is exact on a sphere only: against an
+  ellipsoid up to about 0.5 % remains, which never decides which conference is
+  nearer.
 - **The theme crosses the boundary as custom properties, never as CSS.**
   `shared/theme/tokens.css` declares `--cf-*` on `:root`; the shell's stylesheet
   and each remote's standalone stylesheet import it, and a remote never imports

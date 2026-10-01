@@ -54,8 +54,8 @@ suite grew from 20 to 23 tests.
   Corrected after the review: `Slider` already ships in the basic catalog, so `mfe-filter` delivers
   **only** the catalog function `withinKm` — pure behaviour, the smallest remote of the demo — and
   the §7 eval case is marked as a prerequisite for that live moment.
-- `docs/book-learnings.md` (modified) — new section 10 on earth-surface distances, marked
-  explicitly as an own note rather than a book learning.
+- `docs/book-learnings.md` (modified; removed before publication) — new section 10 on
+  earth-surface distances, marked explicitly as an own note rather than a book learning.
 
 Created and removed again during the task (see Test Evidence): `agent/src/nodeimport.probe.spec.ts`,
 a tsx probe under `$TMPDIR`, `src/app/domain/__screenshots__/`, `.vitest-attachments/`.
@@ -67,8 +67,8 @@ a tsx probe under `$TMPDIR`, `src/app/domain/__screenshots__/`, `.vitest-attachm
   device-node warning and the plan-deviation reporting pattern.
 - `docs/work/m1-spike/task-log/task-1-workspace-scaffold.md` — Task 3 depends on Task 1; supplied
   the browser-mode test chain (no Node target in the shell) and the lint rule set.
-- `docs/book-learnings.md` §3.3, §3.4, §3.5, §4.2, §4.5, §4.6, §5, §7 — for the A2UI transport and
-  snapshot discussion.
+- `docs/book-learnings.md` §3.3, §3.4, §3.5, §4.2, §4.5, §4.6, §5, §7 (removed before
+  publication) — for the A2UI transport and snapshot discussion.
 - `docs/spec.md` §2, §6, §7, §8 — demo requests, prompt principles, tests, milestones.
 - `node_modules/@a2ui/web_core/src/v0_9/catalog/types.d.ts`, `schema/common-types.d.ts`,
   `basic_catalog/functions/basic_functions.d.ts` — catalog/function model, `functionCall` binding
@@ -182,8 +182,8 @@ a tsx probe under `$TMPDIR`, `src/app/domain/__screenshots__/`, `.vitest-attachm
   `ai-atlas Zürich`). Plus the `meToContextValue` deviation.
 - **Scope notes:** Beyond the task surface: `.gitignore` gained `.vitest-attachments/` (a real gap —
   those files are not ignored and would be committed by `git add -A`); `plan.md` was amended for the
-  dropped projection; `docs/spec.md` and `docs/book-learnings.md` grew sections from the design
-  discussion that followed the implementation. Deliberately **not** done: no runtime validation in
+  dropped projection; `docs/spec.md` and `docs/book-learnings.md` (removed before publication) grew
+  sections from the design discussion that followed the implementation. Deliberately **not** done: no runtime validation in
   the domain layer, no `Slider`/filter-function work (recorded as spec request 7 / M3+).
 - **Read next:**
   1. `src/app/domain/find-conferences.ts` — `Candidate`, `toResult`, `withinRadius`: the
@@ -233,7 +233,8 @@ Berlin 300 km boundary:        inside max 281 km | next outside 355 km   ← 74 
 **Distance-method comparison** (raised during review of the haversine choice, 10 cities × 30
 conferences): naive degree Pythagoras gives 64.3 % max error, 352/4350 inverted orderings and 20
 differing radius memberships; the cos-corrected equirectangular form gives 0.2 %, 0 and 0. Haversine
-kept — the reasoning is recorded in `docs/book-learnings.md` §10, not in the code.
+kept — the reasoning is recorded in `docs/architecture.md` (*Distances are great-circle
+distances*), not in the code.
 
 **Temporary probes — all removed, none remain in the tree:**
 

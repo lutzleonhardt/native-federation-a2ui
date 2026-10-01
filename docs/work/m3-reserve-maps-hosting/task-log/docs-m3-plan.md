@@ -35,7 +35,7 @@ them.
   task-7 logs (boot probes, deploy-manifest notes, replay note), `docs/work/publication/plan.md`,
   `docs/architecture.md` (headings, styling zones, status), `docs/how-it-works.md` (click section,
   DevTools mentions), `docs/improvements.md`, `docs/tech-debt-backlog.md`, `docs/book-learnings.md`
-  (grep only).
+  (grep only; removed before publication).
 - Shell: `src/main.ts`, `src/bootstrap.ts`, `src/app/app.config.ts`, `src/app/app.routes.ts`,
   `src/app/a2ui/{action-bus,provide-a2ui-catalog,surface-host-rules,catalog-context,assistant-catalog,agent-capabilities.token}.ts`,
   `src/app/agent/{init-agent-store,agent-store-helper,assistant-agent.token,create-frontend-tool,me-context-entry,render-failure-correction,surface-data.store}.ts`,

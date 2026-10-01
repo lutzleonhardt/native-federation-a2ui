@@ -56,7 +56,8 @@ Zwischenzeitlich angelegt und wieder **entfernt** (siehe Key Decisions):
 ### Files Read (Context Only)
 
 - `docs/work/m1-spike/plan.md` — Preamble + Task-1-Block.
-- `docs/book-learnings.md` — Stack-Einordnung; lieferte den Hinweis auf den richtigen Referenz-Branch.
+- `docs/book-learnings.md` (vor der Veröffentlichung entfernt) — Stack-Einordnung; lieferte den
+  Hinweis auf den richtigen Referenz-Branch.
 - `node_modules/@angular/build/src/builders/unit-test/**` — `browser-provider.js` (Browser-Namens-
   Normalisierung), `configuration.js` (Config-Dateinamen), `plugins.js` (`resolve`/`optimizeDeps`-
   Merge, `mainFields`), `executor.js`, `schema.json`.

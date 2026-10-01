@@ -1,6 +1,6 @@
 # Plan: ConferenceFinder — M1 Spike im Monolith
 
-Spec: `docs/spec.md` (v3.3, 2026-09-09; copy of `a2ui/docs/spec/spec-federated-capabilities.md`). Background: `docs/book-learnings.md`.
+Spec: `docs/spec.md` (v3.3, 2026-09-09; copy of `a2ui/docs/spec/spec-federated-capabilities.md`).
 Scope: Milestone M1 only — Agent + Shell + `renderSurface` + `findConferences` + `Timeline`/`Map`/`Gauge` as in-shell catalog components, demo requests 1–3, **no Native Federation**. The M1 gate is Task 9 (requests 1–3; request 4's `reserve`-button contract is scored inside request 3). M2 (NF split: charts + maps remotes) and M3 (reserve, MapLibre upgrade, hosting/replay publication) are planned separately. **v3.3 re-scoping (2026-09-09, user-approved): Task 8 moved out of this scope into M3 — task order here is 6 → 7 → 9.**
 Repo: `~/projects/conference-finder` (MIT, Angular CLI workspace, npm, Node ≥ 24). Ports: shell 4200, agent 3001. Tests: Vitest (Browser Mode for the shell, Node for `agent/`).
 Data-model conventions: catalog id `https://conference-finder.dev/catalogs/assistant`; paths `/filteredConfs` (last `findConferences` result), `/selectedConf` (selection within each surface, initially the first result), `/me` (location). The client mounts these values; `/filteredConfs` and `/me` are never written by the model.

@@ -34,7 +34,8 @@ split instead of silent absorption.
 
 - `docs/work/m2-nf-split/plan.md` (preamble, Task 8 block, cross-cutting section),
   `docs/work/m2-nf-split/task-log/task-7-eval-capability-sets.md`, `README.md`,
-  `docs/architecture.md`, `docs/improvements.md`, the head of `docs/book-learnings.md`.
+  `docs/architecture.md`, `docs/improvements.md`, the head of `docs/book-learnings.md` (removed
+  before publication).
 - `src/app/agent/tools/find-conferences.{tool,definition}.ts`, `src/app/agent/create-frontend-tool.ts`
   (grep), `src/app/chat/example-prompts.ts`, `eval/scenarios.ts`, the head of
   `src/app/domain/conferences.json`.
