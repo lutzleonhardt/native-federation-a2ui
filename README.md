@@ -158,12 +158,32 @@ server (`?agent=local`, the default of `npm start`), or the recordings
 Nobody needs an AI-composed conference finder. The domain is deliberately small
 so the mechanism stays visible.
 
+## Where this pays off
+
+And where it does not.
+
+The criterion is not "lots of data". It is unpredictable questions against
+structured data that has many forms of presentation.
+
+- **The natural home is BI, dashboards and internal cockpits.** Cross-filtering
+  is the selection mechanism you see in the demo. Several teams own
+  visualizations. And the model does not read the data set.
+- **It does not fit fixed processes and form flows.** There the hand-built
+  screen wins.
+- **Go in stages.** First natural language as a command layer over the existing
+  UI: tool calls, no A2UI. Then generative composition, and only where the
+  presentation is really open.
+
+The rule: several teams, requests that cut across them, UIs nobody built in
+advance. If one of the three is missing, a widget tool is enough.
+
 ## FAQ
 
 Every answer is short on purpose. The link below it leads to the place where the
 rule is written down in full.
 
-### For the skeptic
+<details>
+<summary><b>For the skeptic</b></summary>
 
 **Is a conference finder a realistic use case?**
 
@@ -208,7 +228,10 @@ names the gap. The result still depends strongly on the model and on the
 prompt.
 → [The model-behavior gate](docs/development.md#the-model-behavior-gate)
 
-### For the agentic-UI reader
+</details>
+
+<details>
+<summary><b>For the agentic-UI reader</b></summary>
 
 **How does Mastra talk to Angular?**
 
@@ -257,7 +280,10 @@ The shell is English. The LLM is told to write the labels inside a surface in
 the language the user writes in. There are no translation files.
 → [Prompt and vocabulary](docs/architecture.md#prompt-and-vocabulary)
 
-### For the Native Federation reader
+</details>
+
+<details>
+<summary><b>For the Native Federation reader</b></summary>
 
 **How are the module boundaries enforced?**
 
@@ -305,7 +331,10 @@ and the shell did not notice the change. The eval gate reads only the
 vocabulary files, so the same vocabulary gets the same verdicts.
 → [How the shell finds its remotes](docs/how-it-works.md#how-the-shell-finds-its-remotes)
 
-### For the architect
+</details>
+
+<details>
+<summary><b>For the architect</b></summary>
 
 **A remote writes text into the system prompt: a risk?**
 
@@ -331,24 +360,7 @@ components. The eval is about 20 requests per run. The hosted demo costs
 nothing: no model is called.
 → [The model-behavior gate](docs/development.md#the-model-behavior-gate)
 
-## Where this pays off
-
-And where it does not.
-
-The criterion is not "lots of data". It is unpredictable questions against
-structured data that has many forms of presentation.
-
-- **The natural home is BI, dashboards and internal cockpits.** Cross-filtering
-  is the selection mechanism you see in the demo. Several teams own
-  visualizations. And the model does not read the data set.
-- **It does not fit fixed processes and form flows.** There the hand-built
-  screen wins.
-- **Go in stages.** First natural language as a command layer over the existing
-  UI: tool calls, no A2UI. Then generative composition, and only where the
-  presentation is really open.
-
-The rule: several teams, requests that cut across them, UIs nobody built in
-advance. If one of the three is missing, a widget tool is enough.
+</details>
 
 ## Not production-ready
 
