@@ -955,8 +955,11 @@ describes the code as it is.
   local agent server. A per-conference count of the user's own reservations in
   the data model; [`docs/improvements.md`](./improvements.md) holds both
   variants.
-- **Next.** Publication: the README as the front door, the repository history,
-  the public repository.
+- **Publication, 2026-10-01.** The README as the front door, and the public
+  repository
+  [`native-federation-a2ui`](https://github.com/lutzleonhardt/native-federation-a2ui).
+  Its history was rewritten once before the first push, so the commit hashes
+  cited in task logs up to that date do not exist in it.
 - **Where the reasons are.** The spec is [`docs/spec.md`](./spec.md), the look's
   spec [`docs/specs/visual-language.md`](./specs/visual-language.md). The plans
   and task logs under `docs/work/` record why each decision was taken and hold
