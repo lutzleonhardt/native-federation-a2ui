@@ -170,7 +170,7 @@ describe('CapabilityPanelComponent', () => {
     expect(agent.textContent).toContain('npm start');
     const links = [...agent.querySelectorAll('a')].map((a) => a.getAttribute('href'));
     expect(links).toEqual([
-      'https://github.com/lutzleonhardt/conference-finder#readme',
+      'https://github.com/lutzleonhardt/native-federation-a2ui#readme',
       'https://native-federation.com/docs/v4/devtools/',
     ]);
   });
@@ -187,5 +187,19 @@ describe('CapabilityPanelComponent', () => {
     fixture.componentInstance.open();
 
     expect(details.open).toBe(true);
+  });
+
+  it('closes on a press outside the panel and stays open on one inside', async () => {
+    const host = await render();
+    const details = host.querySelector('details') as HTMLDetailsElement;
+    const press = (target: Element) =>
+      target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    details.open = true;
+
+    press(host.querySelector('.cf-panel') as HTMLElement);
+    expect(details.open).toBe(true);
+
+    press(document.body);
+    expect(details.open).toBe(false);
   });
 });

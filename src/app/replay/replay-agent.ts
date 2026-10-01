@@ -11,7 +11,7 @@ import { emptyRun, toolCallRun, toolCallsRun, type ScriptedToolCall } from './sc
 export const NOT_RECORDED_TEXT =
   'This question has no recorded answer. The hosted demo plays back recordings of the example ' +
   'prompts above, one per prompt and capability set. For a live model, clone the ' +
-  '[repository](https://github.com/lutzleonhardt/conference-finder#readme), add one provider ' +
+  '[repository](https://github.com/lutzleonhardt/native-federation-a2ui#readme), add one provider ' +
   'key to `.env` and run `npm start`.';
 
 /**

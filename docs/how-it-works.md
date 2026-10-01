@@ -491,5 +491,5 @@ Native Federation decides who delivers the vocabulary.
 
 - [architecture.md](./architecture.md) — diagrams, who owns which layer, and the
   invariants.
-- [README, "Adding a remote"](../README.md#adding-a-remote) — the checklist for a third
-  capability.
+- [development.md, "Adding a remote"](./development.md#adding-a-remote) — the checklist
+  for a third capability.

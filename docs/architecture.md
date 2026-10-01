@@ -643,6 +643,11 @@ What the model may know, and where it learns it.
   over the federation boundary. Which capabilities are loaded is decided by the
   federation bootstrap (`createAppConfig(remotes)`), never by an import in the
   shell; `AGENT_CAPABILITIES` is where the rest of the app reads that list.
+- **The chrome is English, a surface speaks the user's language.** The static
+  prompt tells the model to write the labels inside a surface in the language
+  the user writes in. Header, example prompts and capability panel are English
+  text in the shell's templates. There are no translation files and no locale
+  switch.
 
 ### Surfaces and tools
 
@@ -706,6 +711,11 @@ What keeps a remote loadable, replaceable and movable.
   `singleton` with `strictVersion`; a second Angular instance would mean a
   second DI tree and no binding across the boundary. The price is that shell and
   remotes upgrade Angular in step.
+- **One zod line crosses the boundary.** The contract and every remote schema
+  import `zod/v3`, the line the a2ui, ag-ui and CopilotKit packages carry, and
+  that subpath is shared. The root `zod` (4) is in the `skip` list of all three
+  federation configs: shared, it would replace those packages' nested zod 3 and
+  break every catalog schema that nests the renderer's action schema.
 - **Remotes stay repo-portable.** A remote depends on the contract folder and on
   published packages, on nothing else, so it could move into its own repository
   on its own server tomorrow — the boundaries above exist to keep that true.
@@ -861,8 +871,8 @@ with `charts` the timeline badge and the slider-map badge that no announced
 component can serve. The last one passes only if the answer uses nothing outside
 the announced vocabulary, names the gap and draws no slider. The slider form and
 the comparison badge are judged by eye when they are recorded, not by the gate. It
-costs real model calls and is run by hand, never in CI; the README section "The
-model-behavior gate" has the commands.
+costs real model calls and is run by hand, never in CI;
+[`development.md`](./development.md#the-model-behavior-gate) has the commands.
 
 ## Status and history
 

@@ -24,7 +24,7 @@ interface PanelEntry {
 /** What an entry shows where a remote that did not load has nothing to list. */
 const NONE = '—';
 
-export const REPOSITORY_URL = 'https://github.com/lutzleonhardt/conference-finder#readme';
+export const REPOSITORY_URL = 'https://github.com/lutzleonhardt/native-federation-a2ui#readme';
 export const NF_DEVTOOLS_URL = 'https://native-federation.com/docs/v4/devtools/';
 
 /**
@@ -38,8 +38,10 @@ export const NF_DEVTOOLS_URL = 'https://native-federation.com/docs/v4/devtools/'
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './capability-panel.component.html',
   styleUrl: './capability-panel.component.css',
+  host: { '(document:pointerdown)': 'closeOnOutside($event)' },
 })
 export class CapabilityPanelComponent {
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly entries = toPanelEntries(inject(CAPABILITY_STATUS), inject(PAGE_SEARCH));
   protected readonly mode = inject(AGENT_MODE);
   protected readonly agentPort = AGENT_PORT;
@@ -50,6 +52,15 @@ export class CapabilityPanelComponent {
   /** Opens the disclosure for whoever points at the panel, e.g. the replay notice. */
   open(): void {
     this.details().nativeElement.open = true;
+  }
+
+  /**
+   * A native <details> has no light dismiss. Pointerdown rather than click, so an outside
+   * button that calls `open()` on its click is not undone by the same gesture.
+   */
+  protected closeOnOutside(event: Event): void {
+    if (this.host.nativeElement.contains(event.target as Node)) return;
+    this.details().nativeElement.open = false;
   }
 }
 

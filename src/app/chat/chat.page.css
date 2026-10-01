@@ -12,3 +12,17 @@ copilot-chat {
   flex: 1;
   min-height: 0;
 }
+/* On the input band's surface, so it reads as that band's last line. */
+.cf-credit {
+  padding: var(--cf-s-1) var(--cf-s-4) var(--cf-s-2);
+  background: var(--cf-surface);
+  color: var(--cf-muted);
+  font-size: var(--cf-t-2);
+  text-align: center;
+}
+.cf-credit a {
+  color: var(--cf-rail);
+}
+.cf-credit a:hover {
+  color: var(--cf-ink);
+}

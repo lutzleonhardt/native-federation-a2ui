@@ -23,7 +23,7 @@ export const config: SheriffConfig = {
     'host-contract': [],
   },
   // One pair per remote: the standalone page and the exposed module. A remote missing here is
-  // never traversed and therefore never checked — see README, "Adding a remote".
+  // never traversed and therefore never checked — see docs/development.md, "Adding a remote".
   entryPoints: {
     shell: 'src/main.ts',
     'charts-page': 'projects/mfe-charts/src/main.ts',
