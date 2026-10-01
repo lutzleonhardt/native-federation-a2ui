@@ -129,6 +129,13 @@ Then open http://localhost:4200 and ask freely, within what the search offers:
 topics, a date window and the distance from your location. Requires Node.js
 >= 24.
 
+**What data is behind it?**
+
+Thirty invented conferences: five topics (Angular, .NET, web, AI, cloud), nine
+European countries, each with a date, a city, a ticket price and tickets left.
+Dates are stored as offsets from today, so there is always a "next" conference.
+→ [`conferences.json`](src/app/domain/conferences.json)
+
 → [Development](docs/development.md) has the setup details, every script, the
 deploy build and the checklist for a third remote.
 
