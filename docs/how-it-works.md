@@ -67,7 +67,7 @@ A2UI message:
 
 <!-- prettier-ignore -->
 ```jsonc
-// the LLM's answer to "show them on a map" — shortened
+// the LLM's answer to "where are the Angular conferences?" — shortened
 [
   { "createSurface": { "surfaceId": "confs-on-a-map" } },
   { "updateComponents": { "surfaceId": "confs-on-a-map", "components": [
@@ -118,9 +118,9 @@ export const capability = {
         schema: mapProps,
       },
     },
-    // "kilometres between two points": the description is for the LLM,
-    // the implementation runs in the renderer
-    functions: [distance],
+    // "kilometres between two points", "the points within a radius": the description
+    // is for the LLM, the implementation runs in the renderer
+    functions: [distance, filterWithinKm],
   },
 
   // Half 2: the implementation. It is registered in the catalog of the A2UI renderer:
@@ -151,7 +151,7 @@ You are the ConferenceFinder assistant …
 # Custom Catalog
 { "components": { "Map":      { "description": "Shows items that have lat/lon …", "schema": { … } },
                   "Timeline": { … }, "Gauge": { … } },
-  "functions":  { "distance": { … }, "daysUntil": { … } },
+  "functions":  { "distance": { … }, "filterWithinKm": { … }, "daysUntil": { … } },
   "basic":      { "Slider": ["label", "min", "max", "value", …], "Card": ["child", …], … } }
 ```
 
@@ -191,6 +191,7 @@ Timeline             TimelineComponent    from the charts remote
 Map                  MapComponent         from the maps remote
 daysUntil            function             from the charts remote
 distance             function             from the maps remote
+filterWithinKm       function             from the maps remote
 ```
 
 Compare it with the `# Custom Catalog` block above: the same names. The split is not
@@ -243,11 +244,14 @@ packages were negotiated.
 
 The demo shows the effect of a new remote in two steps:
 
-1. Open the app with charts only (`/?capabilities=charts`) and ask for the conferences
-   on a map. The LLM has never heard of `Map`. It answers in text that it has no map
-   component and offers a timeline instead.
+1. Open the app with charts only (`/?capabilities=charts`) and click the second example
+   prompt: where are the conferences around me, with a slider for the distance. The LLM
+   has never heard of `Map`, and no function it knows can filter by distance. It says in
+   text that it cannot wire up a slider, and shows a plain list instead. It draws no
+   slider, because that slider would do nothing.
 2. Switch maps on. The capability panel in the app's header has a _Switch on_ link per
-   remote; it reloads the app with both remotes. Ask again. Now the answer is a map.
+   remote; it reloads the app with both remotes. Click the prompt again. Now the answer
+   is a map, and the slider narrows it.
 
 Between the two steps nothing changed except what was loaded.
 
@@ -266,8 +270,11 @@ breaks.
 > with their own Angular inside would need a different renderer.
 >
 > A surface that is stored and loaded again later needs a version next to it, or a hash
-> of the catalog: the remote may have changed in between. This demo does not store
-> surfaces yet.
+> of the catalog: the remote may have changed in between. The recordings of the hosted
+> demo are stored surfaces too, but they are only there to save LLM calls for the demo.
+> Their file names the A2UI version and nothing about the catalog. If a remote changes a
+> component in a breaking way, the shell refuses the recorded surface, and I record
+> again. Real persistence would need a better safeguard.
 
 **The LLM can still invent a `Map`.** The system prompt does what it can to prevent it:
 it tells the LLM to use only what is listed, and to say so when something is missing. It
@@ -320,8 +327,9 @@ Three things follow from this:
 - **`./capability` is the only thing a remote exposes.** One module with one export, in
   the shape shown in [A capability has two halves](#a-capability-has-two-halves). I
   defined this contract myself. It is not part of A2UI or AG-UI. Everything else inside
-  a remote is its own business. Each remote is also a small standalone page that renders
-  its components without the shell.
+  a remote is its own business. The maps remote draws a real map with MapLibre today.
+  Before that it was a plain SVG drawing, and the shell did not notice the change. Each
+  remote is also a small standalone page that renders its components without the shell.
 
 > [!NOTE]
 > Two things are simplified here.
@@ -364,6 +372,11 @@ where the value would stand, and its arguments can be bindings again:
 
 The browser computes the result, and computes it again when the data changes.
 
+This is also how a control works without the LLM. The second example prompt asks for a
+slider that narrows the map by distance. The slider writes its value to a path. The
+points of the map are a function call, `filterWithinKm`, which reads that path. Move the
+slider and the map follows. No request is sent.
+
 Through bindings the LLM can wire components to each other: one component writes to a
 path, another one reads it. In Angular this is mapped onto signals that live in the
 shared data context of the surface, so the UI updates by itself.
@@ -387,6 +400,22 @@ A click on a map marker does up to two independent things:
    decides what an event means: it can handle it locally, or turn it into a new request
    to the LLM. An action can also be a local function call instead of an event. That one
    runs in the browser and is never sent anywhere.
+
+Reserving a seat is such an event. The button in the detail view sends `reserve` with the
+id of the selected conference. The shell handles it locally: it counts the reservation
+and writes the new number of tickets back into the data. The gauge drops by one. The LLM
+is not asked, and it never hears of it.
+
+So what can a team ship in a remote? In this demo, two things: components that render,
+and functions that compute. That is already enough for interaction, as the slider shows.
+The reaction to an event stays in the shell here: `reserve` changes data that the shell
+put there. That is a decision about the scope of the demo, not a limit of the idea. A
+remote could expose events and their handlers as well, next to components and functions.
+The handler would then call the backend of the team that owns the remote.
+
+→ [A click, without the model](./architecture.md#a-click-without-the-model) follows the
+reserve click step by step, and [Who ships what](./architecture.md#who-ships-what) says
+what a remote would need to own the reaction too.
 
 → [Invariants worth knowing](./architecture.md#invariants-worth-knowing) has the exact
 rules for who may write which data.
@@ -417,6 +446,34 @@ What changes in a real setup:
   debug this: they show which version of a shared package won and who provides it.
   Remote components render inside the shell's component tree, so a single Angular
   instance is mandatory. The price: all teams upgrade Angular in step.
+
+## The hosted demo is a recording
+
+I made recordings, so that the hosted demo needs no LLM and no API key. There is one for
+every example prompt and every combination of remotes. A recording holds what the LLM
+did: its tool calls, with the A2UI messages inside. When you click a prompt, the browser
+plays them again. Everything else runs as in the live mode, on today's data.
+
+Three things follow from this:
+
+- Each prompt answers on its own. A question you type yourself has no recording.
+- Your location is set to Dresden, because I recorded there.
+- You can read what the LLM said:
+  [`public/recordings.json`](../public/recordings.json). It is a good place to look when
+  you want to understand an answer, or to debug one.
+
+> [!NOTE]
+> What you see is a selection. The LLM is not deterministic: while I was recording, the
+> same prompt gave me a different UI from one click to the next. It seemed to depend on
+> how the LLM felt that day. I kept the answers that show the idea well. How good the
+> result is depends strongly on the model and on the prompt.
+
+With your own key you get the live mode: clone the repository, put one provider key into
+`.env` and run `npm start`. Then you can ask freely, within what the search offers:
+topics, a date window and the distance from your location. It cannot find a conference
+by its name, and it cannot tell you what you have reserved.
+
+→ [Agent modes: local and replay](./architecture.md#agent-modes-local-and-replay)
 
 ## The idea in one sentence
 

@@ -318,6 +318,10 @@ Popup: surface, 1 px ink border, title, mono facts, stock line in attention ink.
 existing muted vector style, do not redraw cartography. Basemap colours live inside the WebGL canvas,
 so they are passed as values, not inherited as custom properties.
 
+Status (2026-09-30): implemented in M3 on OpenFreeMap's `positron` style, with one deviation — the
+popup was dropped. A DOM popup is invisible to MapLibre's collision index and covered neighbouring
+labels, so the selection is the ink ring plus a bold label that is placed first.
+
 ## 9. Acceptance
 
 1. Shell chrome, `Timeline` and `Gauge` take every colour, radius, space and font family from

@@ -1,6 +1,6 @@
 # Spec: ConferenceFinder — föderiertes A2UI-Vokabular mit Native Federation
 
-Status: Entwurf v3.4, 2026-09-25 (Veröffentlichung als eigener Schritt nach M3; v3.3: 2026-09-09, Entschlackung: 2 Remotes, Anfragen 1–4, Replay verpflichtend; v3.2: 2026-08-27). Projekt: **ConferenceFinder**. Eigene App ohne Flights-Bezug.
+Status: Entwurf v3.5, 2026-09-30 (M3 umgesetzt: vier Badges, Distanzfilter als Funktion in `mfe-maps`, MapLibre, eigener Key = lokaler Agent-Server; v3.4: 2026-09-25, Veröffentlichung als eigener Schritt nach M3; v3.3: 2026-09-09, Entschlackung: 2 Remotes, Anfragen 1–4, Replay verpflichtend; v3.2: 2026-08-27). Projekt: **ConferenceFinder**. Eigene App ohne Flights-Bezug.
 Hintergrundwissen: `docs/book-learnings.md`. Taskzuschnitt folgt später per `/plan` je Meilenstein. Diese Spec wandert als `docs/spec.md` ins Projekt-Repo, sobald es existiert.
 
 ## 0. Leitgedanke (Anker für README, Post und Talk)
@@ -34,17 +34,21 @@ Wann sich das lohnt (README-Regel): mehrere Teams, Anfragen quer zu den Teams, U
 
 ## 2. Demo-Anfragen (in Steigerung)
 
-| # | Anfrage | Was entsteht | Beweist |
-|---|---|---|---|
-| 1 | „Welche Angular-Konferenzen gibt es in den nächsten Monaten?" | `Timeline` an `/filteredConfs` (vom Client montiert) | Remote liefert Ausgabe-Vokabular |
-| 2 | „Zeig sie auf einer Karte" | `Map` an `/filteredConfs`, `center ← /me` | zweites Remote, gleicher Pfad |
-| 3 | „Wann ist die nächste in meiner Nähe? Wenn ich eine anklicke, will ich Details." | `Row [ Map(selected → /selectedConf), Column [ Text /selectedConf/name, Text daysUntil(/selectedConf/date), Text distance(/me, /selectedConf), Gauge(/selectedConf/remaining, /selectedConf/capacity), Button reserve ] ]`, `/selectedConf` mit der nächsten vorbelegt | **Auswahl in einem Remote treibt Anzeige aus einem zweiten Remote und der Shell — ohne Modell-Roundtrip** |
-| 4 | „Reservier mir eine Karte" (Klick auf den Button) | `action: reserve { id: { path: '/selectedConf/id' } }` → Shell-Handler → Store → `updateDataModel /selectedConf/remaining` → `Gauge` sinkt | Domänenaktion ohne Modell, Vokabular neutral |
+Seit v3.5 sind die Demo-Anfragen die vier **Badges** — die Beispiel-Prompts als Buttons über dem Chat. Jedes Badge steht für sich (es braucht keinen Verlauf) und verlangt eine andere Form der Antwort.
 
-Weitere Anfragen (ehemals 5–7) sind in die Späteren Erweiterungen verschoben und Teil keiner verbindlichen Abnahme.
+| # | Badge | Was entsteht | Beweist |
+|---|---|---|---|
+| 1 | „Which Angular conferences are coming up in the next six months?" | `Timeline` an `/filteredConfs` (vom Client montiert), sonst nichts | Remote liefert Ausgabe-Vokabular |
+| 2 | „Where are the Angular conferences around me? Let me narrow them down by distance with a slider." | `Column [ Slider(value → /filter/maxKm), Map(points ← filterWithinKm(/filteredConfs, /me, /filter/maxKm), center ← /me) ]` | Funktions-Vokabular eines Remotes treibt ein Bedienelement des Basis-Katalogs — der Regler filtert ohne einen Token |
+| 3 | „Compare the next three Angular conferences: date, city, ticket price and tickets left." | `Row` aus drei `Card`s, je an `/filteredConfs/0…2` gebunden, Restkarten als `Gauge`; kein Reserve-Button | Komposition aus Basis-Katalog und Charts-Remote |
+| 4 | „Where and when is the next Angular conference near me? When I click one, I want details and a way to reserve a seat." | `Map` und `Timeline` mit `selected → /selectedConf`, dazu eine Detail-`Card`: `Text /selectedConf/name`, `daysUntil(/selectedConf/date)`, `distance(/me, /selectedConf)`, `Gauge(/selectedConf/remaining, /selectedConf/capacity)`, `Button reserve`; `/selectedConf` mit der ersten vorbelegt | **Klick-Kaskade: Auswahl in einem Remote treibt Anzeige aus einem zweiten Remote und der Shell — ohne Modell-Roundtrip**; dazu die Aktion, die der Shell gehört |
+
+**Anfrage 4** bleibt der Klick auf den Button aus Badge 4, kein eigenes Badge: `action: reserve { id: { path: '/selectedConf/id' } }` → Shell-Handler → Store → `updateDataModel …/remaining` → `Gauge` sinkt. Beweist: Domänenaktion ohne Modell, Vokabular neutral.
+
+Wo die Meilensteine M1 und M2 von „Anfragen 1–3" sprechen, meinen sie die damaligen Texte (Zeitachse, „Zeig sie auf einer Karte", Detailansicht); deren Beweise tragen heute Badge 1, 2 und 4. Weitere Anfragen (ehemals 5–7) sind in die Späteren Erweiterungen verschoben und Teil keiner verbindlichen Abnahme.
 
 **Live-Moment:**
-- Ohne `mfe-maps` beantwortet das Modell Anfrage 2 mit `Timeline` + Text („keine Karte verfügbar"). Remote ins Manifest, Reload → Karte. `context[]` im Request zeigt das neue Vokabular; `agent/` unverändert.
+- Ohne `mfe-maps` beantwortet das Modell Badge 2 mit einem Text, der die Lücke benennt (die fehlende Karte oder den fehlenden Distanzfilter), und einer einfachen Liste — ohne Regler. Remote im Panel einschalten, Reload → Karte mit Regler. `context[]` im Request zeigt das neue Vokabular; `agent/` unverändert.
 
 ## 3. Architektur
 
@@ -52,9 +56,9 @@ Weitere Anfragen (ehemals 5–7) sind in die Späteren Erweiterungen verschoben 
 
 | Einheit | Inhalt | Port |
 |---|---|---|
-| **Shell** | Chat, A2UI-Renderer + Basic Catalog, Client-Tool `renderSurface` (3.5), Datentool `findConferences`, `ConferenceStore`, Handler `reserve`, Standort (Geolocation, Fallback Stadtwahl) als Kontext-Entry `/me`, Capability-Loader, Panel „geladene Remotes und ihr Vokabular" (sichtbarer Demo-Bestandteil), Beispiel-Prompts als Buttons (Anfragen 1–4; Basis für den Replay-Modus) | 4200 |
+| **Shell** | Chat, A2UI-Renderer + Basic Catalog, Client-Tool `renderSurface` (3.5), Datentool `findConferences`, `ConferenceStore`, Handler `reserve`, Standort (Geolocation, Fallback Stadtwahl) als Kontext-Entry `/me`, Capability-Loader, Panel „geladene Remotes und ihr Vokabular" (sichtbarer Demo-Bestandteil), Beispiel-Prompts als Buttons (die vier Badges aus Abschnitt 2; ein Badge ist eine Replay-Aufnahme) | 4200 |
 | **`mfe-charts`** | `Timeline`, `Gauge`, Fn `daysUntil` | 4201 |
-| **`mfe-maps`** | `Map`, Fn `distance` | 4202 |
+| **`mfe-maps`** | `Map`, Fn `distance`, Fn `filterWithinKm` | 4202 |
 | **`agent`** | ein Mastra-Agent, Prompt, offizieller `@ag-ui/mastra`-Adapter, Provider Anthropic/OpenAI/DeepSeek per Config, **keine Server-Tools** | 3001 |
 
 Basic Catalog bleibt in der Shell; Eingaben außer Karten-/Chart-/Timeline-Auswahl kommen von dort (`ChoicePicker` für Themen, `DateTimeInput`, `TextField`, `Button`).
@@ -113,25 +117,26 @@ Der Agent-Server weiß nichts von A2UI; der offizielle Adapter reicht. Umstieg a
 
 - Neues Repo `~/projects/conference-finder` (MIT), getrennt vom Notiz-Repo `~/projects/a2ui`. Angular-CLI-Workspace (kein Nx), npm, Node LTS. Projekte: `shell` (Default), `projects/mfe-charts`, `projects/mfe-maps`, `agent/` (Mastra, eigenes `package.json`), `libs/capabilities`.
 - Versionen: Angular 21.x, `@copilotkit/angular` 0.3.x, `@a2ui/angular` 0.10.x, `@a2ui/web_core` 0.10.x, `@ag-ui/*` 0.0.57+, `@angular-architects/native-federation` passend zu Angular 21 (in M2 prüfen), Mastra 1.x mit Providern Anthropic/OpenAI/DeepSeek.
-- npm-Scripts: `start` (Shell + alle Remotes + Agent parallel), `start:shell`, `start:charts`, `start:maps`, `start:agent`, `capture` (M3, Replay), `test`, `eval`.
+- npm-Scripts: `start` (Shell + alle Remotes + Agent parallel), `start:shell`, `start:charts`, `start:maps`, `start:agent`, `build:deploy` (M3, statisches Deployment), `test`, `eval`. Ein Capture-Skript gibt es nicht: die Replay-Aufnahmen entstehen im Browser mit `?record`.
 - `.env.example` mit den drei Provider-Keys; Modell per `agent/config.ts` wählbar.
 - **M1-Prüfpunkt Chat-UI:** Liefert `@copilotkit/angular` 0.3 eine fertige Chat-Komponente, die registrierte `ToolRenderer` darstellt? Wenn ja, nutzen (spart Zeit). Sonst headless nach Buch-Muster (`chat-messages` mit `copilot-render-tool-calls`).
 
 ### 3.8 Shared Dependencies
 
-`@angular/*`, `@a2ui/angular`, `@a2ui/web_core`, `@copilotkit/angular`, `@ag-ui/core`, `@ag-ui/client`, `zod` (inkl. `zod/v3`), `rxjs` — singleton, strictVersion. Keine Chart-/Karten-Bibliothek: alles SVG.
+`@angular/*`, `@a2ui/angular`, `@a2ui/web_core`, `@copilotkit/angular`, `@ag-ui/core`, `@ag-ui/client`, `zod` (inkl. `zod/v3`), `rxjs` — singleton, strictVersion. Die Charts bleiben SVG ohne Bibliothek. Die Karte zeichnet seit M3 MapLibre (`maplibre-gl`) innerhalb von `mfe-maps`: die Bibliothek gehört dem Remote, die Shell importiert sie nicht.
 
 ## 4. Primitive
 
-Alle Props sind `binding(...)`. Eingabe-Primitive schreiben über `props().selected.onUpdate(obj)` → `dataContext.set(path, obj)`; bei Literal No-op (Prompt-Regel). **Auswahl schreibt das ganze Element, nicht die Id** — dann binden Basic-Komponenten direkt `/selectedConf/name`, `/selectedConf/url` usw. Optionales `action` (`ActionSchema`) macht aus dem Klick zusätzlich ein Client-Event.
+Alle Props sind `binding(...)` — Literal, Pfad oder Funktionsaufruf. Eingabe-Primitive schreiben über `props().selected.onUpdate(obj)` → `dataContext.set(path, obj)`; bei Literal No-op (Prompt-Regel). **Auswahl schreibt das ganze Element, nicht die Id** — dann binden Basic-Komponenten direkt `/selectedConf/name`, `/selectedConf/url` usw. Optionales `action` (`ActionSchema`) macht aus dem Klick zusätzlich ein Client-Event.
 
 | Remote | Primitive | liest | Klick schreibt | `action` | Bemerkung |
 |---|---|---|---|---|---|
 | charts | `Timeline` | `items: {id, label, date, …}[]`, `range?`, `selected?` | `selected` (Element) | optional | horizontale Zeitachse, SVG |
 | charts | `Gauge` | `value`, `max`, `label?` | — | — | Restkarten |
 | charts | Fn `daysUntil(date)` → number | | | | „42" plus eigenes `Text`-Label; der Basiskatalog hat keine Interpolation — `formatString` coerct nur einen einzelnen Wert zu String |
-| maps | `Map` | `points: {id, label, lat, lon, …}[]`, `center?`, `selected?` | `selected` (Element) | optional | SVG-Scatter über Bounding-Box; MapLibre-Upgrade in M3 |
+| maps | `Map` | `points: {id, label, lat, lon, …}[]`, `center?`, `selected?` | `selected` (Element) | optional | MapLibre auf OpenFreeMap-Vektorkacheln (Stil `positron`, umgefärbt, kein Key); Labels als Symbol-Layer mit Kollisionsvermeidung; Auswahl als Ring plus fettes Label, kein Popup |
 | maps | Fn `distance(a, b)` → km | | | | Haversine |
+| maps | Fn `filterWithinKm(points, center, maxKm)` → Array | | | | die Punkte im Umkreis, Zusatzfelder bleiben erhalten; macht aus einem `Slider` des Basis-Katalogs einen Live-Filter |
 
 Elemente in `items`/`points`/`data` dürfen **beliebige Zusatzfelder** tragen; die Primitive reichen sie beim Schreiben von `selected` unverändert durch. Das ist der Mechanismus, der Detailansichten ohne Lookup-Funktion möglich macht.
 
@@ -163,9 +168,9 @@ Damit jede Task als „Diff + Test" landen kann (Vorgabe für `/plan`):
 | Pure Functions | `mergeCatalog`, Kontext-Serialisierung (Komponenten + Funktionen), `resolveCapabilityRemotes`, `findConferences`-Filter/Distanz, `dayOffset`-Loader, `daysUntil`, `distance`, Datenmontage-Guard (`/filteredConfs`, `/me` abgelehnt) | Vitest, Node |
 | Primitive | jede Katalogkomponente mit gebundenen Props: rendert, `selected.onUpdate` wird mit dem ganzen Element gerufen, `action` dispatcht | Vitest Browser Mode (Buch Kap. 9), `BoundProperty`-Fakes wie `initialProperty` im Buch |
 | Renderer-Integration | `renderSurface`-Handler: valide Nachrichten → Surface erscheint, Daten montiert; invalide → `{ ok: false, result }`; Klick auf `Map` aktualisiert gebundenen `Text` ohne Agentenrequest | Vitest Browser Mode mit echtem `A2uiRendererService` |
-| Agent-Loop ohne Modell | Agent-Store mit `ReplayAgent`/Mock-Agent (Kap. 9): Anfrage → aufgezeichnete Events → Surface | Vitest Browser Mode; dieselben Aufnahmen wie der M3-Replay-Modus |
-| Modell-Verhalten | Anfragen 1–3 gegen das echte Modell, Erfolgsquote ≥ 4/5 (der Request-4-Kontrakt — `reserve`-Button — wird in Anfrage 3 mitbewertet) | manuelles Skript `npm run eval`, nicht in CI |
-| Fehlendes Vokabular | Anfrage mit einer Capability, die im Katalog **nicht** vorhanden ist (z. B. Anfrage 2 ohne `mfe-maps`): die Antwort **benennt die Lücke** und emittiert **keine wirkungslosen Bedienelemente** — keine Bedienung ohne dahinterliegende Funktion | `npm run eval`, ein Fall je Live-Moment |
+| Agent-Loop ohne Modell | Agent-Store mit `ReplayAgent`/Mock-Agent (Kap. 9): Badge → aufgezeichnete Tool-Calls → Surface | Vitest Browser Mode; dieselben Aufnahmen wie der M3-Replay-Modus |
+| Modell-Verhalten | vier Zellen gegen das echte Modell, jedes Badge als erste Nachricht einer frischen Sitzung: Badge 1 und Badge 4 mit beiden Remotes, Badge 1 und Badge 2 nur mit Charts; Erfolgsquote ≥ 4/5 je Zelle (der Request-4-Kontrakt — `reserve`-Button — wird in Badge 4 mitbewertet). Die Regler-Form von Badge 2 und das Vergleichs-Badge 3 beurteilt das Auge bei der Aufnahme, nicht das Gate | manuelles Skript `npm run eval`, nicht in CI |
+| Fehlendes Vokabular | Anfrage mit einer Capability, die im Katalog **nicht** vorhanden ist — Badge 2 ohne `mfe-maps`: die Antwort **benennt die Lücke** (Karte oder Distanzfilter) und emittiert **keine wirkungslosen Bedienelemente** — sie zeichnet keinen Regler, hinter dem keine Funktion steht | `npm run eval`, ein Fall je Live-Moment |
 
 Der letzte Fall sichert die Vorher-Hälfte der Live-Momente ab: Ein Modell, das statt einer ehrlichen Absage drei tote Knöpfe baut, besteht die Schema-Validierung (die Namen existieren ja) und lässt die Demo kaputt statt unvollständig aussehen. Der Guardrail des Renderers greift hier nicht — er verhindert erfundene Namen, nicht wirkungslose Komposition aus echten.
 
@@ -179,7 +184,7 @@ Sheriff wie im Buch-Repo für Modulgrenzen (Shell importiert keine Remotes; Remo
 
 **Visuelle Sprache „Departure" (zwischen M2 und M3).** Ein Look für die Demo — Kopfband in Tinte, Mono-Ziffern für Datum, Distanz und Anzahl, Blau für Linie und Auswahl, Amber nur für Aufmerksamkeit — über Shell-Chrome, Chat-Rahmen, Agent-Primitive, `Timeline` und `Gauge`, getragen von `--cf-*`-Custom-Properties über die Föderationsgrenze; dazu die eine Nicht-CSS-Änderung, Prompt-Beispiele mit gruppierten Beschriftung/Wert-Paaren. Eigene Spec: `docs/specs/visual-language.md`. Liegt vor M3, weil die Prompt-Änderung vor den Replay-Aufnahmen stehen muss.
 
-**M3 — Reserve, Karten-Upgrade, Hosting.** `ConferenceStore` + `reserve`-Handler (Anfrage 4, samt Prompt-/Eval-Erweiterung). MapLibre-Upgrade **innerhalb** von `mfe-maps` (echte Tiles hier erlaubt; Vokabular, Schema und Prompt bleiben unverändert; Toggle = Reload bleibt; das Karten-Kit steht in `docs/specs/visual-language.md`, Abschnitt 8.3). Hosting: `ReplayAgent` (aufgezeichnete Runs pro Anfrage × Capability-Set, Capture-Skript; Aufnahmen enthalten dank Datenmontage nur Struktur und pinnen die Protokollversion) als **verpflichtender**, klar gekennzeichneter Default — Besucher brauchen keinen API-Key; `BrowserAgent` (BYOK, ein Modellaufruf pro Run) als optionaler Schalter; statisches Deployment wie Frankenstein. **Die gehostete Demo läuft.**
+**M3 — Reserve, Karten-Upgrade, Hosting.** `ConferenceStore` + `reserve`-Handler (Anfrage 4, samt Prompt-/Eval-Erweiterung). MapLibre-Upgrade **innerhalb** von `mfe-maps` (echte Tiles hier erlaubt; Vokabular, Schema und Prompt bleiben unverändert; Toggle = Reload bleibt; das Karten-Kit steht in `docs/specs/visual-language.md`, Abschnitt 8.3). Der Distanzfilter `filterWithinKm` als Katalogfunktion in `mfe-maps` und die vier Badges aus Abschnitt 2. Hosting: `ReplayAgent` als **verpflichtender**, klar gekennzeichneter Default — Besucher brauchen keinen API-Key. Eine Aufnahme je Badge × Capability-Set (zwei Remotes ergeben vier Sets, also sechzehn Aufnahmen); jedes Badge ist eigenständig formuliert und als erste Nachricht einer frischen Unterhaltung aufgenommen, der Verlauf wird beim Abspielen ignoriert, Freitext bekommt die Antwort „nicht aufgezeichnet". Aufgenommen wird im Browser mit `?record`, nicht mit einem Capture-Skript; die Aufnahmen enthalten dank Datenmontage nur Struktur und pinnen Protokoll- und Formatversion sowie die Stadt der Aufnahme. **Eigener Key = lokaler Agent-Server** (`.env`, `npm start`): ein Key gehört auf einen Server, ein `BrowserAgent` mit Key im Browser wird nicht gebaut. Statisches Deployment wie Frankenstein (`npm run build:deploy`). **Die gehostete Demo läuft.**
 
 **Veröffentlichung (nach M3).** README als Eingangstür des öffentlichen Repos: Architekturbild, Wann-lohnt-es-sich-Regel, Datenstand, FAQ als Vortragsskript — ihre Fakten (gehostete Replay-Demo, MapLibre-Karte, Anfrage 4) stammen aus M3, deshalb erst danach. Historie ohne Buchnotizen und privaten Kontext; dann ein neues GitHub-Repository `native-federation-a2ui` statt einer Umbenennung (die App bleibt ConferenceFinder). Post 2. **Demo fertig und veröffentlicht.**
 
@@ -189,7 +194,11 @@ In v3.3 aus dem Pflichtumfang genommen: jede Position hier ist eine zweite Insta
 bewiesenen Punkts oder ein eigenständiger Nachschlag. Reihenfolge = empfohlene Reihenfolge, falls
 die Demo nach der Veröffentlichung wächst.
 
-1. **`mfe-filter` — die Kür (zuerst umsetzen, bestes Sequel).** Liefert **ausschließlich die
+1. **Umgesetzt in M3 als Funktion `filterWithinKm` innerhalb von `mfe-maps` — bewusst ohne
+   eigenes Remote `mfe-filter` (E12).** Ein drittes wählbares Remote hätte die Replay-Matrix auf
+   acht Capability-Sets verdoppelt; die Pointe (föderiertes *Verhalten* treibt einen Regler des
+   Basis-Katalogs) trägt Badge 2 auch so. Der ursprüngliche Vorschlag bleibt zum Nachlesen stehen:
+   **`mfe-filter` — die Kür (zuerst umsetzen, bestes Sequel).** Liefert **ausschließlich die
    Katalogfunktion `withinKm`** — kein neues Anzeige-Primitiv; das kleinstmögliche Remote der
    ganzen Demo. `Slider` bringt der Basis-Katalog von `@a2ui/angular` bereits mit (verifiziert
    2026-09-03: `slider` steht in `DEFAULT_COMPONENT_IMPLEMENTATIONS`); was fehlt, ist die
@@ -225,6 +234,9 @@ die Demo nach der Veröffentlichung wächst.
 | E7 | Bindung vs. Agent | lokal bevorzugen, per Prompt-Regel |
 | E8 | Scope-Entschlackung v3.3 | 2 Remotes, Anfragen 1–4, drei Meilensteine, Replay verpflichtend/BYOK optional; `mfe-filter`, `mfe-embed`, `BarChart`/`ChartGrid`, `submitAnswer` → §8b (2026-09-09) |
 | E9 | Reihenfolge M3 → Veröffentlichung | Hosting bleibt in M3; README, Historie, neues Repo `native-federation-a2ui` und Post 2 bilden den Schritt „Veröffentlichung" danach, weil die README-Fakten aus M3 stammen (2026-09-25) |
+| E10 | Replay und eigener Key | Eine Aufnahme je Badge × Capability-Set; die Badges sind eigenständig formuliert, der Verlauf wird ignoriert, Freitext bekommt „nicht aufgezeichnet". Eigener Key = lokaler Agent-Server; kein `BrowserAgent`, der Key gehört nicht in den Browser (2026-09-26) |
+| E11 | Vier Badges, vier Formen | Zeitachse, Karte mit Distanzregler, Drei-Karten-Vergleich, Detailansicht mit Reservieren; Anfrage 4 bleibt der Button-Klick. Die Formregeln stehen im Systemprompt, die Negativliste je Badge ist die Prüfliste fürs Auge bei der Aufnahme (2026-09-28) |
+| E12 | Distanzfilter | Katalogfunktion `filterWithinKm` in `mfe-maps`, kein drittes Remote `mfe-filter`: weniger als §8b.1 vorschlug, dafür bleibt die Replay-Matrix bei vier Sets (2026-09-28) |
 
 ## 10. Risiken
 
@@ -241,12 +253,12 @@ Server-Tools, DSL/Dashboard, HITL-Interrupts, MCP, Streaming, Late-Binding zur L
 
 ## 12. Akzeptanzkriterien
 
-1. Anfragen 1–3 liefern die beschriebenen Surfaces mit dem Entwicklungsmodell in ≥ 4 von 5 Versuchen (inkl. `reserve`-Button-Kontrakt in Anfrage 3).
-2. Anfrage 3: Marker-Klick wechselt Name, Countdown, Distanz und Gauge ohne Agentenrequest.
+1. Die vier Badges — Zeitachse, Karte mit Distanzregler, Drei-Karten-Vergleich, Detailansicht mit Reservieren — liefern die in Abschnitt 2 beschriebenen Surfaces. Das Eval-Gate misst davon Badge 1 und Badge 4 mit beiden Remotes sowie Badge 1 und Badge 2 nur mit Charts, mit dem Entwicklungsmodell in ≥ 4 von 5 Versuchen (inkl. `reserve`-Button-Kontrakt in Badge 4).
+2. Badge 4: Marker-Klick wechselt Name, Countdown, Distanz und Gauge ohne Agentenrequest.
 3. (M3) Anfrage 4: Reservieren senkt die Gauge ohne Modellaufruf; Store hält die Reservierung.
-4. Ohne `mfe-maps` degradiert Anfrage 2 sauber; mit: Karte. `context[]` zeigt den Unterschied; `agent/` unverändert.
+4. Ohne `mfe-maps` degradiert Badge 2 sauber (Lücke benannt, kein Regler); mit: Karte mit Regler. `context[]` zeigt den Unterschied; `agent/` unverändert.
 5. Remotes sind getrennte Builds/Ports; NF-Devtools zeigen sie; das Remote-Panel zeigt geladene Remotes und ihr Vokabular.
-6. (M3) Gehostete Demo läuft statisch im klar gekennzeichneten Replay-Modus ohne API-Key (verpflichtend); BYOK-Modus mit eigenem Key (optional).
+6. (M3) Gehostete Demo läuft statisch im klar gekennzeichneten Replay-Modus ohne API-Key (verpflichtend). Wer einen eigenen Key hat, startet den lokalen Agent-Server; einen Modus mit Key im Browser gibt es nicht.
 7. Tests aus Abschnitt 7 laufen grün; `npm run eval` dokumentiert die Modell-Erfolgsquote.
 
 ## 13. Veröffentlichung
